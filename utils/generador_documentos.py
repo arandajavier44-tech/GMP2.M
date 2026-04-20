@@ -7,7 +7,7 @@ from models.documento import DocumentoGMP
 from models.orden_trabajo import OrdenTrabajo
 from models.calibracion import Calibracion
 from models.sistema import SistemaEquipo, PlanMantenimiento
-from utils.ia_engine import ia_engine
+#from utils.ia_engine import ia_engine
 import logging
 
 logger = logging.getLogger(__name__)

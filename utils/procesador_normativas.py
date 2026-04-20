@@ -11,9 +11,9 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-class ProcesadorNormativas:
-    def __init__(self, ia_engine):
-        self.ia_engine = ia_engine
+#class ProcesadorNormativas:
+    #def __init__(self, ia_engine):
+        #self.ia_engine = ia_engine
         self.scraper = ScraperNormativas()
     
     def actualizar_base_conocimiento(self):

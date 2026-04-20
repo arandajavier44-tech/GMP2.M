@@ -4,7 +4,7 @@ import time
 import logging
 from datetime import datetime
 from .procesador_normativas import ProcesadorNormativas
-from utils.ia_engine import ia_engine
+#from utils.ia_engine import ia_engine
 
 logger = logging.getLogger(__name__)
 
