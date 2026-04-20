@@ -2,13 +2,13 @@
 import os
 import io
 import json
+import requests
 from flask import Blueprint, render_template, request, jsonify, session, send_file
 from flask_login import login_required
 from models import db
 from models.conocimiento import Normativa, ConsultaIA, RecomendacionIA
 from datetime import datetime, timedelta
 from utils.decorators import tecnico_required, admin_required
-import google.generativeai as genai
 import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
@@ -18,25 +18,44 @@ from reportlab.lib.units import inch
 
 ia_bp = Blueprint('ia', __name__)
 
-# Configuración de Gemini
-def get_gemini_client():
-    """Obtiene el cliente de Gemini API"""
-    api_key = os.environ.get('GOOGLE_API_KEY')
-    if not api_key:
-        return None
-    genai.configure(api_key=api_key)
-    return genai
+# ========== CONFIGURACIÓN DE GEMINI API (sin librería pesada) ==========
 
 def consultar_gemini(pregunta):
-    """Consulta a Gemini API y devuelve respuesta"""
+    """Consulta a Gemini API directamente con requests (sin librería)"""
     try:
-        gemini = get_gemini_client()
-        if not gemini:
+        api_key = os.environ.get('GOOGLE_API_KEY')
+        if not api_key:
             return "⚠️ La IA no está configurada. Contacta al administrador."
         
-        model = gemini.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(pregunta)
-        return response.text
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        
+        headers = {
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "contents": [{
+                "parts": [{"text": pregunta}]
+            }]
+        }
+        
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        
+        if response.status_code == 200:
+            resultado = response.json()
+            # Extraer el texto de la respuesta
+            candidates = resultado.get("candidates", [])
+            if candidates:
+                content = candidates[0].get("content", {})
+                parts = content.get("parts", [])
+                if parts:
+                    return parts[0].get("text", "Sin respuesta")
+            return "No se pudo obtener respuesta de la IA"
+        else:
+            return f"❌ Error en API Gemini: {response.status_code} - {response.text[:200]}"
+            
+    except requests.exceptions.Timeout:
+        return "❌ La IA tardó demasiado en responder. Intenta de nuevo."
     except Exception as e:
         print(f"Error en Gemini: {e}")
         return f"❌ Error al consultar la IA: {str(e)}"
@@ -87,7 +106,6 @@ def api_consultar():
 @tecnico_required
 def api_recomendaciones():
     """API para obtener recomendaciones (simplificado)"""
-    # Recomendaciones básicas predefinidas
     recomendaciones = RecomendacionIA.query.filter_by(leida=False).order_by(
         RecomendacionIA.prioridad.desc()
     ).limit(10).all()
@@ -118,11 +136,9 @@ def api_marcar_leida(rec_id):
 def api_generar_recomendaciones():
     """Genera nuevas recomendaciones usando Gemini"""
     try:
-        # Consultar a Gemini sobre recomendaciones de mantenimiento
         prompt = "Genera 3 recomendaciones breves para mantenimiento preventivo en una planta farmacéutica GMP"
         respuesta = consultar_gemini(prompt)
         
-        # Crear una recomendación de ejemplo
         nueva_rec = RecomendacionIA(
             tipo='Mantenimiento',
             titulo='Recomendación generada por IA',
@@ -475,6 +491,6 @@ def api_estado():
     return jsonify({
         'configurada': bool(api_key),
         'proveedor': 'Google Gemini API',
-        'modelo': 'gemini-2.0-flash' if api_key else None,
+        'modelo': 'gemini-1.5-flash' if api_key else None,
         'mensaje': 'IA configurada correctamente' if api_key else 'API Key no configurada'
     })
