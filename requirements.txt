@@ -34,3 +34,4 @@ python-dateutil==2.9.0
 six==1.17.0
 typing_extensions==4.15.0
 tzdata==2025.2
+reportlab==4.4.4
