@@ -1,1 +1,1 @@
-git add runtime.txt requirements.txt utils/actualizador_automatico.py utils/generador_documentos.py utils/procesador_normativas.py
+python-3.11
