@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ documento.codigo }} - {{ documento.titulo }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: white; padding: 20px; }
+        .document-container { max-width: 1200px; margin: 0 auto; }
+        .gmp-header { margin-bottom: 30px; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; }
+        .gmp-title { font-size: 28px; font-weight: bold; color: #2c3e50; }
+        .gmp-subtitle { color: #7f8c8d; font-size: 14px; }
+        .document-code { text-align: right; font-size: 12px; color: #7f8c8d; }
+        .metadata { background-color: #f8f9fa; padding: 15px; margin: 20px 0; border: 1px solid #dee2e6; border-radius: 5px; font-size: 12px; }
+        .metadata table { width: 100%; }
+        .metadata td { padding: 5px; }
+        .document-content { margin: 30px 0; }
+        .document-content h1 { font-size: 24px; margin: 20px 0 10px 0; color: #2c3e50; }
+        .document-content h2 { font-size: 20px; margin: 15px 0 10px 0; color: #34495e; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .document-content h3 { font-size: 18px; margin: 10px 0 8px 0; color: #7f8c8d; }
+        .document-content table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .document-content th, .document-content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .document-content th { background-color: #f2f2f2; font-weight: bold; }
+        .document-content .firma-box { border: 1px solid #000; padding: 15px; margin: 20px 0; text-align: center; }
+        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 10px; text-align: center; color: #7f8c8d; }
+        .approvals { margin-top: 40px; display: flex; justify-content: space-between; }
+        .approval-item { width: 30%; text-align: center; }
+        .approval-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 10px; }
+        .qr-section { text-align: center; margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 10px; }
+        .qr-box img { max-width: 120px; }
+        @media print {
+            body { padding: 0; margin: 0; }
+            .no-print { display: none; }
+            .metadata { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .qr-section { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        .signature-line { border-bottom: 1px solid #000; width: 80%; margin: 5px auto; }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" style="padding: 10px 20px; background: #2c3e50; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                🖨️ Imprimir Documento
+            </button>
+            <button onclick="window.close()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                ✖ Cerrar
+            </button>
+        </div>
+        
+        <div class="gmp-header">
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <div class="gmp-title">DOCUMENTO GMP</div>
+                    <div class="gmp-subtitle">Sistema de Gestión de Mantenimiento</div>
+                </div>
+                <div class="document-code">
+                    <strong>Código:</strong> {{ documento.codigo }}<br>
+                    <strong>Versión:</strong> {{ documento.version }}<br>
+                    <strong>Estado:</strong> {{ documento.estado }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="metadata">
+            <table>
+                <tr><td style="width: 25%;"><strong>Título:</strong></td><td colspan="3">{{ documento.titulo }}</td></tr>
+                <tr><td><strong>Tipo:</strong></td><td>{{ documento.tipo|upper }}</td><td><strong>Subtipo:</strong></td><td>{{ documento.subtipo|upper if documento.subtipo else '-' }}</td></tr>
+                <tr><td><strong>Fecha Creación:</strong></td><td>{{ documento.fecha_creacion.strftime('%d/%m/%Y') }}</td><td><strong>Creado por:</strong></td><td>{{ documento.creado_por or 'Sistema' }}</td></tr>
+                {% if documento.equipos_asignados %}
+                <tr><td><strong>Equipos Asignados:</strong></td><td colspan="3">{% for eq in documento.equipos_asignados %}{{ eq.code }} - {{ eq.name }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+                {% elif documento.equipo %}
+                <tr><td><strong>Equipo:</strong></td><td colspan="3">{{ documento.equipo.code }} - {{ documento.equipo.name }}</td></tr>
+                {% endif %}
+            </table>
+        </div>
+        
+        <div class="document-content">
+            {% if documento.contenido %}
+                {{ documento.contenido|safe }}
+            {% else %}
+                <div style="border: 1px solid #ddd; padding: 20px; text-align: center; color: #999;">
+                    ⚠️ El contenido del documento no está disponible.<br>
+                    <small>Por favor, edite el documento para generar el contenido.</small>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- QR Section -->
+        <div class="qr-section">
+            <div class="qr-box">
+                {% if documento.qr_code %}
+                <img src="{{ url_for('static', filename=documento.qr_code, _external=True) }}" alt="QR Code">
+                <p class="small text-muted mt-2"><strong>Código de trazabilidad GMP</strong></p>
+                <p class="small">Escanee este código para acceder al documento desde su dispositivo móvil</p>
+                {% else %}
+                <p class="small text-muted">Código QR no disponible</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="approvals">
+            <div class="approval-item"><div class="approval-line"></div><strong>Elaborado por</strong><br><small>{{ documento.creado_por or '_________________' }}</small><br><small>Fecha: {{ documento.fecha_creacion.strftime('%d/%m/%Y') if documento.fecha_creacion else '___/___/______' }}</small></div>
+            <div class="approval-item"><div class="approval-line"></div><strong>Revisado por</strong><br><small>{{ documento.revisado_por or '_________________' }}</small><br><small>Fecha: ___/___/______</small></div>
+            <div class="approval-item"><div class="approval-line"></div><strong>Aprobado por</strong><br><small>{{ documento.aprobado_por or '_________________' }}</small><br><small>Fecha: ___/___/______</small></div>
+        </div>
+        
+        <div class="footer">
+            <p>Este documento es propiedad de GMP Maintenance System. Su reproducción no autorizada está prohibida.</p>
+            <p>Documento generado el {{ documento.fecha_creacion.strftime('%d/%m/%Y %H:%M') if documento.fecha_creacion else now.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+</body>
+</html>

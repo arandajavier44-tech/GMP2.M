@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Inspecciones{% endblock %}
+{% block page_title %}Historial de Inspecciones Diarias{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item active">Historial</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label fw-bold small">Desde</label>
+                        <input type="date" class="form-control form-control-sm" id="filtroDesde">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label fw-bold small">Hasta</label>
+                        <input type="date" class="form-control form-control-sm" id="filtroHasta">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label fw-bold small">Resultado</label>
+                        <select class="form-select form-select-sm" id="filtroResultado">
+                            <option value="">Todos</option>
+                            <option value="1">Conforme</option>
+                            <option value="0">No conforme</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2 d-flex align-items-end">
+                        <button class="btn btn-primary btn-sm w-100" onclick="aplicarFiltros()">
+                            <i class="fas fa-search me-1"></i>Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de inspecciones -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Inspecciones Realizadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="inspeccionesTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Plantilla</th>
+                                <th>Equipo/Área</th>
+                                <th>Inspector</th>
+                                <th>Items</th>
+                                <th>Conformidad</th>
+                                <th>Resultado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inspeccion in inspecciones %}
+                            <tr class="fila-inspeccion" 
+                                data-fecha="{{ inspeccion.fecha.strftime('%Y-%m-%d') }}"
+                                data-conforme="{{ '1' if inspeccion.conforme else '0' }}">
+                                <td>{{ inspeccion.fecha.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <strong>{{ inspeccion.plantilla.nombre }}</strong>
+                                    <br><small class="text-muted">{{ inspeccion.plantilla.frecuencia|capitalize }}</small>
+                                </td>
+                                <td>
+                                    {% if inspeccion.equipo %}
+                                        {{ inspeccion.equipo.code }} - {{ inspeccion.equipo.name }}
+                                    {% elif inspeccion.plantilla.area %}
+                                        Área: {{ inspeccion.plantilla.area }}
+                                    {% else %}
+                                        General
+                                    {% endif %}
+                                </td>
+                                <td>{{ inspeccion.realizada_por }}</td>
+                                <td class="text-center">{{ inspeccion.resultados|length }}</td>
+                                <td>
+                                    {% set conformes = inspeccion.resultados|selectattr('conforme')|list|length %}
+                                    {% set total = inspeccion.resultados|length %}
+                                    <div class="progress" style="height: 5px;">
+                                        <div class="progress-bar bg-success" style="width: {{ (conformes / total * 100)|round }}%"></div>
+                                    </div>
+                                    <small>{{ conformes }}/{{ total }}</small>
+                                </td>
+                                <td>
+                                    {% if inspeccion.conforme %}
+                                        <span class="badge bg-success">Conforme</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No conforme</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('inspecciones.ver_inspeccion', inspeccion_id=inspeccion.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No hay inspecciones registradas</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let inspeccionesTable;
+
+    $(document).ready(function() {
+        inspeccionesTable = $('#inspeccionesTable').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            },
+            pageLength: 25,
+            order: [[0, 'desc']]
+        });
+    });
+
+    function aplicarFiltros() {
+        const desde = document.getElementById('filtroDesde').value;
+        const hasta = document.getElementById('filtroHasta').value;
+        const resultado = document.getElementById('filtroResultado').value;
+        
+        inspeccionesTable.rows().every(function() {
+            const row = this.node();
+            const fecha = row.dataset.fecha;
+            const conforme = row.dataset.conforme;
+            
+            let mostrar = true;
+            
+            if (desde && fecha < desde) mostrar = false;
+            if (hasta && fecha > hasta) mostrar = false;
+            if (resultado !== '' && conforme !== resultado) mostrar = false;
+            
+            if (mostrar) {
+                $(row).show();
+            } else {
+                $(row).hide();
+            }
+        });
+    }
+</script>
+{% endblock %}

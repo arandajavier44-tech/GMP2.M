@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Proveedor - GMP{% endblock %}
+{% block page_title %}Nuevo Proveedor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-truck me-2"></i>Registrar Nuevo Proveedor
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formNuevoProveedor">
+                    
+                    <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Información Básica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label gmp-required">Nombre del Proveedor *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="tipo" class="form-label gmp-required">Tipo *</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="insumos">Insumos / Repuestos</option>
+                                <option value="servicios">Servicios</option>
+                                <option value="equipos">Equipos</option>
+                                <option value="calibraciones">Calibraciones</option>
+                                <option value="varios">Varios</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="rubro" class="form-label">Rubro</label>
+                            <input type="text" class="form-control" id="rubro" name="rubro">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: CONTACTO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-address-card me-2"></i>
+                                Contacto
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="contacto_nombre" class="form-label">Nombre de contacto</label>
+                            <input type="text" class="form-control" id="contacto_nombre" name="contacto_nombre">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="contacto_cargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="contacto_cargo" name="contacto_cargo">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="sitio_web" class="form-label">Sitio Web</label>
+                            <input type="url" class="form-control" id="sitio_web" name="sitio_web">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: DIRECCIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Dirección
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="ciudad" class="form-label">Ciudad</label>
+                            <input type="text" class="form-control" id="ciudad" name="ciudad">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="provincia" class="form-label">Provincia</label>
+                            <input type="text" class="form-control" id="provincia" name="provincia">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="pais" class="form-label">País</label>
+                            <input type="text" class="form-control" id="pais" name="pais" value="Argentina">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: DATOS FISCALES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-file-invoice me-2"></i>
+                                Datos Fiscales
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="cuit" class="form-label">CUIT</label>
+                            <input type="text" class="form-control" id="cuit" name="cuit" placeholder="20-12345678-9">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="condicion_iva" class="form-label">Condición IVA</label>
+                            <select class="form-select" id="condicion_iva" name="condicion_iva">
+                                <option value="">Seleccionar...</option>
+                                <option value="Responsable Inscripto">Responsable Inscripto</option>
+                                <option value="Monotributista">Monotributista</option>
+                                <option value="Exento">Exento</option>
+                                <option value="Consumidor Final">Consumidor Final</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="calificacion" class="form-label">Calificación</label>
+                            <select class="form-select" id="calificacion" name="calificacion">
+                                <option value="0">Sin calificar</option>
+                                <option value="1">⭐</option>
+                                <option value="2">⭐⭐</option>
+                                <option value="3">⭐⭐⭐</option>
+                                <option value="4">⭐⭐⭐⭐</option>
+                                <option value="5">⭐⭐⭐⭐⭐</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: CALIFICACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-certificate me-2"></i>
+                                Calificación GMP
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="es_proveedor_gmp" name="es_proveedor_gmp">
+                                <label class="form-check-label" for="es_proveedor_gmp">
+                                    Es proveedor GMP calificado
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3 fecha-gmp" style="display: none;">
+                            <label for="fecha_calificacion" class="form-label">Fecha de calificación</label>
+                            <input type="date" class="form-control" id="fecha_calificacion" name="fecha_calificacion">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3 fecha-gmp" style="display: none;">
+                            <label for="fecha_vencimiento_calificacion" class="form-label">Fecha de vencimiento</label>
+                            <input type="date" class="form-control" id="fecha_vencimiento_calificacion" name="fecha_vencimiento_calificacion">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: DATOS BANCARIOS -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-university me-2"></i>
+                                Datos Bancarios
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="banco" class="form-label">Banco</label>
+                            <input type="text" class="form-control" id="banco" name="banco">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="cbu" class="form-label">CBU</label>
+                            <input type="text" class="form-control" id="cbu" name="cbu" placeholder="0000000000000000000000">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="alias" class="form-label">Alias</label>
+                            <input type="text" class="form-control" id="alias" name="alias">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 7: OBSERVACIONES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('proveedores.gestion_proveedores') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Proveedor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar/ocultar fechas GMP
+        document.getElementById('es_proveedor_gmp').addEventListener('change', function() {
+            const fechas = document.querySelectorAll('.fecha-gmp');
+            fechas.forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+
+        // Validación antes de enviar
+        document.getElementById('formNuevoProveedor').addEventListener('submit', function(e) {
+            const nombre = document.getElementById('nombre').value;
+            const tipo = document.getElementById('tipo').value;
+            
+            if (!nombre || !tipo) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos requeridos',
+                    text: 'Complete los campos obligatorios'
+                });
+            }
+        });
+    });
+</script>
+
+<style>
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: 20px;
+}
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

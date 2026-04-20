@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+
+{% block title %}Mantenimiento Preventivo{% endblock %}
+{% block page_title %}Mantenimiento Preventivo{% endblock %}
+
+{% block styles %}
+<style>
+    .equipo-card {
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .equipo-header {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .equipo-header[data-estado="vencido"] {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        animation: pulse-red 2s infinite;
+    }
+    .equipo-header[data-estado="semana"] {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    }
+    .equipo-header[data-estado="normal"] {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    }
+    @keyframes pulse-red {
+        0% { opacity: 1; }
+        50% { opacity: 0.85; }
+        100% { opacity: 1; }
+    }
+    .frecuencia-card {
+        border-left: 4px solid;
+        margin-bottom: 0.75rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+    .frecuencia-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .frecuencia-vencido { border-left-color: #dc3545; background: #fff5f5; }
+    .frecuencia-semana { border-left-color: #ffc107; background: #fffbf0; }
+    .frecuencia-mes { border-left-color: #0dcaf0; background: #f0f9ff; }
+    .frecuencia-futuro { border-left-color: #198754; background: #f0fff4; }
+    .collapse-icon {
+        transition: transform 0.3s;
+    }
+    .equipo-header.collapsed .collapse-icon {
+        transform: rotate(-90deg);
+    }
+    .alert-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideInRight 0.3s ease;
+    }
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    .badge-alerta {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header con controles -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                Mantenimiento Preventivo
+            </h1>
+            <small class="text-muted">Tareas agrupadas por equipo y frecuencia</small>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary" id="expandirTodosBtn" title="Expandir todos los equipos">
+                <i class="fas fa-expand-alt me-1"></i>Expandir Todos
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" id="colapsarTodosBtn" title="Colapsar todos los equipos">
+                <i class="fas fa-compress-alt me-1"></i>Colapsar Todos
+            </button>
+            <button class="btn btn-sm btn-warning" id="btnRecalcular" title="Recalcular todas las fechas">
+                <i class="fas fa-sync-alt me-1"></i>Recalcular
+            </button>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen global -->
+    <div class="row mb-4" id="resumenGlobal">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0"><i class="fas fa-skull-crosswalk me-1"></i> Vencidas</h6>
+                            <h2 class="mb-0" id="totalVencidas">0</h2>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0"><i class="fas fa-hourglass-half me-1"></i> Próximas 7 días</h6>
+                            <h2 class="mb-0" id="totalProximas">0</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0"><i class="fas fa-calendar-week me-1"></i> Este Mes</h6>
+                            <h2 class="mb-0" id="totalMes">0</h2>
+                        </div>
+                        <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0"><i class="fas fa-tasks me-1"></i> Total Tareas</h6>
+                            <h2 class="mb-0" id="totalTareas">0</h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2 text-muted">Cargando equipos y sus mantenimientos...</p>
+    </div>
+
+    <!-- Contenedor de acordeones -->
+    <div id="equiposContainer" class="accordion" style="display: none;"></div>
+</div>
+
+<!-- Modal de alerta emergente -->
+<div class="modal fade" id="alertaModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" id="alertaModalHeader">
+                <h5 class="modal-title">
+                    <i class="fas fa-bell me-2"></i>Alertas de Mantenimiento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="alertaModalBody">
+                <div class="text-center py-3">Cargando alertas...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGenerarOrdenesUrgentes">
+                    <i class="fas fa-clipboard-list me-1"></i>Generar Órdenes Urgentes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para generar orden de grupo -->
+<div class="modal fade" id="ordenModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-list me-2"></i>Generar Orden de Trabajo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalContenido">
+                <div class="text-center py-3">Cargando...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarOrden">
+                    <i class="fas fa-check me-1"></i>Generar Orden
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let equiposData = [];
+let grupoSeleccionado = null;
+let alertasActivas = [];
+
+const FRECUENCIA_TEXTOS = {
+    7: 'Semanal', 15: 'Quincenal', 30: 'Mensual',
+    60: 'Bimestral', 90: 'Trimestral', 180: 'Semestral', 365: 'Anual'
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarEquipos();
+    verificarAlertasActivas();
+    
+    setInterval(verificarAlertasActivas, 30000);
+    
+    document.getElementById('btnRecalcular').addEventListener('click', recalcularFechas);
+    document.getElementById('expandirTodosBtn').addEventListener('click', expandirTodos);
+    document.getElementById('colapsarTodosBtn').addEventListener('click', colapsarTodos);
+    document.getElementById('btnConfirmarOrden').addEventListener('click', confirmarGenerarOrden);
+    document.getElementById('btnGenerarOrdenesUrgentes').addEventListener('click', generarOrdenesUrgentes);
+});
+
+function verificarAlertasActivas() {
+    if (!equiposData.length) return;
+    
+    alertasActivas = [];
+    const hoy = new Date();
+    
+    equiposData.forEach(equipo => {
+        if (equipo.tareas) {
+            equipo.tareas.forEach(tarea => {
+                if (tarea.dias_restantes < 0) {
+                    alertasActivas.push({
+                        tipo: 'vencido',
+                        equipo: equipo.codigo,
+                        equipoNombre: equipo.nombre,
+                        tarea: tarea.descripcion,
+                        dias: Math.abs(tarea.dias_restantes),
+                        fecha: tarea.fecha_formateada
+                    });
+                } else if (tarea.dias_restantes <= 3 && tarea.dias_restantes >= 0) {
+                    alertasActivas.push({
+                        tipo: 'urgente',
+                        equipo: equipo.codigo,
+                        equipoNombre: equipo.nombre,
+                        tarea: tarea.descripcion,
+                        dias: tarea.dias_restantes,
+                        fecha: tarea.fecha_formateada
+                    });
+                }
+            });
+        }
+    });
+    
+    const alertaCount = alertasActivas.length;
+    if (alertaCount > 0 && !document.querySelector('.alerta-flotante')) {
+        mostrarAlertaFlotante();
+    }
+}
+
+function mostrarAlertaFlotante() {
+    const vencidos = alertasActivas.filter(a => a.tipo === 'vencido').length;
+    const urgentes = alertasActivas.filter(a => a.tipo === 'urgente').length;
+    
+    const alertaHtml = `
+        <div class="alert-toast shadow-lg" id="alertaFlotante">
+            <div class="card border-${vencidos > 0 ? 'danger' : 'warning'}">
+                <div class="card-header bg-${vencidos > 0 ? 'danger' : 'warning'} text-white d-flex justify-content-between align-items-center">
+                    <strong><i class="fas fa-bell me-2"></i>Alertas de Mantenimiento</strong>
+                    <button type="button" class="btn-close btn-close-white" onclick="cerrarAlertaFlotante()"></button>
+                </div>
+                <div class="card-body">
+                    ${vencidos > 0 ? `<div class="alert alert-danger mb-2 py-2"><i class="fas fa-skull-crosswalk me-2"></i><strong>${vencidos}</strong> tareas VENCIDAS</div>` : ''}
+                    ${urgentes > 0 ? `<div class="alert alert-warning mb-2 py-2"><i class="fas fa-hourglass-half me-2"></i><strong>${urgentes}</strong> tareas URGENTES (3 días o menos)</div>` : ''}
+                    <button class="btn btn-sm btn-${vencidos > 0 ? 'danger' : 'warning'} w-100 mt-2" onclick="verAlertasCompletas()">
+                        <i class="fas fa-eye me-1"></i>Ver Detalle
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingAlert = document.getElementById('alertaFlotante');
+    if (existingAlert) existingAlert.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', alertaHtml);
+}
+
+function cerrarAlertaFlotante() {
+    const alerta = document.getElementById('alertaFlotante');
+    if (alerta) alerta.remove();
+}
+
+function verAlertasCompletas() {
+    cerrarAlertaFlotante();
+    
+    let html = `
+        <div class="list-group">
+            <div class="list-group-item bg-light">
+                <strong><i class="fas fa-chart-simple me-2"></i>Resumen de Alertas</strong>
+                <span class="badge bg-danger float-end">${alertasActivas.filter(a => a.tipo === 'vencido').length} Vencidas</span>
+                <span class="badge bg-warning float-end me-2">${alertasActivas.filter(a => a.tipo === 'urgente').length} Urgentes</span>
+            </div>
+    `;
+    
+    const porEquipo = {};
+    alertasActivas.forEach(alerta => {
+        if (!porEquipo[alerta.equipo]) porEquipo[alerta.equipo] = [];
+        porEquipo[alerta.equipo].push(alerta);
+    });
+    
+    for (const [equipo, alertas] of Object.entries(porEquipo)) {
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong><i class="fas fa-industry me-2"></i>${escapeHtml(equipo)}</strong>
+                    <span class="badge ${alertas.some(a => a.tipo === 'vencido') ? 'bg-danger' : 'bg-warning'}">${alertas.length} alerta(s)</span>
+                </div>
+                <hr class="my-2">
+                <div class="small">
+        `;
+        alertas.forEach(alerta => {
+            html += `
+                <div class="mb-2 p-2 ${alerta.tipo === 'vencido' ? 'bg-danger bg-opacity-10' : 'bg-warning bg-opacity-10'} rounded">
+                    <div class="d-flex justify-content-between">
+                        <span>📋 ${escapeHtml(alerta.tarea.substring(0, 60))}${alerta.tarea.length > 60 ? '...' : ''}</span>
+                        <span class="badge ${alerta.tipo === 'vencido' ? 'bg-danger' : 'bg-warning'}">
+                            ${alerta.tipo === 'vencido' ? `Vencido hace ${alerta.dias} días` : `Vence en ${alerta.dias} días`}
+                        </span>
+                    </div>
+                    <small class="text-muted">📅 ${alerta.fecha}</small>
+                </div>
+            `;
+        });
+        html += `</div></div>`;
+    }
+    
+    html += `</div>`;
+    
+    document.getElementById('alertaModalBody').innerHTML = html;
+    const modalHeader = document.getElementById('alertaModalHeader');
+    modalHeader.className = 'modal-header ' + (alertasActivas.some(a => a.tipo === 'vencido') ? 'bg-danger' : 'bg-warning') + ' text-white';
+    
+    new bootstrap.Modal(document.getElementById('alertaModal')).show();
+}
+
+function generarOrdenesUrgentes() {
+    const urgentes = alertasActivas.filter(a => a.tipo === 'vencido' || a.tipo === 'urgente');
+    if (urgentes.length === 0) return;
+    
+    Swal.fire({
+        title: 'Generar Órdenes Urgentes',
+        text: `Se generarán órdenes para las tareas urgentes. ¿Continuar?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, generar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Éxito', `Se generaron las órdenes urgentes`, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('alertaModal')).hide();
+            cargarEquipos();
+        }
+    });
+}
+
+function cargarEquipos() {
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('equiposContainer').style.display = 'none';
+    
+    fetch('/calendario/api/todos-cronogramas')
+        .then(response => response.json())
+        .then(data => {
+            equiposData = data.equipos || [];
+            renderizarEquipos(equiposData);
+            actualizarContadores(equiposData);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('equiposContainer').style.display = 'block';
+            verificarAlertasActivas();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loader').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error al cargar datos: ${error.message}
+                    <button class="btn btn-sm btn-primary ms-3" onclick="cargarEquipos()">Reintentar</button>
+                </div>
+            `;
+        });
+}
+
+function renderizarEquipos(equipos) {
+    const container = document.getElementById('equiposContainer');
+    
+    if (!equipos || equipos.length === 0) {
+        container.innerHTML = `
+            <div class="alert alert-info text-center py-5">
+                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                <h5>No hay tareas programadas</h5>
+                <p class="mb-0">Todos los equipos están al día o no tienen planes de mantenimiento activos.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    
+    equipos.forEach((equipo, idx) => {
+        let estadoGeneral = 'normal';
+        if (equipo.vencidos > 0) estadoGeneral = 'vencido';
+        else if (equipo.proximos_semana > 0) estadoGeneral = 'semana';
+        
+        const tareasPorFrecuencia = {};
+        equipo.tareas.forEach(tarea => {
+            const freq = tarea.frecuencia_dias;
+            if (!tareasPorFrecuencia[freq]) tareasPorFrecuencia[freq] = [];
+            tareasPorFrecuencia[freq].push(tarea);
+        });
+        
+        const frecuenciasOrdenadas = Object.keys(tareasPorFrecuencia).map(Number).sort((a,b) => a - b);
+        
+        html += `
+            <div class="accordion-item equipo-card mb-3 border-0 shadow-sm">
+                <div class="accordion-header equipo-header ${estadoGeneral == 'normal' ? 'bg-primary' : estadoGeneral == 'vencido' ? 'bg-danger' : 'bg-warning'}" 
+                     data-estado="${estadoGeneral}">
+                    <button class="accordion-button ${idx >= 5 ? 'collapsed' : ''} text-white bg-transparent" 
+                            type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#collapseEquipo${equipo.id}" 
+                            aria-expanded="${idx < 5 ? 'true' : 'false'}">
+                        <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap gap-2">
+                            <div>
+                                <i class="fas fa-industry me-2"></i>
+                                <strong>${escapeHtml(equipo.codigo)}</strong>
+                                <span class="ms-2 small opacity-75">${escapeHtml(equipo.nombre)}</span>
+                            </div>
+                            <div class="d-flex gap-1">
+                                ${equipo.vencidos > 0 ? `<span class="badge bg-dark"><i class="fas fa-skull-crosswalk me-1"></i>${equipo.vencidos} vencidas</span>` : ''}
+                                ${equipo.proximos_semana > 0 ? `<span class="badge bg-light text-dark"><i class="fas fa-hourglass-half me-1"></i>${equipo.proximos_semana} próximas</span>` : ''}
+                                <span class="badge bg-light text-dark">📋 ${equipo.total_tareas} tareas</span>
+                                ${equipo.vencidos > 0 ? `<button class="btn btn-sm btn-light ms-2" onclick="verAlertasEquipo(${equipo.id})" title="Ver alertas"><i class="fas fa-bell text-danger"></i></button>` : ''}
+                            </div>
+                        </div>
+                    </button>
+                </div>
+                <div id="collapseEquipo${equipo.id}" class="accordion-collapse collapse ${idx < 5 ? 'show' : ''}" 
+                     data-bs-parent="#equiposContainer">
+                    <div class="accordion-body bg-light">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <small class="text-muted"><i class="fas fa-location-dot me-1"></i>Ubicación:</small>
+                                <span>${escapeHtml(equipo.ubicacion || 'No especificada')}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted"><i class="fas fa-tag me-1"></i>GMP:</small>
+                                <span class="badge ${equipo.gmp_classification === 'Crítico' ? 'bg-danger' : equipo.gmp_classification === 'Importante' ? 'bg-warning' : 'bg-secondary'}">
+                                    ${escapeHtml(equipo.gmp_classification || 'N/A')}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+        `;
+        
+        frecuenciasOrdenadas.forEach(frecuencia => {
+            const tareasGrupo = tareasPorFrecuencia[frecuencia];
+            const freqTexto = FRECUENCIA_TEXTOS[frecuencia] || `Cada ${frecuencia} días`;
+            
+            let grupoEstado = 'futuro';
+            if (tareasGrupo.some(t => t.dias_restantes < 0)) grupoEstado = 'vencido';
+            else if (tareasGrupo.some(t => t.dias_restantes >= 0 && t.dias_restantes <= 7)) grupoEstado = 'semana';
+            else if (tareasGrupo.some(t => t.dias_restantes <= 30)) grupoEstado = 'mes';
+            
+            const tareaMasCercana = tareasGrupo.reduce((min, t) => t.dias_restantes < min.dias_restantes ? t : min, tareasGrupo[0]);
+            
+            html += `
+                <div class="col-xl-6 col-lg-6 mb-4">
+                    <div class="frecuencia-card p-3 rounded shadow-sm frecuencia-${grupoEstado}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">
+                                <i class="fas fa-clock me-2"></i>
+                                <strong>${freqTexto}</strong>
+                                <span class="badge bg-secondary ms-2">${frecuencia} días</span>
+                            </h6>
+                            <span class="badge ${grupoEstado === 'vencido' ? 'bg-danger' : grupoEstado === 'semana' ? 'bg-warning' : 'bg-primary'}">
+                                ${tareasGrupo.length} tarea(s)
+                            </span>
+                        </div>
+                        
+                        <div class="small mb-3">
+                            <i class="fas fa-calendar-alt me-1 text-muted"></i>
+                            Próxima: <strong>${tareaMasCercana.fecha_formateada}</strong>
+                            ${tareaMasCercana.dias_restantes < 0 ? 
+                                `<span class="badge bg-danger ms-2">Vencido hace ${Math.abs(tareaMasCercana.dias_restantes)} días</span>` : 
+                                tareaMasCercana.dias_restantes <= 7 ? 
+                                `<span class="badge bg-warning ms-2">En ${tareaMasCercana.dias_restantes} días</span>` :
+                                `<span class="badge bg-info ms-2">En ${tareaMasCercana.dias_restantes} días</span>`}
+                        </div>
+                        
+                        <div class="tareas-lista mb-3" style="max-height: 180px; overflow-y: auto;">
+                            ${tareasGrupo.map(t => `
+                                <div class="d-flex justify-content-between align-items-start small mb-2 p-1 rounded">
+                                    <div class="flex-grow-1">
+                                        <span class="badge bg-secondary me-1">${escapeHtml(t.sistema_nombre)}</span>
+                                        <span class="text-muted">${escapeHtml(t.descripcion.substring(0, 55))}${t.descripcion.length > 55 ? '...' : ''}</span>
+                                    </div>
+                                    <div class="text-end ms-2">
+                                        <i class="fas ${t.dias_restantes < 0 ? 'fa-skull-crosswalk text-danger' : t.dias_restantes <= 7 ? 'fa-hourglass-half text-warning' : 'fa-check-circle text-success'}"></i>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button class="btn btn-sm ${grupoEstado === 'vencido' ? 'btn-danger' : 'btn-success'} w-100 mt-2" 
+                                onclick='prepararGenerarOrden(${equipo.id}, "${escapeHtml(equipo.codigo)}", ${frecuencia}, "${freqTexto}", ${JSON.stringify(tareasGrupo).replace(/"/g, '&quot;')}, "${tareaMasCercana.fecha_programada}")'>
+                            <i class="fas fa-clipboard-list me-1"></i>
+                            Generar Orden ${freqTexto}
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div></div></div></div>`;
+    });
+    
+    container.innerHTML = html;
+}
+
+function verAlertasEquipo(equipoId) {
+    const equipo = equiposData.find(e => e.id === equipoId);
+    if (!equipo) return;
+    
+    const alertasEquipo = [];
+    equipo.tareas.forEach(tarea => {
+        if (tarea.dias_restantes < 0 || tarea.dias_restantes <= 7) {
+            alertasEquipo.push(tarea);
+        }
+    });
+    
+    let html = `
+        <div class="list-group">
+            <div class="list-group-item bg-light">
+                <strong><i class="fas fa-industry me-2"></i>${escapeHtml(equipo.codigo)} - ${escapeHtml(equipo.nombre)}</strong>
+            </div>
+    `;
+    
+    alertasEquipo.forEach(alerta => {
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="badge ${alerta.dias_restantes < 0 ? 'bg-danger' : 'bg-warning'} me-2">
+                            ${alerta.dias_restantes < 0 ? 'VENCIDO' : 'URGENTE'}
+                        </span>
+                        <strong>${escapeHtml(alerta.sistema_nombre)}</strong>
+                    </div>
+                    <small>📅 ${alerta.fecha_formateada}</small>
+                </div>
+                <p class="small mt-2 mb-0">${escapeHtml(alerta.descripcion)}</p>
+                <div class="mt-1">
+                    <span class="badge bg-secondary">Frecuencia: ${alerta.frecuencia_dias} días</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    
+    document.getElementById('alertaModalBody').innerHTML = html;
+    document.getElementById('alertaModalHeader').className = 'modal-header bg-danger text-white';
+    new bootstrap.Modal(document.getElementById('alertaModal')).show();
+}
+
+function actualizarContadores(equipos) {
+    let totalVencidas = 0, totalProximas = 0, totalMes = 0, totalTareas = 0;
+    
+    equipos.forEach(equipo => {
+        totalVencidas += equipo.vencidos || 0;
+        totalProximas += equipo.proximos_semana || 0;
+        totalTareas += equipo.total_tareas || 0;
+        
+        if (equipo.tareas) {
+            equipo.tareas.forEach(tarea => {
+                if (tarea.dias_restantes > 7 && tarea.dias_restantes <= 30) totalMes++;
+            });
+        }
+    });
+    
+    document.getElementById('totalVencidas').textContent = totalVencidas;
+    document.getElementById('totalProximas').textContent = totalProximas;
+    document.getElementById('totalMes').textContent = totalMes;
+    document.getElementById('totalTareas').textContent = totalTareas;
+}
+
+function recalcularFechas() {
+    Swal.fire({ title: 'Recalculando', text: 'Actualizando planes...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    fetch('/calendario/api/recalcular-fechas', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => { Swal.close(); if (data.success) Swal.fire('Completado', `Actualizados ${data.actualizados} planes`, 'success'); cargarEquipos(); })
+        .catch(error => Swal.fire('Error', error.message, 'error'));
+}
+
+function expandirTodos() { document.querySelectorAll('.accordion-collapse').forEach(el => bootstrap.Collapse.getOrCreateInstance(el).show()); }
+function colapsarTodos() { document.querySelectorAll('.accordion-collapse.show').forEach(el => bootstrap.Collapse.getOrCreateInstance(el).hide()); }
+
+function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+function prepararGenerarOrden(equipoId, equipoCodigo, frecuenciaDias, frecuenciaTexto, tareas, fechaSugerida) {
+    grupoSeleccionado = { equipoId, equipoCodigo, frecuenciaDias, frecuenciaTexto, tareas, fechaSugerida };
+    
+    let fechaDefault = fechaSugerida;
+    if (!fechaDefault) {
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() + 7);
+        fechaDefault = fecha.toISOString().split('T')[0];
+    }
+    
+    // Mostrar repuestos en el modal
+    let repuestosHtml = '';
+    let stockBajo = false;
+    const repuestosMap = new Map();
+    
+    tareas.forEach(tarea => {
+        if (tarea.repuestos && tarea.repuestos.length > 0) {
+            tarea.repuestos.forEach(rep => {
+                const key = rep.codigo;
+                if (!repuestosMap.has(key)) {
+                    repuestosMap.set(key, {
+                        codigo: rep.codigo,
+                        nombre: rep.nombre,
+                        cantidad_total: rep.cantidad_requerida,
+                        stock_actual: rep.stock_actual
+                    });
+                } else {
+                    repuestosMap.get(key).cantidad_total += rep.cantidad_requerida;
+                }
+                if (rep.stock_actual < rep.cantidad_requerida) stockBajo = true;
+            });
+        }
+    });
+    
+    if (repuestosMap.size > 0) {
+        repuestosHtml = `
+            <div class="card mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <strong><i class="fas fa-boxes me-1"></i>Repuestos Críticos Requeridos</strong>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Código</th><th>Nombre</th><th>Cantidad Total</th><th>Stock Actual</th><th>Estado</th></tr>
+                        </thead>
+                        <tbody>
+                            ${Array.from(repuestosMap.values()).map(rep => `
+                                <tr>
+                                    <td><strong>${escapeHtml(rep.codigo)}</strong></td>
+                                    <td>${escapeHtml(rep.nombre)}</span>
+                                    <td class="text-center">${rep.cantidad_total}</td>
+                                    <td class="text-center">${rep.stock_actual}</td>
+                                    <td>
+                                        ${rep.stock_actual < rep.cantidad_total ? 
+                                            '<span class="badge bg-danger">Stock Insuficiente</span>' : 
+                                            '<span class="badge bg-success">Stock Suficiente</span>'}
+                                    </span>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } else {
+        repuestosHtml = `
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                Esta tarea no requiere repuestos críticos.
+            </div>
+        `;
+    }
+    
+    document.getElementById('modalContenido').innerHTML = `
+        <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>${escapeHtml(frecuenciaTexto)}</strong><br>
+            Equipo: ${escapeHtml(equipoCodigo)} | Total tareas: ${tareas.length}
+        </div>
+        
+        ${repuestosHtml}
+        
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <strong><i class="fas fa-calendar-alt me-1"></i>Fecha de Ejecución</strong>
+            </div>
+            <div class="card-body">
+                <input type="date" class="form-control" id="fechaEjecucion" value="${fechaDefault}">
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <strong><i class="fas fa-tasks me-1"></i>Tareas (${tareas.length})</strong>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th>Sistema</th><th>Tarea</th><th>Próxima</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        ${tareas.map(t => `
+                            <tr>
+                                <td><span class="badge bg-secondary">${escapeHtml(t.sistema_nombre)}</span></span>
+                                <td>${escapeHtml(t.descripcion)}</span>
+                                <td>${t.fecha_formateada}</span>
+                                <td>
+                                    ${t.dias_restantes < 0 ? '<span class="badge bg-danger">Vencido</span>' : 
+                                      t.dias_restantes <= 7 ? '<span class="badge bg-warning">Urgente</span>' : 
+                                      '<span class="badge bg-info">Programado</span>'}
+                                </span>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        ${stockBajo ? '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>⚠️ Stock insuficiente para algunos repuestos. Se recomienda realizar pedido antes de ejecutar la orden.</div>' : ''}
+    `;
+    
+    new bootstrap.Modal(document.getElementById('ordenModal')).show();
+}
+
+function confirmarGenerarOrden() {
+    if (!grupoSeleccionado) return;
+    const fechaEjecucion = document.getElementById('fechaEjecucion').value;
+    if (!fechaEjecucion) return Swal.fire('Error', 'Seleccione fecha', 'error');
+    
+    Swal.fire({ title: 'Generando', text: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    fetch('/calendario/api/generar-orden-grupo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ equipo_id: grupoSeleccionado.equipoId, frecuencia_dias: grupoSeleccionado.frecuenciaDias, fecha_ejecucion: fechaEjecucion })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        if (data.success) {
+            Swal.fire({ icon: 'success', title: 'Orden Generada', html: `Orden <strong>${data.numero_ot}</strong> creada`, confirmButtonText: 'Ver' })
+                .then(result => result.isConfirmed && window.open(`/ordenes/${data.orden_id}`, '_blank'));
+            bootstrap.Modal.getInstance(document.getElementById('ordenModal')).hide();
+            cargarEquipos();
+        } else Swal.fire('Error', data.error, 'error');
+    })
+    .catch(error => Swal.fire('Error', error.message, 'error'));
+}
+</script>
+{% endblock %}

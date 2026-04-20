@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}QR Inspección - {{ inspeccion.codigo_inspeccion }}{% endblock %}
+{% block page_title %}Código QR de Trazabilidad{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow text-center">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>Código QR de Inspección
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    {% if qr_img %}
+                    <img src="data:image/png;base64,{{ qr_img }}" 
+                         alt="QR Code" 
+                         class="img-fluid border p-2 bg-white"
+                         style="max-width: 250px;">
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No se ha generado el código QR
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Código:</strong> {{ inspeccion.codigo_inspeccion }}<br>
+                    <strong>Fecha:</strong> {{ inspeccion.fecha.strftime('%d/%m/%Y') }}<br>
+                    <strong>Plantilla:</strong> {{ inspeccion.plantilla.nombre }}<br>
+                    <strong>Inspector:</strong> {{ inspeccion.realizada_por }}<br>
+                    <strong>Resultado:</strong> 
+                    <span class="badge {% if inspeccion.conforme %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ 'CONFORME' if inspeccion.conforme else 'NO CONFORME' }}
+                    </span>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('inspecciones.ver_inspeccion', inspeccion_id=inspeccion.id) }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-eye me-2"></i>Ver Inspección
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir QR
+                    </button>
+                    <a href="{{ url_for('inspecciones.imprimir_inspeccion', inspeccion_id=inspeccion.id) }}" 
+                       class="btn btn-outline-success">
+                        <i class="fas fa-print me-2"></i>Imprimir Reporte GMP
+                    </a>
+                    <a href="{{ url_for('inspecciones.buscar_por_qr') }}" class="btn btn-outline-info">
+                        <i class="fas fa-search me-2"></i>Buscar otra inspección
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Instrucciones GMP
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Pegue este código QR en el equipo, área o documento de registro</li>
+                    <li>Los técnicos pueden escanearlo para ver el historial de inspecciones</li>
+                    <li>Facilita la trazabilidad durante auditorías GMP</li>
+                    <li>El código contiene la URL directa al reporte completo</li>
+                    <li>Se recomienda imprimir y adjuntar al registro físico</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

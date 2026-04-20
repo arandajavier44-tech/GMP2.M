@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Plan Anual{% endblock %}
+{% block page_title %}Plan Anual {{ plan.año }} - {{ plan.nombre }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('plan_anual.index') }}">Planes Anuales</a></li>
+                <li class="breadcrumb-item active">{{ plan.año }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <!-- Panel de control -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Información del Plan</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Año:</strong> {{ plan.año }}</p>
+                <p><strong>Estado:</strong> 
+                    <span class="badge bg-{{ 'warning' if plan.estado == 'Borrador' else 'success' if plan.estado == 'Aprobado' else 'primary' if plan.estado == 'Ejecución' else 'secondary' }}">
+                        {{ plan.estado }}
+                    </span>
+                </p>
+                <p><strong>Creado:</strong> {{ plan.fecha_creacion.strftime('%d/%m/%Y') }}</p>
+                {% if plan.fecha_aprobacion %}
+                <p><strong>Aprobado:</strong> {{ plan.fecha_aprobacion.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Por:</strong> {{ plan.aprobado_por }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Acciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">Acciones</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="mostrarModalActividad()">
+                        <i class="fas fa-plus-circle me-2"></i>Agregar Actividad
+                    </button>
+                    
+                    {% if plan.estado == 'Borrador' %}
+                    <button class="btn btn-success" onclick="cambiarEstado('Aprobado')">
+                        <i class="fas fa-check-circle me-2"></i>Aprobar Plan
+                    </button>
+                    {% endif %}
+                    
+                    {% if plan.estado == 'Aprobado' %}
+                    <button class="btn btn-primary" onclick="cambiarEstado('Ejecución')">
+                        <i class="fas fa-play-circle me-2"></i>Iniciar Ejecución
+                    </button>
+                    {% endif %}
+                    
+                    <button class="btn btn-info" onclick="generarDesdePM()">
+                        <i class="fas fa-sync-alt me-2"></i>Generar desde PM
+                    </button>
+                    
+                    <button class="btn btn-warning" onclick="exportarPlan()">
+                        <i class="fas fa-file-export me-2"></i>Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <!-- Vista por meses -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Calendario Anual de Actividades</h6>
+                <div>
+                    <button class="btn btn-sm btn-light" onclick="cambiarVista('timeGridMonth')">Mes</button>
+                    <button class="btn btn-sm btn-light" onclick="cambiarVista('timeGridWeek')">Semana</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="calendario" style="height: 600px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar actividad -->
+<div class="modal fade" id="actividadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Agregar Actividad al Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formActividad">
+                    <input type="hidden" id="plan_id" value="{{ plan.id }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Mes *</label>
+                        <select class="form-select" id="mes" required>
+                            <option value="">Seleccionar mes...</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Semana</label>
+                        <select class="form-select" id="semana">
+                            <option value="1">Semana 1</option>
+                            <option value="2">Semana 2</option>
+                            <option value="3">Semana 3</option>
+                            <option value="4">Semana 4</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Equipo</label>
+                        <select class="form-select" id="equipo" onchange="cargarSistemas()">
+                            <option value="">Seleccionar equipo...</option>
+                            {% for equipo in equipos %}
+                            <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Sistema</label>
+                        <select class="form-select" id="sistema" disabled>
+                            <option value="">Primero seleccione equipo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descripción *</label>
+                        <input type="text" class="form-control" id="descripcion" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" id="tipo">
+                                <option value="preventivo">Preventivo</option>
+                                <option value="calibracion">Calibración</option>
+                                <option value="inspeccion">Inspección</option>
+                                <option value="validacion">Validación</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Duración (horas)</label>
+                            <input type="number" class="form-control" id="duracion" value="1" step="0.5">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Responsable</label>
+                        <input type="text" class="form-control" id="responsable">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarActividad()">Guardar Actividad</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js"></script>
+
+<script>
+    let calendar;
+    let actividades = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarActividades();
+        
+        const calendarEl = document.getElementById('calendario');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: '/plan-anual/{{ plan.id }}/api/actividades',
+            eventDidMount: function(info) {
+                info.el.title = info.event.title;
+            },
+            eventClick: function(info) {
+                mostrarDetalleActividad(info.event);
+            }
+        });
+        
+        calendar.render();
+    });
+
+    function cargarActividades() {
+        fetch(`/plan-anual/{{ plan.id }}/api/actividades`)
+            .then(response => response.json())
+            .then(data => {
+                actividades = data;
+            });
+    }
+
+    function cargarSistemas() {
+        const equipoId = document.getElementById('equipo').value;
+        const sistemaSelect = document.getElementById('sistema');
+        
+        if (!equipoId) {
+            sistemaSelect.innerHTML = '<option value="">Primero seleccione equipo</option>';
+            sistemaSelect.disabled = true;
+            return;
+        }
+        
+        fetch(`/equipos/api/sistemas-por-equipo/${equipoId}`)
+            .then(response => response.json())
+            .then(data => {
+                sistemaSelect.innerHTML = '<option value="">Seleccionar sistema...</option>';
+                data.forEach(s => {
+                    sistemaSelect.innerHTML += `<option value="${s.id}">${s.nombre}</option>`;
+                });
+                sistemaSelect.disabled = false;
+            });
+    }
+
+    function mostrarModalActividad() {
+        document.getElementById('formActividad').reset();
+        new bootstrap.Modal(document.getElementById('actividadModal')).show();
+    }
+
+    function guardarActividad() {
+        const data = {
+            plan_id: {{ plan.id }},
+            mes: document.getElementById('mes').value,
+            semana: document.getElementById('semana').value,
+            equipo_id: document.getElementById('equipo').value || null,
+            sistema_id: document.getElementById('sistema').value || null,
+            descripcion: document.getElementById('descripcion').value,
+            tipo: document.getElementById('tipo').value,
+            duracion: document.getElementById('duracion').value,
+            responsable: document.getElementById('responsable').value,
+            fecha: `{{ plan.año }}-${String(document.getElementById('mes').value).padStart(2,'0')}-01`
+        };
+
+        if (!data.mes || !data.descripcion) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos requeridos',
+                text: 'Debe completar mes y descripción'
+            });
+            return;
+        }
+
+        fetch('/plan-anual/api/agregar-actividad', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Actividad agregada',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                bootstrap.Modal.getInstance(document.getElementById('actividadModal')).hide();
+                calendar.refetchEvents();
+                cargarActividades();
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        });
+    }
+
+    function cambiarEstado(nuevoEstado) {
+        Swal.fire({
+            title: `¿Cambiar estado a "${nuevoEstado}"?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cambiar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/plan-anual/api/cambiar-estado/{{ plan.id }}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Estado actualizado',
+                            timer: 1500
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    function generarDesdePM() {
+        Swal.fire({
+            title: 'Generar desde PM',
+            text: '¿Generar actividades automáticamente desde los planes de mantenimiento?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, generar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/plan-anual/api/generar-desde-pm/{{ plan.id }}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Actividades generadas',
+                            text: `Se generaron ${data.cantidad} actividades`,
+                            timer: 2000
+                        }).then(() => {
+                            location.reload();
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    function exportarPlan() {
+        fetch(`/plan-anual/api/exportar/{{ plan.id }}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '<h3>Resumen del Plan Anual</h3>';
+                html += `<p><strong>Año:</strong> ${data.plan.año}</p>`;
+                html += `<p><strong>Estado:</strong> ${data.plan.estado}</p>`;
+                html += '<table border="1" style="width:100%; border-collapse: collapse;">';
+                html += '<tr><th>Mes</th><th>Semana</th><th>Actividad</th><th>Equipo</th><th>Tipo</th><th>Responsable</th><th>Estado</th></tr>';
+                
+                data.actividades.forEach(a => {
+                    html += `<tr>
+                        <td>${a.mes}</td>
+                        <td>${a.semana}</td>
+                        <td>${a.titulo}</td>
+                        <td>${a.equipo}</td>
+                        <td>${a.tipo}</td>
+                        <td>${a.responsable || '-'}</td>
+                        <td>${a.estado}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                
+                Swal.fire({
+                    title: 'Plan Anual',
+                    html: html,
+                    width: '90%',
+                    confirmButtonText: 'Cerrar'
+                });
+            });
+    }
+
+    function cambiarVista(vista) {
+        calendar.changeView(vista);
+    }
+</script>
+{% endblock %}

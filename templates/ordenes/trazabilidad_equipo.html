@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Trazabilidad de Órdenes{% endblock %}
+{% block page_title %}Trazabilidad - Equipo: {{ equipo.code }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Historial de Órdenes - {{ equipo.code }}: {{ equipo.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                
+                <!-- Resumen estadístico -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h3>{{ total_ordenes }}</h3>
+                                <small>Total Órdenes</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ ordenes_completadas }}</h3>
+                                <small>Completadas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning">
+                            <div class="card-body text-center">
+                                <h3>{{ tiempo_promedio_respuesta }}</h3>
+                                <small>Tiempo promedio respuesta (horas)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3>{{ mtbf }}</h3>
+                                <small>MTBF (horas)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline de órdenes -->
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-timeline me-2"></i>
+                    Línea de tiempo de órdenes
+                </h6>
+                
+                <div class="timeline">
+                    {% for orden in ordenes %}
+                    <div class="timeline-item">
+                        <div class="timeline-badge bg-{{ orden.get_estado_color() }}">
+                            <i class="fas fa-{{ orden.get_tipo_icon() }}"></i>
+                        </div>
+                        <div class="timeline-panel">
+                            <div class="timeline-heading">
+                                <h6 class="timeline-title">
+                                    <a href="{{ url_for('ordenes.detalle_orden', orden_id=orden.id) }}">
+                                        {{ orden.numero_ot }}
+                                    </a>
+                                    <span class="badge bg-{{ orden.get_estado_color() }} ms-2">{{ orden.estado }}</span>
+                                </h6>
+                                <p class="text-muted small">
+                                    <i class="far fa-calendar-alt me-1"></i>{{ orden.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                                </p>
+                            </div>
+                            <div class="timeline-body">
+                                <p><strong>{{ orden.titulo }}</strong></p>
+                                <p class="small">{{ orden.descripcion or '' }}</p>
+                                <hr class="my-1">
+                                <div class="row small">
+                                    <div class="col-4">
+                                        <i class="fas fa-user me-1"></i> Técnico: {{ orden.asignado_a or 'No asignado' }}
+                                    </div>
+                                    <div class="col-4">
+                                        <i class="fas fa-clock me-1"></i> Tiempo: {{ orden.tiempo_real or orden.tiempo_ejecucion or '-' }}h
+                                    </div>
+                                    <div class="col-4">
+                                        <i class="fas fa-flag me-1"></i> Prioridad: {{ orden.prioridad }}
+                                    </div>
+                                </div>
+                                {% if orden.resultado %}
+                                <div class="mt-2">
+                                    <span class="badge bg-{{ 'success' if orden.resultado == 'Solucionado' else 'warning' if orden.resultado == 'Parcial' else 'danger' }}">
+                                        {{ orden.resultado }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #e9ecef;
+    left: 30px;
+    margin-left: -2px;
+}
+.timeline-item {
+    margin-bottom: 20px;
+    position: relative;
+}
+.timeline-badge {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    left: 5px;
+    top: 0;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 50px;
+    color: white;
+    z-index: 2;
+}
+.timeline-panel {
+    margin-left: 70px;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+}
+.timeline-heading {
+    margin-bottom: 10px;
+}
+.timeline-title {
+    margin: 0;
+    display: inline-block;
+}
+</style>
+{% endblock %}

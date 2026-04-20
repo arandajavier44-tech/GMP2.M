@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Calibración - GMP{% endblock %}
+{% block page_title %}Nueva Calibración - Cumplimiento GMP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-ruler-combined me-2"></i>Registrar Nueva Calibración - Normas GMP
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="formNuevaCalibracion">
+                    
+                    <!-- SECCIÓN 1: IDENTIFICACIÓN DEL INSTRUMENTO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-fingerprint me-2"></i>
+                                    Identificación del Instrumento
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="equipo_id" class="form-label gmp-required">Equipo Asociado *</label>
+                            <select class="form-select" id="equipo_id" name="equipo_id" required>
+                                <option value="">Seleccionar equipo...</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="instrumento" class="form-label gmp-required">Nombre del Instrumento *</label>
+                            <input type="text" class="form-control" id="instrumento" name="instrumento" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="codigo_instrumento" class="form-label">Código Interno</label>
+                            <input type="text" class="form-control" id="codigo_instrumento" name="codigo_instrumento">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="marca" class="form-label">Marca</label>
+                            <input type="text" class="form-control" id="marca" name="marca">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="modelo" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="modelo" name="modelo">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="serie" class="form-label">Número de Serie</label>
+                            <input type="text" class="form-control" id="serie" name="serie">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: ESPECIFICACIONES TÉCNICAS -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-cog me-2"></i>
+                                Especificaciones Técnicas
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="rango" class="form-label">Rango de Medición</label>
+                            <input type="text" class="form-control" id="rango" name="rango" placeholder="Ej: 0-100 °C">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="unidad" class="form-label">Unidad</label>
+                            <input type="text" class="form-control" id="unidad" name="unidad" placeholder="Ej: °C, bar, kg">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="tolerancia" class="form-label">Tolerancia</label>
+                            <input type="text" class="form-control" id="tolerancia" name="tolerancia" placeholder="Ej: ±0.1°C">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="precision" class="form-label">Precisión</label>
+                            <input type="text" class="form-control" id="precision" name="precision" placeholder="Ej: 0.1%">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: CLASIFICACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-clipboard-check me-2"></i>
+                                Clasificación GMP y Frecuencia
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="clasificacion_gmp" class="form-label gmp-required">Clasificación GMP *</label>
+                            <select class="form-select" id="clasificacion_gmp" name="clasificacion_gmp" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Crítico">Crítico (Afecta calidad producto)</option>
+                                <option value="Importante">Importante (Afecta proceso)</option>
+                                <option value="Auxiliar">Auxiliar (No afecta calidad)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="frecuencia_dias" class="form-label gmp-required">Frecuencia (días) *</label>
+                            <select class="form-select" id="frecuencia_dias" name="frecuencia_dias" required>
+                                <option value="30">30 días (Mensual)</option>
+                                <option value="60">60 días (Bimestral)</option>
+                                <option value="90">90 días (Trimestral)</option>
+                                <option value="180">180 días (Semestral)</option>
+                                <option value="365" selected>365 días (Anual)</option>
+                                <option value="730">730 días (Bianual)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha_calibracion" class="form-label gmp-required">Fecha de Calibración *</label>
+                            <input type="date" class="form-control" id="fecha_calibracion" name="fecha_calibracion" 
+                                   value="{{ now.strftime('%Y-%m-%d') }}" required>
+                            <small class="text-muted">La próxima fecha se calculará automáticamente</small>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: RESULTADOS Y CERTIFICADO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-file-certificate me-2"></i>
+                                Resultados y Certificado
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="resultado" class="form-label gmp-required">Resultado *</label>
+                            <select class="form-select" id="resultado" name="resultado" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Conforme">Conforme</option>
+                                <option value="No Conforme">No Conforme</option>
+                                <option value="Parcial">Parcialmente Conforme</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="laboratorio" class="form-label">Laboratorio</label>
+                            <input type="text" class="form-control" id="laboratorio" name="laboratorio">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="certificado_numero" class="form-label">N° de Certificado</label>
+                            <input type="text" class="form-control" id="certificado_numero" name="certificado_numero">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="certificado_archivo" class="form-label">Certificado (PDF)</label>
+                            <input type="file" class="form-control" id="certificado_archivo" name="certificado_archivo" accept=".pdf">
+                            <small class="text-muted">Archivo PDF del certificado de calibración</small>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3" id="acciones_correctivas_container" style="display: none;">
+                            <label for="acciones_correctivas" class="form-label text-danger">Acciones Correctivas</label>
+                            <textarea class="form-control" id="acciones_correctivas" name="acciones_correctivas" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: PATRONES Y TRAZABILIDAD -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-ruler me-2"></i>
+                                Patrones y Trazabilidad
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="patron_utilizado" class="form-label">Patrón Utilizado</label>
+                            <input type="text" class="form-control" id="patron_utilizado" name="patron_utilizado">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="patron_certificado" class="form-label">Certificado del Patrón</label>
+                            <input type="text" class="form-control" id="patron_certificado" name="patron_certificado">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="trazabilidad" class="form-label">Trazabilidad</label>
+                            <input type="text" class="form-control" id="trazabilidad" name="trazabilidad" 
+                                   placeholder="Ej: INTI, LSM, etc.">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="temperatura" class="form-label">Temperatura (°C)</label>
+                            <input type="text" class="form-control" id="temperatura" name="temperatura">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="humedad" class="form-label">Humedad (%)</label>
+                            <input type="text" class="form-control" id="humedad" name="humedad">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: RESPONSABLES Y FIRMAS GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-signature me-2"></i>
+                                Responsables y Firmas GMP
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="realizado_por" class="form-label gmp-required">Realizado por *</label>
+                            <input type="text" class="form-control" id="realizado_por" name="realizado_por" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="revisado_por" class="form-label">Revisado por</label>
+                            <input type="text" class="form-control" id="revisado_por" name="revisado_por">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="aprobado_por" class="form-label">Aprobado por</label>
+                            <input type="text" class="form-control" id="aprobado_por" name="aprobado_por">
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="gmp_compliance" name="gmp_compliance" required>
+                                <label class="form-check-label" for="gmp_compliance">
+                                    <i class="fas fa-check-double me-1"></i>
+                                    Certifico que los datos ingresados cumplen con las normas GMP de calibración *
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('calibraciones.gestion_calibraciones') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Registrar Calibración
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar acciones correctivas si el resultado es No Conforme
+        document.getElementById('resultado').addEventListener('change', function() {
+            const container = document.getElementById('acciones_correctivas_container');
+            if (this.value === 'No Conforme') {
+                container.style.display = 'block';
+                document.getElementById('acciones_correctivas').required = true;
+            } else {
+                container.style.display = 'none';
+                document.getElementById('acciones_correctivas').required = false;
+            }
+        });
+
+        // Validación antes de enviar
+        document.getElementById('formNuevaCalibracion').addEventListener('submit', function(e) {
+            const equipo = document.getElementById('equipo_id').value;
+            const instrumento = document.getElementById('instrumento').value;
+            const clasificacion = document.getElementById('clasificacion_gmp').value;
+            const fecha = document.getElementById('fecha_calibracion').value;
+            const resultado = document.getElementById('resultado').value;
+            const realizado = document.getElementById('realizado_por').value;
+            const compliance = document.getElementById('gmp_compliance').checked;
+            
+            let errores = [];
+            if (!equipo) errores.push('Equipo');
+            if (!instrumento) errores.push('Instrumento');
+            if (!clasificacion) errores.push('Clasificación GMP');
+            if (!fecha) errores.push('Fecha de calibración');
+            if (!resultado) errores.push('Resultado');
+            if (!realizado) errores.push('Realizado por');
+            if (!compliance) errores.push('Certificación GMP');
+            
+            if (errores.length > 0) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos requeridos',
+                    html: `Faltan: <strong>${errores.join(', ')}</strong>`
+                });
+                return;
+            }
+            
+            // Calcular fecha próxima para mostrar en confirmación
+            const frecuencia = parseInt(document.getElementById('frecuencia_dias').value);
+            const fechaCal = new Date(fecha);
+            const fechaProx = new Date(fechaCal);
+            fechaProx.setDate(fechaProx.getDate() + frecuencia);
+            
+            Swal.fire({
+                title: '¿Confirmar registro GMP?',
+                html: `
+                    <p><strong>Instrumento:</strong> ${instrumento}</p>
+                    <p><strong>Fecha calibración:</strong> ${fecha}</p>
+                    <p><strong>Próxima calibración:</strong> ${fechaProx.toLocaleDateString('es-AR')}</p>
+                    <p><strong>Resultado:</strong> ${resultado}</p>
+                    <p class="text-muted small">Este registro cumplirá con trazabilidad GMP</p>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, registrar',
+                cancelButtonText: 'Revisar'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: 20px;
+}
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

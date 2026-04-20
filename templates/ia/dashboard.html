@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard IA - GMP{% endblock %}
+{% block page_title %}Dashboard de Asistente IA{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ia.index') }}">Asistente IA</a></li>
+                <li class="breadcrumb-item active">Dashboard</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Tarjetas de estadísticas -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Consultas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-consultas">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-comments fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Consultas Hoy
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="consultas-hoy">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-day fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Esta Semana
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="consultas-semana">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-week fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Feedback Promedio
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="feedback-promedio">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-star fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-chart-line me-2"></i>Evolución de Consultas
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="consultasChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-chart-pie me-2"></i>Distribución por Tipo
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="tipoChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Normativas más consultadas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-book me-2"></i>Normativas Más Consultadas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Título</th>
+                                <th>Veces Consultada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="normativas-top">
+                            <tr>
+                                <td colspan="3" class="text-center py-3">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas consultas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-history me-2"></i>Últimas Consultas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ultimas-consultas">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Pregunta</th>
+                                <th>Feedback</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-center py-3">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let consultasChart, tipoChart;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarEstadisticas();
+        cargarUltimasConsultas();
+        cargarGraficos();
+    });
+
+    function cargarEstadisticas() {
+        fetch('/ia/api/estadisticas')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('total-consultas').textContent = data.total_consultas;
+                document.getElementById('consultas-hoy').textContent = data.consultas_hoy;
+                document.getElementById('consultas-semana').textContent = data.consultas_semana;
+                document.getElementById('feedback-promedio').textContent = data.feedback_promedio + ' ★';
+                
+                // Normativas top
+                let html = '';
+                data.normativas_top.forEach(n => {
+                    html += `
+                        <tr>
+                            <td><strong>${n.codigo}</strong></td>
+                            <td>${n.titulo}</td>
+                            <td><span class="badge bg-info">${n.veces} consultas</span></td>
+                        </tr>
+                    `;
+                });
+                document.getElementById('normativas-top').innerHTML = html || '<tr><td colspan="3" class="text-center">Sin datos</td></tr>';
+            });
+    }
+
+    function cargarUltimasConsultas() {
+        fetch('/ia/api/historial')
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                data.slice(0, 10).forEach(c => {
+                    let estrellas = '';
+                    for (let i = 0; i < 5; i++) {
+                        if (i < (c.feedback || 0)) {
+                            estrellas += '<i class="fas fa-star text-warning"></i>';
+                        } else {
+                            estrellas += '<i class="far fa-star text-warning"></i>';
+                        }
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${c.fecha}</td>
+                            <td>${c.usuario || 'Anónimo'}</td>
+                            <td>${c.pregunta.substring(0, 50)}${c.pregunta.length > 50 ? '...' : ''}</td>
+                            <td>${estrellas}</td>
+                        </tr>
+                    `;
+                });
+                
+                const tbody = document.querySelector('#ultimas-consultas tbody');
+                tbody.innerHTML = html || '<tr><td colspan="4" class="text-center">Sin consultas</td></tr>';
+            });
+    }
+
+    function cargarGraficos() {
+        // Datos de ejemplo - en producción vendrían de una API
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const consultasData = [5, 8, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+        // Gráfico de evolución
+        const ctx = document.getElementById('consultasChart').getContext('2d');
+        consultasChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'Consultas',
+                    data: consultasData,
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+        // Gráfico de tipos (simulado)
+        const tipoCtx = document.getElementById('tipoChart').getContext('2d');
+        tipoChart = new Chart(tipoCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['GMP', 'ANMAT', 'FDA', 'EMA'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                    hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<style>
+.border-left-primary { border-left: 4px solid #4e73df !important; }
+.border-left-success { border-left: 4px solid #1cc88a !important; }
+.border-left-info { border-left: 4px solid #36b9cc !important; }
+.border-left-warning { border-left: 4px solid #f6c23e !important; }
+.text-gray-300 { color: #dddfeb !important; }
+.text-gray-800 { color: #5a5c69 !important; }
+</style>
+{% endblock %}

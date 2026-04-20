@@ -1,0 +1,19 @@
+{
+  "numero_ot": "OT-0003-2026-GMP-PR-BLI-ZUL-01",
+  "titulo": "Error de temperatura estación de sellado",
+  "estado": "Completada",
+  "equipo": "GMP-PR-BLI-ZUL-01",
+  "equipo_nombre": "ZULIANA ",
+  "fecha_creacion": "06/04/2026 15:50",
+  "prioridad": "Crítica",
+  "tipo": "Correctivo",
+  "asignado_a": "admin",
+  "fecha_estimada": "06/04/2026",
+  "metadata": {
+    "tipo": "orden",
+    "fecha_generacion": "2026-04-06T12:56:22.203644",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/ordenes/4"
+}

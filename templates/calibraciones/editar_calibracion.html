@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Calibración - GMP{% endblock %}
+{% block page_title %}Editar Calibración: {{ calibracion.instrumento }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('calibraciones.gestion_calibraciones') }}">Calibraciones</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('calibraciones.detalle_calibracion', calibracion_id=calibracion.id) }}">{{ calibracion.instrumento }}</a></li>
+                <li class="breadcrumb-item active">Editar</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>Editar Calibración - {{ calibracion.instrumento }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="formEditarCalibracion">
+                    
+                    <!-- Identificación del Instrumento -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-fingerprint me-2"></i>Identificación del Instrumento
+                            </h5>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Equipo Asociado</label>
+                            <select class="form-select" name="equipo_id">
+                                <option value="">Seleccionar equipo...</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}" {% if calibracion.equipo_id == equipo.id %}selected{% endif %}>
+                                    {{ equipo.code }} - {{ equipo.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label gmp-required">Instrumento *</label>
+                            <input type="text" class="form-control" name="instrumento" value="{{ calibracion.instrumento }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Código Interno</label>
+                            <input type="text" class="form-control" name="codigo_instrumento" value="{{ calibracion.codigo_instrumento or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Marca</label>
+                            <input type="text" class="form-control" name="marca" value="{{ calibracion.marca or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" class="form-control" name="modelo" value="{{ calibracion.modelo or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">N° Serie</label>
+                            <input type="text" class="form-control" name="serie" value="{{ calibracion.serie or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Especificaciones Técnicas -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-cog me-2"></i>Especificaciones Técnicas
+                            </h5>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Rango</label>
+                            <input type="text" class="form-control" name="rango" value="{{ calibracion.rango or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Unidad</label>
+                            <input type="text" class="form-control" name="unidad" value="{{ calibracion.unidad or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Tolerancia</label>
+                            <input type="text" class="form-control" name="tolerancia" value="{{ calibracion.tolerancia or '' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Precisión</label>
+                            <input type="text" class="form-control" name="precision" value="{{ calibracion.precision or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Clasificación GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-clipboard-check me-2"></i>Clasificación GMP
+                            </h5>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label gmp-required">Clasificación GMP *</label>
+                            <select class="form-select" name="clasificacion_gmp" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Crítico" {% if calibracion.clasificacion_gmp == 'Crítico' %}selected{% endif %}>Crítico (Afecta calidad producto)</option>
+                                <option value="Importante" {% if calibracion.clasificacion_gmp == 'Importante' %}selected{% endif %}>Importante (Afecta proceso)</option>
+                                <option value="Auxiliar" {% if calibracion.clasificacion_gmp == 'Auxiliar' %}selected{% endif %}>Auxiliar (No afecta calidad)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label gmp-required">Frecuencia (días) *</label>
+                            <select class="form-select" name="frecuencia_dias" required>
+                                <option value="30" {% if calibracion.frecuencia_dias == 30 %}selected{% endif %}>30 días (Mensual)</option>
+                                <option value="60" {% if calibracion.frecuencia_dias == 60 %}selected{% endif %}>60 días (Bimestral)</option>
+                                <option value="90" {% if calibracion.frecuencia_dias == 90 %}selected{% endif %}>90 días (Trimestral)</option>
+                                <option value="180" {% if calibracion.frecuencia_dias == 180 %}selected{% endif %}>180 días (Semestral)</option>
+                                <option value="365" {% if calibracion.frecuencia_dias == 365 %}selected{% endif %}>365 días (Anual)</option>
+                                <option value="730" {% if calibracion.frecuencia_dias == 730 %}selected{% endif %}>730 días (Bianual)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Fechas -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-calendar me-2"></i>Fechas de Calibración
+                            </h5>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label gmp-required">Fecha Calibración *</label>
+                            <input type="date" class="form-control" name="fecha_calibracion" 
+                                   value="{{ calibracion.fecha_calibracion.strftime('%Y-%m-%d') }}" required>
+                            <small class="text-muted">La próxima fecha se recalculará automáticamente</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Próxima Calibración (Lectura)</label>
+                            <input type="text" class="form-control" value="{{ calibracion.fecha_proxima.strftime('%d/%m/%Y') }}" disabled>
+                        </div>
+                    </div>
+
+                    <!-- Resultados -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-file-certificate me-2"></i>Resultados y Certificado
+                            </h5>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label gmp-required">Resultado *</label>
+                            <select class="form-select" name="resultado" required id="resultado">
+                                <option value="Conforme" {% if calibracion.resultado == 'Conforme' %}selected{% endif %}>Conforme</option>
+                                <option value="No Conforme" {% if calibracion.resultado == 'No Conforme' %}selected{% endif %}>No Conforme</option>
+                                <option value="Parcial" {% if calibracion.resultado == 'Parcial' %}selected{% endif %}>Parcialmente Conforme</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Laboratorio</label>
+                            <input type="text" class="form-control" name="laboratorio" value="{{ calibracion.laboratorio or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">N° Certificado</label>
+                            <input type="text" class="form-control" name="certificado_numero" value="{{ calibracion.certificado_numero or '' }}">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Nuevo Certificado (PDF)</label>
+                            <input type="file" class="form-control" name="certificado_archivo" accept=".pdf">
+                            {% if calibracion.certificado_archivo %}
+                            <small class="text-muted">Certificado actual: <a href="{{ url_for('static', filename=calibracion.certificado_archivo) }}" target="_blank">Ver archivo</a></small>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control" name="observaciones" rows="3">{{ calibracion.observaciones or '' }}</textarea>
+                        </div>
+                        <div class="col-12 mb-3" id="acciones_correctivas_container" style="display: {% if calibracion.resultado == 'No Conforme' %}block{% else %}none{% endif %};">
+                            <label class="form-label text-danger">Acciones Correctivas</label>
+                            <textarea class="form-control" name="acciones_correctivas" rows="2">{{ calibracion.acciones_correctivas or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Patrones y Trazabilidad -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-ruler me-2"></i>Patrones y Trazabilidad
+                            </h5>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Patrón Utilizado</label>
+                            <input type="text" class="form-control" name="patron_utilizado" value="{{ calibracion.patron_utilizado or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Certificado del Patrón</label>
+                            <input type="text" class="form-control" name="patron_certificado" value="{{ calibracion.patron_certificado or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Trazabilidad</label>
+                            <input type="text" class="form-control" name="trazabilidad" value="{{ calibracion.trazabilidad or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Temperatura (°C)</label>
+                            <input type="text" class="form-control" name="temperatura" value="{{ calibracion.temperatura or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Humedad (%)</label>
+                            <input type="text" class="form-control" name="humedad" value="{{ calibracion.humedad or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Responsables -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-signature me-2"></i>Responsables GMP
+                            </h5>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label gmp-required">Realizado por *</label>
+                            <input type="text" class="form-control" name="realizado_por" value="{{ calibracion.realizado_por or '' }}" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Revisado por</label>
+                            <input type="text" class="form-control" name="revisado_por" value="{{ calibracion.revisado_por or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Aprobado por</label>
+                            <input type="text" class="form-control" name="aprobado_por" value="{{ calibracion.aprobado_por or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-toggle-on me-2"></i>Estado del Instrumento
+                            </h5>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" name="estado">
+                                <option value="Activo" {% if calibracion.estado == 'Activo' %}selected{% endif %}>Activo</option>
+                                <option value="Fuera de Servicio" {% if calibracion.estado == 'Fuera de Servicio' %}selected{% endif %}>Fuera de Servicio</option>
+                                <option value="En Reparación" {% if calibracion.estado == 'En Reparación' %}selected{% endif %}>En Reparación</option>
+                                <option value="Baja" {% if calibracion.estado == 'Baja' %}selected{% endif %}>Baja</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('calibraciones.detalle_calibracion', calibracion_id=calibracion.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const resultadoSelect = document.getElementById('resultado');
+        const accionesContainer = document.getElementById('acciones_correctivas_container');
+        
+        resultadoSelect.addEventListener('change', function() {
+            if (this.value === 'No Conforme') {
+                accionesContainer.style.display = 'block';
+            } else {
+                accionesContainer.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+<style>
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,790 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Equipo - GMP{% endblock %}
+{% block page_title %}Editar Equipo - {{ equipo.code }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>Editar Equipo - {{ equipo.code }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formEditarEquipo">
+                    
+                    <!-- SECCIÓN 1: IDENTIFICACIÓN GMP DEL EQUIPO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-fingerprint me-2"></i>
+                                    Identificación GMP del Equipo
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="code" class="form-label">Código GMP *</label>
+                            <input type="text" class="form-control" id="code" name="code" value="{{ equipo.code }}" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="name" class="form-label">Nombre del Equipo *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ equipo.name }}" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="gmp_id" class="form-label">ID GMP Interno</label>
+                            <input type="text" class="form-control" id="gmp_id" name="gmp_id" value="{{ equipo.gmp_id or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: CLASIFICACIÓN Y CRITICIDAD GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-clipboard-check me-2"></i>
+                                Clasificación GMP y Criticidad
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="gmp_classification" class="form-label">Clasificación GMP *</label>
+                            <select class="form-select" id="gmp_classification" name="gmp_classification" required>
+                                <option value="Crítico GMP" {% if equipo.gmp_classification == 'Crítico GMP' %}selected{% endif %}>Crítico GMP</option>
+                                <option value="No Crítico GMP" {% if equipo.gmp_classification == 'No Crítico GMP' %}selected{% endif %}>No Crítico GMP</option>
+                                <option value="Auxiliar" {% if equipo.gmp_classification == 'Auxiliar' %}selected{% endif %}>Auxiliar</option>
+                                <option value="Validado" {% if equipo.gmp_classification == 'Validado' %}selected{% endif %}>Validado</option>
+                                <option value="Calificado" {% if equipo.gmp_classification == 'Calificado' %}selected{% endif %}>Calificado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="risk_level" class="form-label">Nivel de Riesgo</label>
+                            <select class="form-select" id="risk_level" name="risk_level">
+                                <option value="Alto" {% if equipo.risk_level == 'Alto' %}selected{% endif %}>Alto</option>
+                                <option value="Medio" {% if equipo.risk_level == 'Medio' %}selected{% endif %}>Medio</option>
+                                <option value="Bajo" {% if equipo.risk_level == 'Bajo' %}selected{% endif %}>Bajo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="product_contact" class="form-label">Contacto con Producto *</label>
+                            <select class="form-select" id="product_contact" name="product_contact" required>
+                                <option value="Directo" {% if equipo.product_contact == 'Directo' %}selected{% endif %}>Contacto Directo</option>
+                                <option value="Indirecto" {% if equipo.product_contact == 'Indirecto' %}selected{% endif %}>Contacto Indirecto</option>
+                                <option value="No Contacto" {% if equipo.product_contact == 'No Contacto' %}selected{% endif %}>Sin Contacto</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="cleaning_level" class="form-label">Nivel de Limpieza</label>
+                            <select class="form-select" id="cleaning_level" name="cleaning_level">
+                                <option value="CIP" {% if equipo.cleaning_level == 'CIP' %}selected{% endif %}>CIP</option>
+                                <option value="SIP" {% if equipo.cleaning_level == 'SIP' %}selected{% endif %}>SIP</option>
+                                <option value="Manual" {% if equipo.cleaning_level == 'Manual' %}selected{% endif %}>Manual</option>
+                                <option value="No Requerido" {% if equipo.cleaning_level == 'No Requerido' %}selected{% endif %}>No Requerido</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: INFORMACIÓN TÉCNICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-tools me-2"></i>
+                                Información Técnica
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="manufacturer" class="form-label">Fabricante</label>
+                            <input type="text" class="form-control" id="manufacturer" name="manufacturer" value="{{ equipo.manufacturer or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="model" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="model" name="model" value="{{ equipo.model or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="serial_number" class="form-label">Número de Serie</label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number" value="{{ equipo.serial_number or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="capacity" class="form-label">Capacidad</label>
+                            <input type="text" class="form-control" id="capacity" name="capacity" value="{{ equipo.capacity or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="operating_range" class="form-label">Rango Operativo</label>
+                            <input type="text" class="form-control" id="operating_range" name="operating_range" value="{{ equipo.operating_range or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="power_requirements" class="form-label">Requisitos de Energía</label>
+                            <input type="text" class="form-control" id="power_requirements" name="power_requirements" value="{{ equipo.power_requirements or '' }}">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">Descripción Técnica</label>
+                            <textarea class="form-control" id="description" name="description" rows="2">{{ equipo.description or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: VALIDACIÓN Y CALIFICACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-file-certificate me-2"></i>
+                                Validación y Calificación GMP
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="validation_status" class="form-label">Estado Validación</label>
+                            <select class="form-select" id="validation_status" name="validation_status">
+                                <option value="" {% if not equipo.validation_status %}selected{% endif %}>No Validado</option>
+                                <option value="DQ" {% if equipo.validation_status == 'DQ' %}selected{% endif %}>DQ</option>
+                                <option value="IQ" {% if equipo.validation_status == 'IQ' %}selected{% endif %}>IQ</option>
+                                <option value="OQ" {% if equipo.validation_status == 'OQ' %}selected{% endif %}>OQ</option>
+                                <option value="PQ" {% if equipo.validation_status == 'PQ' %}selected{% endif %}>PQ</option>
+                                <option value="Completo" {% if equipo.validation_status == 'Completo' %}selected{% endif %}>Completamente Validado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="validation_date" class="form-label">Fecha Validación</label>
+                            <input type="date" class="form-control" id="validation_date" name="validation_date" value="{{ equipo.validation_date.strftime('%Y-%m-%d') if equipo.validation_date else '' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="next_validation" class="form-label">Próxima Validación</label>
+                            <input type="date" class="form-control" id="next_validation" name="next_validation" value="{{ equipo.next_validation.strftime('%Y-%m-%d') if equipo.next_validation else '' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="validation_doc" class="form-label">Documento Validación</label>
+                            <input type="text" class="form-control" id="validation_doc" name="validation_doc" value="{{ equipo.validation_doc or '' }}">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requires_requalification" name="requires_requalification" {% if equipo.requires_requalification %}checked{% endif %}>
+                                <label class="form-check-label" for="requires_requalification">
+                                    Requiere Recalificación Periódica
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: LOCALIZACIÓN Y PRODUCCIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Localización y Área de Producción
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="location" class="form-label">Ubicación Física</label>
+                            <input type="text" class="form-control" id="location" name="location" value="{{ equipo.location or '' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="production_area" class="form-label">Área de Producción</label>
+                            <select class="form-select" id="production_area" name="production_area">
+                                <option value="" {% if not equipo.production_area %}selected{% endif %}>Seleccionar...</option>
+                                <option value="Área Crítica" {% if equipo.production_area == 'Área Crítica' %}selected{% endif %}>Área Crítica</option>
+                                <option value="Área Limpia" {% if equipo.production_area == 'Área Limpia' %}selected{% endif %}>Área Limpia</option>
+                                <option value="Área Controlada" {% if equipo.production_area == 'Área Controlada' %}selected{% endif %}>Área Controlada</option>
+                                <option value="Área General" {% if equipo.production_area == 'Área General' %}selected{% endif %}>Área General</option>
+                                <option value="Almacén" {% if equipo.production_area == 'Almacén' %}selected{% endif %}>Almacén</option>
+                                <option value="Laboratorio" {% if equipo.production_area == 'Laboratorio' %}selected{% endif %}>Laboratorio</option>
+                                <option value="Servicios" {% if equipo.production_area == 'Servicios' %}selected{% endif %}>Servicios</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="room_number" class="form-label">Sala/Número</label>
+                            <input type="text" class="form-control" id="room_number" name="room_number" value="{{ equipo.room_number or '' }}">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="installation_date" class="form-label">Fecha Instalación</label>
+                            <input type="date" class="form-control" id="installation_date" name="installation_date" value="{{ equipo.installation_date.strftime('%Y-%m-%d') if equipo.installation_date else '' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: DOCUMENTACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-archive me-2"></i>
+                                Documentación GMP Asociada
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="sop_number" class="form-label">Número SOP Operación</label>
+                            <input type="text" class="form-control" id="sop_number" name="sop_number" value="{{ equipo.sop_number or '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="maintenance_sop" class="form-label">SOP Mantenimiento</label>
+                            <input type="text" class="form-control" id="maintenance_sop" name="maintenance_sop" value="{{ equipo.maintenance_sop or '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="cleaning_sop" class="form-label">SOP Limpieza</label>
+                            <input type="text" class="form-control" id="cleaning_sop" name="cleaning_sop" value="{{ equipo.cleaning_sop or '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="calibration_sop" class="form-label">SOP Calibración</label>
+                            <input type="text" class="form-control" id="calibration_sop" name="calibration_sop" value="{{ equipo.calibration_sop or '' }}">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="gmp_notes" class="form-label">Observaciones GMP</label>
+                            <textarea class="form-control" id="gmp_notes" name="gmp_notes" rows="2">{{ equipo.gmp_notes or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 7: SISTEMAS CON TAREAS Y REPUESTOS CRÍTICOS -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="text-success mb-0">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Sistemas con Tareas y Repuestos Críticos
+                                </h5>
+                                <button type="button" class="btn btn-success" onclick="mostrarModalSistema()">
+                                    <i class="fas fa-plus-circle me-2"></i>Agregar Sistema
+                                </button>
+                            </div>
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Cada sistema puede tener múltiples tareas. A cada tarea puede asignarle repuestos críticos.
+                                </small>
+                            </div>
+                            
+                            <!-- Lista de Sistemas existentes -->
+                            <div id="sistemas-container" class="row">
+                                {% for sistema in equipo.sistemas %}
+                                <div class="col-md-6 mb-3 sistema-card" data-sistema-id="{{ sistema.id }}">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-header bg-primary text-white d-flex justify-content-between">
+                                            <span><i class="fas fa-cog me-2"></i>{{ sistema.nombre }}</span>
+                                            <button class="btn btn-sm btn-light" onclick="eliminarSistemaExistente({{ sistema.id }})">
+                                                <i class="fas fa-trash text-danger"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="small text-muted">{{ sistema.descripcion or 'Sin descripción' }}</p>
+                                            <small class="fw-bold">Tareas ({{ sistema.planes_pm|length }}):</small>
+                                            <ul class="list-unstyled mt-2">
+                                                {% for plan in sistema.planes_pm %}
+                                                <li class="mb-2">
+                                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                                    {{ plan.tarea_descripcion }}
+                                                    {% if plan.repuestos_necesarios and plan.repuestos_necesarios|length > 0 %}
+                                                        <br><small class="text-muted ms-4">
+                                                            <i class="fas fa-boxes me-1"></i>Repuestos: 
+                                                            {% for rpt in plan.repuestos_necesarios %}
+                                                                {{ rpt.repuesto.codigo }}{% if not loop.last %}, {% endif %}
+                                                            {% endfor %}
+                                                        </small>
+                                                    {% else %}
+                                                        <br><small class="text-muted ms-4">
+                                                            <i class="fas fa-info-circle me-1"></i>Sin repuestos asignados
+                                                        </small>
+                                                    {% endif %}
+                                                    <br><small class="text-muted ms-4">
+                                                        <i class="fas fa-clock me-1"></i>c/{{ plan.frecuencia_dias }} días
+                                                    </small>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 8: CAMPOS OCULTOS PARA SISTEMAS NUEVOS -->
+                    <div id="hidden-fields"></div>
+
+                    <!-- SECCIÓN 9: FIRMAS Y APROBACIONES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-signature me-2"></i>Registro de Responsables GMP
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="quality_approver" class="form-label">Aprobación Calidad</label>
+                                            <input type="text" class="form-control" id="quality_approver" name="quality_approver" value="{{ equipo.quality_approver or '' }}">
+                                        </div>
+                                        
+                                        <div class="col-md-4 mb-3">
+                                            <label for="maintenance_responsible" class="form-label">Responsable Mantenimiento</label>
+                                            <input type="text" class="form-control" id="maintenance_responsible" name="maintenance_responsible" value="{{ equipo.maintenance_responsible or '' }}">
+                                        </div>
+                                        
+                                        <div class="col-md-4 mb-3">
+                                            <label for="current_status" class="form-label">Estado Actual</label>
+                                            <select class="form-select" id="current_status" name="current_status">
+                                                <option value="Operativo" {% if equipo.current_status == 'Operativo' %}selected{% endif %}>Operativo</option>
+                                                <option value="En Mantenimiento" {% if equipo.current_status == 'En Mantenimiento' %}selected{% endif %}>En Mantenimiento</option>
+                                                <option value="Fuera de Servicio" {% if equipo.current_status == 'Fuera de Servicio' %}selected{% endif %}>Fuera de Servicio</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar sistema -->
+<div class="modal fade" id="modalSistema" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>Agregar Sistema con Tareas y Repuestos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formSistema">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="sistema-nombre" class="form-label">Nombre del Sistema *</label>
+                            <input type="text" class="form-control" id="sistema-nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sistema-categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="sistema-categoria">
+                                <option value="Mecánico">Mecánico</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Neumático">Neumático</option>
+                                <option value="Hidráulico">Hidráulico</option>
+                                <option value="Electrónico">Electrónico</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sistema-descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="sistema-descripcion" rows="2"></textarea>
+                    </div>
+
+                    <h6 class="fw-bold mt-4">Tareas de Mantenimiento</h6>
+                    <div id="tareas-container"></div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-success mt-2" onclick="agregarTarea()">
+                        <i class="fas fa-plus me-1"></i>Agregar Tarea
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="guardarSistema()">Guardar Sistema</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar repuestos -->
+<div class="modal fade" id="modalRepuestos" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-boxes me-2"></i>Seleccionar Repuestos para la Tarea
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="repuestos-lista"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarRepuestosTarea()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let sistemas = [];
+let tareaActual = null;
+let repuestosDisponibles = [];
+let repuestosSeleccionadosTemp = {};
+
+// Cargar repuestos disponibles
+fetch('/inventario/api/listar')
+    .then(response => response.json())
+    .then(data => {
+        repuestosDisponibles = data;
+        console.log("Repuestos cargados:", repuestosDisponibles.length);
+    })
+    .catch(error => console.error("Error cargando repuestos:", error));
+
+function mostrarModalSistema() {
+    document.getElementById('sistema-nombre').value = '';
+    document.getElementById('sistema-categoria').value = 'Mecánico';
+    document.getElementById('sistema-descripcion').value = '';
+    document.getElementById('tareas-container').innerHTML = '';
+    agregarTarea();
+    new bootstrap.Modal(document.getElementById('modalSistema')).show();
+}
+
+function agregarTarea() {
+    const container = document.getElementById('tareas-container');
+    const tareaId = Date.now();
+    
+    const div = document.createElement('div');
+    div.className = 'card mb-3 tarea-card';
+    div.id = `tarea-${tareaId}`;
+    div.innerHTML = `
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Tarea</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarTarea(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8 mb-2">
+                    <label class="form-label">Descripción de la tarea *</label>
+                    <input type="text" class="form-control tarea-descripcion" required>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Frecuencia (días)</label>
+                    <select class="form-select tarea-frecuencia">
+                        <option value="7">7 días</option>
+                        <option value="15">15 días</option>
+                        <option value="30" selected>30 días</option>
+                        <option value="60">60 días</option>
+                        <option value="90">90 días</option>
+                        <option value="180">180 días</option>
+                        <option value="365">365 días</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Tiempo (horas)</label>
+                    <input type="number" class="form-control tarea-tiempo" value="1.0" min="0.5" step="0.5">
+                </div>
+            </div>
+            
+            <div class="mt-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <label class="text-success fw-bold small">
+                        <i class="fas fa-boxes me-1"></i>Repuestos críticos
+                    </label>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="mostrarSelectorRepuestos('${tareaId}')">
+                        <i class="fas fa-plus-circle me-1"></i>Agregar Repuestos
+                    </button>
+                </div>
+                <div id="repuestos-${tareaId}" class="mt-2 small">
+                    <span class="text-muted fst-italic">No hay repuestos asignados</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(div);
+}
+
+function eliminarTarea(btn) {
+    if (document.querySelectorAll('.tarea-card').length > 1) {
+        btn.closest('.tarea-card').remove();
+    } else {
+        alert('Debe haber al menos una tarea');
+    }
+}
+
+function mostrarSelectorRepuestos(tareaId) {
+    tareaActual = tareaId;
+    const container = document.getElementById('repuestos-lista');
+    
+    if (repuestosDisponibles.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning">No hay repuestos disponibles. Cree repuestos en Inventario primero.</div>';
+    } else {
+        const existingRepuestos = repuestosSeleccionadosTemp[tareaId] || [];
+        
+        let html = '<div class="row">';
+        repuestosDisponibles.forEach(rep => {
+            const isSelected = existingRepuestos.some(r => r.id == rep.id);
+            const existingCantidad = existingRepuestos.find(r => r.id == rep.id)?.cantidad || 1;
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card border-${isSelected ? 'success' : 'secondary'}">
+                        <div class="card-body py-2">
+                            <div class="form-check">
+                                <input class="form-check-input repuesto-check" type="checkbox" 
+                                       value="${rep.id}" id="rep_${rep.id}"
+                                       ${isSelected ? 'checked' : ''}>
+                                <label class="form-check-label" for="rep_${rep.id}">
+                                    <strong>${rep.codigo}</strong> - ${rep.nombre}
+                                </label>
+                            </div>
+                            <div class="mt-2">
+                                <label class="small">Cantidad requerida:</label>
+                                <input type="number" class="form-control form-control-sm" 
+                                       id="cant_${rep.id}" 
+                                       value="${existingCantidad}" 
+                                       min="1" style="width: 100px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    
+    new bootstrap.Modal(document.getElementById('modalRepuestos')).show();
+}
+
+function guardarRepuestosTarea() {
+    const seleccionados = [];
+    document.querySelectorAll('.repuesto-check:checked').forEach(cb => {
+        const repId = parseInt(cb.value);
+        const cantidad = parseInt(document.getElementById(`cant_${repId}`).value) || 1;
+        const repuesto = repuestosDisponibles.find(r => r.id == repId);
+        if (repuesto) {
+            seleccionados.push({
+                id: repId,
+                codigo: repuesto.codigo,
+                nombre: repuesto.nombre,
+                cantidad: cantidad
+            });
+        }
+    });
+    
+    repuestosSeleccionadosTemp[tareaActual] = seleccionados;
+    
+    const container = document.getElementById(`repuestos-${tareaActual}`);
+    if (seleccionados.length > 0) {
+        let html = '<div class="border-start border-success ps-2 mt-1">';
+        seleccionados.forEach(rep => {
+            html += `
+                <div class="mb-1">
+                    <i class="fas fa-box text-success me-1"></i>
+                    <strong>${rep.codigo}</strong> - ${rep.nombre}
+                    <span class="badge bg-info">${rep.cantidad} ud(s)</span>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } else {
+        container.innerHTML = '<span class="text-muted fst-italic">No hay repuestos asignados</span>';
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('modalRepuestos')).hide();
+}
+
+function guardarSistema() {
+    const nombre = document.getElementById('sistema-nombre').value.trim();
+    if (!nombre) {
+        alert('Debe ingresar un nombre para el sistema');
+        return;
+    }
+    
+    const tareas = [];
+    let tareaIndex = 0;
+    document.querySelectorAll('.tarea-card').forEach(card => {
+        const desc = card.querySelector('.tarea-descripcion')?.value.trim();
+        if (desc) {
+            const tareaId = card.id.replace('tarea-', '');
+            const repuestos = repuestosSeleccionadosTemp[tareaId] || [];
+            
+            tareas.push({
+                id: tareaIndex,
+                descripcion: desc,
+                frecuencia: card.querySelector('.tarea-frecuencia')?.value || '30',
+                tiempo: card.querySelector('.tarea-tiempo')?.value || '1.0',
+                repuestos: repuestos
+            });
+            tareaIndex++;
+        }
+    });
+    
+    if (tareas.length === 0) {
+        alert('Debe agregar al menos una tarea');
+        return;
+    }
+    
+    const sistema = {
+        id: Date.now(),
+        nombre: nombre,
+        categoria: document.getElementById('sistema-categoria').value,
+        descripcion: document.getElementById('sistema-descripcion').value,
+        tareas: tareas,
+        es_nuevo: true
+    };
+    
+    sistemas.push(sistema);
+    actualizarListaSistemas();
+    bootstrap.Modal.getInstance(document.getElementById('modalSistema')).hide();
+}
+
+function actualizarListaSistemas() {
+    const container = document.getElementById('sistemas-container');
+    const hiddenFields = document.getElementById('hidden-fields');
+    
+    // Limpiar solo los sistemas nuevos (los existentes ya están en el DOM)
+    const existingSystemCards = document.querySelectorAll('.sistema-card');
+    
+    // Generar campos ocultos para sistemas nuevos
+    hiddenFields.innerHTML = '';
+    
+    sistemas.forEach((sistema, sistemaIdx) => {
+        hiddenFields.innerHTML += `
+            <input type="hidden" name="sistema_${sistemaIdx}_nombre" value="${escapeHtml(sistema.nombre)}">
+            <input type="hidden" name="sistema_${sistemaIdx}_categoria" value="${escapeHtml(sistema.categoria)}">
+            <input type="hidden" name="sistema_${sistemaIdx}_descripcion" value="${escapeHtml(sistema.descripcion)}">
+            <input type="hidden" name="sistema_${sistemaIdx}_nuevo" value="1">
+        `;
+        
+        sistema.tareas.forEach((tarea, tareaIdx) => {
+            hiddenFields.innerHTML += `
+                <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}" value="${escapeHtml(tarea.descripcion)}">
+                <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_frecuencia" value="${tarea.frecuencia}">
+                <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_tiempo" value="${tarea.tiempo}">
+            `;
+            
+            if (tarea.repuestos && tarea.repuestos.length > 0) {
+                tarea.repuestos.forEach((rep, repIdx) => {
+                    hiddenFields.innerHTML += `
+                        <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_repuesto_${repIdx}" value="${rep.id}">
+                        <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_repuesto_${repIdx}_cantidad" value="${rep.cantidad}">
+                    `;
+                });
+            }
+        });
+        
+        // Agregar tarjeta visual
+        const col = document.createElement('div');
+        col.className = 'col-md-6 mb-3 sistema-card';
+        col.innerHTML = `
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white d-flex justify-content-between">
+                    <span><i class="fas fa-cog me-2"></i>${escapeHtml(sistema.nombre)}</span>
+                    <button class="btn btn-sm btn-light" onclick="eliminarSistemaNuevo(${sistemaIdx})">
+                        <i class="fas fa-trash text-danger"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">${escapeHtml(sistema.descripcion || 'Sin descripción')}</p>
+                    <small class="fw-bold">Tareas (${sistema.tareas.length}):</small>
+                    <ul class="list-unstyled mt-2">
+                        ${sistema.tareas.map(t => `
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-1"></i>
+                                ${escapeHtml(t.descripcion)}
+                                ${t.repuestos && t.repuestos.length > 0 ? 
+                                    `<br><small class="text-muted ms-4">
+                                        <i class="fas fa-boxes me-1"></i>Repuestos: ${t.repuestos.map(r => r.codigo).join(', ')}
+                                    </small>` : 
+                                    `<br><small class="text-muted ms-4">
+                                        <i class="fas fa-info-circle me-1"></i>Sin repuestos asignados
+                                    </small>`}
+                                <br><small class="text-muted ms-4">
+                                    <i class="fas fa-clock me-1"></i>c/${t.frecuencia} días
+                                </small>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        container.appendChild(col);
+    });
+}
+
+function eliminarSistemaExistente(sistemaId) {
+    Swal.fire({
+        title: '¿Eliminar sistema?',
+        text: 'Esta acción eliminará todas las tareas y repuestos asociados.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `eliminar_sistema_${sistemaId}`;
+            input.value = sistemaId;
+            document.getElementById('hidden-fields').appendChild(input);
+            
+            const card = document.querySelector(`.sistema-card[data-sistema-id="${sistemaId}"]`);
+            if (card) card.remove();
+            
+            Swal.fire('Eliminado', 'Sistema marcado para eliminar', 'success');
+        }
+    });
+}
+
+function eliminarSistemaNuevo(idx) {
+    sistemas.splice(idx, 1);
+    actualizarListaSistemas();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+
+<style>
+.tarea-card {
+    border-left: 3px solid #28a745;
+}
+.sistema-card {
+    transition: transform 0.2s;
+}
+.sistema-card:hover {
+    transform: translateY(-3px);
+}
+</style>
+{% endblock %}

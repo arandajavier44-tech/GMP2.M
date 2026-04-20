@@ -1,0 +1,19 @@
+{
+  "numero_ot": "OT-0002-2026-GMP-ZUL-02",
+  "titulo": "[Mensual] Mantenimiento - GMP-ZUL-02",
+  "estado": "Completada",
+  "equipo": "GMP-ZUL-02",
+  "equipo_nombre": "ZULIANA ",
+  "fecha_creacion": "14/04/2026 02:04",
+  "prioridad": "Media",
+  "tipo": "Preventivo",
+  "asignado_a": "jefe_mant",
+  "fecha_estimada": "12/04/2026",
+  "metadata": {
+    "tipo": "orden",
+    "fecha_generacion": "2026-04-13T23:08:35.131780",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/ordenes/2"
+}

@@ -1,0 +1,697 @@
+{% extends "base.html" %}
+
+{% block title %}Asistente IA - GMP{% endblock %}
+{% block page_title %}Asistente Inteligente GMP/ANMAT{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Asistente IA</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tarjeta de Chat -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-comment-dots me-2"></i>Chat con Asistente IA
+                </h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <p class="card-text">
+                    Consulte sobre normativas GMP, ANMAT, FDA y requisitos regulatorios.
+                    El asistente buscará en su base de conocimiento y le proporcionará respuestas basadas en las normativas.
+                </p>
+                <div class="mt-auto">
+                    <a href="{{ url_for('ia.chat') }}" class="btn btn-primary w-100">
+                        <i class="fas fa-comment me-2"></i>Ir al Chat
+                    </a>
+                    <!-- Botón Dashboard IA (visible para todos) -->
+                    <a href="{{ url_for('ia.dashboard') }}" class="btn btn-info w-100 mt-2">
+                        <i class="fas fa-chart-line me-2"></i>Ver Dashboard IA
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta de Recomendaciones -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Recomendaciones Inteligentes
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    El sistema analiza su base de datos y genera recomendaciones basadas en normativas GMP:
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Calibraciones próximas a vencer</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>CAPAs abiertas por mucho tiempo</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Mantenimientos atrasados</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Oportunidades de mejora</li>
+                </ul>
+                <div class="mt-3" id="recomendaciones-preview">
+                    <div class="text-center py-3">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Cargando recomendaciones...
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-success w-100" onclick="generarRecomendaciones()">
+                        <i class="fas fa-sync-alt me-2"></i>Generar Nuevas Recomendaciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila de botones de administración - Visible para admin, jefes y supervisores -->
+{% if session.area == 'administracion' or session.role in ['jefe', 'supervisor'] %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>Administración de Normativas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button class="btn btn-warning w-100 mb-2" onclick="actualizarNormativas()">
+                            <i class="fas fa-sync-alt me-2"></i>Actualizar Base de Normativas
+                        </button>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Busca nuevas disposiciones en sitios oficiales (ANMAT, FDA, EMA)
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>Actualización automática:</strong> Diaria a las 03:00 AM
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de Exportación - También visible para admin, jefes y supervisores -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2"></i>Exportar Normativas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-primary w-100" onclick="exportarNormativas('excel')">
+                            <i class="fas fa-file-excel me-2"></i>Exportar a Excel
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-warning w-100" onclick="exportarNormativas('json')">
+                            <i class="fas fa-file-code me-2"></i>Exportar a JSON
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-danger w-100" onclick="exportarNormativas('pdf')">
+                            <i class="fas fa-file-pdf me-2"></i>Exportar a PDF
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <button class="btn btn-outline-success w-100" onclick="mostrarSelectorExportacion()">
+                            <i class="fas fa-check-square me-2"></i>Exportar Selección
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Normativas recientes -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-book me-2"></i>Normativas GMP Recientes
+                </h5>
+                <span class="badge bg-light text-dark" id="total-normativas">0</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="normativas-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Título</th>
+                                <th>Tipo</th>
+                                <th>Categoría</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center py-3">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando normativas...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de recomendaciones -->
+<div class="modal fade" id="recomendacionesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-lightbulb me-2"></i>Recomendaciones del Sistema
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="recomendaciones-list">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de actualización -->
+<div class="modal fade" id="actualizacionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-sync-alt me-2"></i>Actualizando Normativas
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <h5>Buscando nuevas disposiciones...</h5>
+                <p class="text-muted" id="estado-actualizacion">Consultando fuentes oficiales</p>
+                <div class="progress mt-3" style="height: 10px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                         id="barra-progreso" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar normativas a exportar -->
+<div class="modal fade" id="selectorExportacionModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-square me-2"></i>Seleccionar Normativas a Exportar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <button class="btn btn-sm btn-primary" onclick="seleccionarTodo()">
+                        <i class="fas fa-check-double me-1"></i>Seleccionar Todo
+                    </button>
+                    <button class="btn btn-sm btn-secondary ms-2" onclick="deseleccionarTodo()">
+                        <i class="fas fa-times me-1"></i>Deseleccionar Todo
+                    </button>
+                </div>
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="checkAll" onchange="toggleAllCheckboxes()">
+                                </th>
+                                <th>Código</th>
+                                <th>Título</th>
+                                <th>Tipo</th>
+                                <th>Categoría</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-seleccion-normativas">
+                            <tr>
+                                <td colspan="6" class="text-center py-3">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando normativas...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="me-auto">
+                    <span id="contador-seleccionadas">0</span> normativas seleccionadas
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="exportarSeleccionadas()">
+                    <i class="fas fa-download me-2"></i>Exportar Seleccionadas
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarRecomendaciones();
+        cargarNormativas();
+    });
+
+    function cargarRecomendaciones() {
+        fetch('/ia/api/recomendaciones')
+            .then(response => response.json())
+            .then(data => {
+                const preview = document.getElementById('recomendaciones-preview');
+                
+                if (data.length === 0) {
+                    preview.innerHTML = `
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No hay recomendaciones pendientes
+                        </div>
+                    `;
+                } else {
+                    let html = '<div class="list-group">';
+                    data.slice(0, 3).forEach(rec => {
+                        let prioridadClass = 'success';
+                        if (rec.prioridad === 'Alta') prioridadClass = 'danger';
+                        else if (rec.prioridad === 'Media') prioridadClass = 'warning';
+                        
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${rec.titulo}</strong>
+                                        <br>
+                                        <small>${rec.descripcion}</small>
+                                    </div>
+                                    <span class="badge bg-${prioridadClass}">${rec.prioridad}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    
+                    if (data.length > 3) {
+                        html += `<div class="text-center mt-2">
+                            <a href="#" onclick="verTodasRecomendaciones(event)">Ver todas (${data.length})</a>
+                        </div>`;
+                    }
+                    
+                    preview.innerHTML = html;
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando recomendaciones:', error);
+                document.getElementById('recomendaciones-preview').innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error al cargar recomendaciones
+                    </div>
+                `;
+            });
+    }
+
+    function cargarNormativas() {
+        fetch('/ia/api/normativas/recientes')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('normativas-table').querySelector('tbody');
+                document.getElementById('total-normativas').textContent = data.total || 0;
+                
+                if (data.normativas && data.normativas.length > 0) {
+                    let html = '';
+                    data.normativas.forEach(n => {
+                        html += `
+                            <tr>
+                                <td><strong>${n.codigo}</strong></td>
+                                <td>${n.titulo}</td>
+                                <td><span class="badge bg-${n.tipo === 'GMP' ? 'primary' : 'warning'}">${n.tipo}</span></td>
+                                <td><span class="badge bg-info">${n.categoria}</span></td>
+                                <td>${n.fecha}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No hay normativas cargadas</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando normativas:', error);
+                // Fallback a datos de ejemplo
+                setTimeout(() => {
+                    const normativas = [
+                        { codigo: 'ANMAT-DISP-2819/99', titulo: 'Buenas Prácticas de Manufactura', tipo: 'ANMAT', categoria: 'BPM', fecha: '15/12/1999' },
+                        { codigo: 'GMP-VAL-2022/05', titulo: 'Guidelines on Process Validation', tipo: 'GMP', categoria: 'Validación', fecha: '10/05/2022' },
+                        { codigo: 'GMP-CAL-2023/03', titulo: 'Guidelines on Calibration', tipo: 'GMP', categoria: 'Calibración', fecha: '20/03/2023' },
+                    ];
+                    
+                    let html = '';
+                    normativas.forEach(n => {
+                        html += `
+                            <tr>
+                                <td><strong>${n.codigo}</strong></td>
+                                <td>${n.titulo}</td>
+                                <td><span class="badge bg-${n.tipo === 'GMP' ? 'primary' : 'warning'}">${n.tipo}</span></td>
+                                <td>${n.categoria}</td>
+                                <td>${n.fecha}</td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('normativas-table').querySelector('tbody').innerHTML = html;
+                }, 500);
+            });
+    }
+
+    function generarRecomendaciones() {
+        Swal.fire({
+            title: 'Generando recomendaciones',
+            text: 'El sistema está analizando los datos...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                
+                fetch('/ia/api/generar-recomendaciones', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Recomendaciones generadas',
+                                text: `Se generaron ${data.cantidad} nuevas recomendaciones`,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            cargarRecomendaciones();
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudieron generar las recomendaciones'
+                        });
+                    });
+            }
+        });
+    }
+
+    function actualizarNormativas() {
+        // Mostrar modal de progreso
+        const modal = new bootstrap.Modal(document.getElementById('actualizacionModal'));
+        modal.show();
+        
+        // Simular progreso
+        let progreso = 0;
+        const barra = document.getElementById('barra-progreso');
+        const estado = document.getElementById('estado-actualizacion');
+        
+        const interval = setInterval(() => {
+            progreso += 10;
+            barra.style.width = progreso + '%';
+            
+            if (progreso === 30) {
+                estado.textContent = 'Consultando ANMAT...';
+            } else if (progreso === 60) {
+                estado.textContent = 'Consultando FDA...';
+            } else if (progreso === 90) {
+                estado.textContent = 'Procesando nuevas normativas...';
+            }
+        }, 500);
+        
+        // Llamada real a la API
+        fetch('/ia/api/forzar-actualizacion', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(interval);
+                barra.style.width = '100%';
+                estado.textContent = '¡Actualización completada!';
+                
+                setTimeout(() => {
+                    modal.hide();
+                    
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Actualización completada',
+                            html: `
+                                <p>${data.message}</p>
+                                <p class="text-muted small">Las nuevas normativas están disponibles en el chat</p>
+                            `,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                        cargarNormativas(); // Recargar la tabla
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.error || 'No se pudo completar la actualización'
+                        });
+                    }
+                }, 500);
+            })
+            .catch(error => {
+                clearInterval(interval);
+                modal.hide();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error de conexión con el servidor'
+                });
+            });
+    }
+
+    function verTodasRecomendaciones(event) {
+        event.preventDefault();
+        
+        fetch('/ia/api/recomendaciones')
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                
+                if (data.length === 0) {
+                    html = '<p class="text-center text-muted">No hay recomendaciones pendientes</p>';
+                } else {
+                    data.forEach(rec => {
+                        let prioridadClass = 'success';
+                        if (rec.prioridad === 'Alta') prioridadClass = 'danger';
+                        else if (rec.prioridad === 'Media') prioridadClass = 'warning';
+                        
+                        html += `
+                            <div class="card mb-2">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">${rec.titulo}</h6>
+                                            <p class="mb-1 small">${rec.descripcion}</p>
+                                            <small class="text-muted">${rec.fecha}</small>
+                                        </div>
+                                        <span class="badge bg-${prioridadClass}">${rec.prioridad}</span>
+                                    </div>
+                                    <div class="mt-2 text-end">
+                                        <button class="btn btn-sm btn-outline-success" onclick="marcarLeida(${rec.id})">
+                                            <i class="fas fa-check me-1"></i>Marcar como leída
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                document.getElementById('recomendaciones-list').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('recomendacionesModal')).show();
+            });
+    }
+
+    function marcarLeida(id) {
+        fetch(`/ia/api/recomendaciones/${id}/leer`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cargarRecomendaciones();
+                    verTodasRecomendaciones(new Event('click'));
+                }
+            });
+    }
+
+    // Funciones para exportación
+    function exportarNormativas(formato) {
+        window.location.href = `/ia/api/exportar/${formato}`;
+    }
+
+    function mostrarSelectorExportacion() {
+        const modal = new bootstrap.Modal(document.getElementById('selectorExportacionModal'));
+        
+        fetch('/ia/api/normativas/recientes?limit=100')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('tabla-seleccion-normativas');
+                
+                if (data.normativas && data.normativas.length > 0) {
+                    let html = '';
+                    data.normativas.forEach(n => {
+                        html += `
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="normativa-checkbox" value="${n.id || ''}" 
+                                           onchange="actualizarContadorSeleccionadas()">
+                                </td>
+                                <td><strong>${n.codigo}</strong></td>
+                                <td>${n.titulo}</td>
+                                <td><span class="badge bg-${n.tipo === 'GMP' ? 'primary' : 'warning'}">${n.tipo}</span></td>
+                                <td><span class="badge bg-info">${n.categoria}</span></td>
+                                <td>${n.fecha}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay normativas cargadas</td></tr>';
+                }
+                
+                document.getElementById('checkAll').checked = false;
+                actualizarContadorSeleccionadas();
+            });
+        
+        modal.show();
+    }
+
+    function toggleAllCheckboxes() {
+        const checkAll = document.getElementById('checkAll').checked;
+        const checkboxes = document.querySelectorAll('.normativa-checkbox');
+        checkboxes.forEach(cb => cb.checked = checkAll);
+        actualizarContadorSeleccionadas();
+    }
+
+    function seleccionarTodo() {
+        const checkboxes = document.querySelectorAll('.normativa-checkbox');
+        checkboxes.forEach(cb => cb.checked = true);
+        document.getElementById('checkAll').checked = true;
+        actualizarContadorSeleccionadas();
+    }
+
+    function deseleccionarTodo() {
+        const checkboxes = document.querySelectorAll('.normativa-checkbox');
+        checkboxes.forEach(cb => cb.checked = false);
+        document.getElementById('checkAll').checked = false;
+        actualizarContadorSeleccionadas();
+    }
+
+    function actualizarContadorSeleccionadas() {
+        const seleccionadas = document.querySelectorAll('.normativa-checkbox:checked').length;
+        document.getElementById('contador-seleccionadas').textContent = seleccionadas;
+    }
+
+    function exportarSeleccionadas() {
+        const seleccionadas = document.querySelectorAll('.normativa-checkbox:checked');
+        
+        if (seleccionadas.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Seleccione normativas',
+                text: 'Debe seleccionar al menos una normativa para exportar'
+            });
+            return;
+        }
+        
+        const ids = Array.from(seleccionadas).map(cb => cb.value);
+        
+        Swal.fire({
+            title: 'Exportar normativas',
+            text: `Se exportarán ${seleccionadas.length} normativas`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Exportar a JSON',
+            cancelButtonText: 'Exportar a Excel',
+            showDenyButton: true,
+            denyButtonText: 'Cancelar'
+        }).then((result) => {
+            let formato = 'json';
+            if (result.isConfirmed) {
+                formato = 'json';
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                formato = 'excel';
+            } else {
+                return;
+            }
+            
+            fetch('/ia/api/exportar/seleccion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: ids, formato: formato })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Error en exportación');
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `normativas_seleccionadas_${new Date().toISOString().slice(0,10)}.${formato}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                bootstrap.Modal.getInstance(document.getElementById('selectorExportacionModal')).hide();
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            });
+        });
+    }
+</script>
+{% endblock %}

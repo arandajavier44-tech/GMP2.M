@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Usuario{% endblock %}
+{% block page_title %}Detalle de Usuario: {{ usuario.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('usuarios.gestion_usuarios') }}">Usuarios</a></li>
+                <li class="breadcrumb-item active">{{ usuario.username }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Tarjeta de información básica -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-user me-2"></i>Información Personal
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    <h5 class="mt-2">{{ usuario.nombre_completo or 'Sin nombre' }}</h5>
+                    <p class="text-muted">@{{ usuario.username }}</p>
+                </div>
+                
+                <table class="table table-sm">
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ usuario.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Teléfono:</th>
+                        <td>{{ usuario.telefono or 'No especificado' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Área:</th>
+                        <td>
+                            <span class="badge bg-info">{{ usuario.area_principal|capitalize }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Nivel:</th>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if usuario.nivel_jerarquico == 'jefe' else 'warning' if usuario.nivel_jerarquico == 'supervisor' else 'primary' }}">
+                                {% for nivel in niveles %}
+                                    {% if nivel.id == usuario.nivel_jerarquico %}
+                                        {{ nivel.nombre }}
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            {% if usuario.activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Último acceso:</th>
+                        <td>{{ usuario.ultimo_acceso.strftime('%d/%m/%Y %H:%M') if usuario.ultimo_acceso else 'Nunca' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-tasks me-2"></i>Acciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('usuarios.editar_usuario', usuario_id=usuario.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Editar Usuario
+                    </a>
+                    
+                    <button class="btn btn-{{ 'danger' if usuario.activo else 'success' }}" 
+                            onclick="cambiarEstado({{ usuario.id }})">
+                        <i class="fas fa-toggle-{{ 'on' if usuario.activo else 'off' }} me-2"></i>
+                        {% if usuario.activo %}Desactivar{% else %}Activar{% endif %}
+                    </button>
+                    
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cambiarPasswordModal">
+                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                    </button>
+                    
+                    <button class="btn btn-info" onclick="probarEmail({{ usuario.id }})">
+                        <i class="fas fa-envelope me-2"></i>Probar Envío de Email
+                    </button>
+                    
+                    {% if session.user_id != usuario.id %}
+                    <button class="btn btn-danger" onclick="eliminarUsuario({{ usuario.id }})">
+                        <i class="fas fa-trash me-2"></i>Eliminar Usuario
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Roles -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-user-tag me-2"></i>Roles Asignados
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    {% if usuario.roles %}
+                        {% for rol in usuario.roles %}
+                            <span class="badge bg-info me-1 p-2">{{ rol }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No tiene roles adicionales asignados</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de actividades -->
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-history me-2"></i>Últimas Actividades
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if actividades %}
+                    <div class="timeline">
+                        {% for act in actividades %}
+                            <div class="timeline-item">
+                                <div class="timeline-date">{{ act.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                                <div class="timeline-content">
+                                    <span class="badge bg-info mb-2">{{ act.accion }}</span>
+                                    <p class="mb-1"><strong>{{ act.modulo }}</strong></p>
+                                    <p class="small">{{ act.detalle or 'Sin detalles' }}</p>
+                                    <small class="text-muted">IP: {{ act.ip or 'N/A' }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-3">No hay actividades registradas</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal cambiar contraseña -->
+<div class="modal fade" id="cambiarPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('usuarios.cambiar_password', usuario_id=usuario.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nueva_password" class="form-label">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="nueva_password" name="nueva_password" required minlength="6">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmar_password" class="form-label">Confirmar Contraseña</label>
+                        <input type="password" class="form-control" id="confirmar_password" name="confirmar_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function cambiarEstado(id) {
+        Swal.fire({
+            title: '¿Confirmar cambio?',
+            text: 'Esta acción cambiará el estado del usuario',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, cambiar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/usuarios/${id}/toggle-estado`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          Swal.fire('Éxito', 'Estado actualizado', 'success').then(() => {
+                              location.reload();
+                          });
+                      } else {
+                          Swal.fire('Error', data.error || 'No se pudo cambiar el estado', 'error');
+                      }
+                  });
+            }
+        });
+    }
+
+    function eliminarUsuario(id) {
+        Swal.fire({
+            title: '¿Eliminar usuario?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/usuarios/${id}/eliminar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          Swal.fire('Eliminado', 'Usuario eliminado correctamente', 'success').then(() => {
+                              window.location.href = '/usuarios/';
+                          });
+                      } else {
+                          Swal.fire('Error', data.error || 'No se pudo eliminar', 'error');
+                      }
+                  });
+            }
+        });
+    }
+
+    function probarEmail(id) {
+        Swal.fire({
+            title: 'Probar envío de email',
+            text: 'Se enviará un email de prueba al correo del usuario',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Enviando...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                fetch(`/usuarios/${id}/test-email`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          Swal.fire('Éxito', 'Email de prueba enviado correctamente', 'success');
+                      } else {
+                          Swal.fire('Error', data.error || 'No se pudo enviar el email', 'error');
+                      }
+                  }).catch(error => {
+                      Swal.fire('Error', 'Error al enviar el email', 'error');
+                  });
+            }
+        });
+    }
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e3e6f0;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4e73df;
+    border: 2px solid white;
+}
+.timeline-date {
+    font-size: 0.8rem;
+    color: #858796;
+    margin-bottom: 5px;
+}
+.timeline-content {
+    background: #f8f9fc;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}

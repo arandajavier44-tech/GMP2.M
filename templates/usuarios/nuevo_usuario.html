@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Usuario - GMP{% endblock %}
+{% block page_title %}Nuevo Usuario - Gestión de Roles{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-plus me-2"></i>Crear Nuevo Usuario con Roles Múltiples
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formNuevoUsuario">
+                    
+                    <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Información Personal
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="username" class="form-label gmp-required">Usuario *</label>
+                            <input type="text" class="form-control" id="username" name="username" required
+                                   placeholder="ej: jperez">
+                            <div class="invalid-feedback" id="username-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="email" class="form-label gmp-required">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" required
+                                   placeholder="ej: jperez@empresa.com">
+                            <div class="invalid-feedback" id="email-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="nombre_completo" class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" id="nombre_completo" name="nombre_completo"
+                                   placeholder="ej: Juan Pérez">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono"
+                                   placeholder="ej: 11-1234-5678">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="password" class="form-label gmp-required">Contraseña *</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                   placeholder="Mínimo 6 caracteres">
+                            <small class="text-muted">Mínimo 6 caracteres</small>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="confirm_password" class="form-label gmp-required">Confirmar Contraseña *</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: ÁREA Y JERARQUÍA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-sitemap me-2"></i>
+                                Área y Jerarquía
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="area_principal" class="form-label gmp-required">Área Principal *</label>
+                            <select class="form-select" id="area_principal" name="area_principal" required>
+                                <option value="">Seleccionar área...</option>
+                                {% for area in areas %}
+                                <option value="{{ area.id }}" data-icon="{{ area.icono }}">
+                                    <i class="fas {{ area.icono }} me-2"></i>{{ area.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nivel_jerarquico" class="form-label gmp-required">Nivel Jerárquico *</label>
+                            <select class="form-select" id="nivel_jerarquico" name="nivel_jerarquico" required>
+                                <option value="">Seleccionar nivel...</option>
+                                {% for nivel in niveles %}
+                                <option value="{{ nivel.id }}" data-nivel="{{ nivel.nivel }}">
+                                    {{ nivel.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Define el nivel de autoridad del usuario</small>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: ROLES MÚLTIPLES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-success">
+                                <i class="fas fa-user-tag me-2"></i>
+                                Roles del Usuario (puede seleccionar múltiples)
+                            </h5>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Seleccione todos los roles que desempeña el usuario. Las competencias se asignarán automáticamente.
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <div id="roles-container">
+                                <!-- Los roles se cargarán dinámicamente según el área seleccionada -->
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    Primero seleccione un área para ver los roles disponibles
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: COMPETENCIAS (solo lectura) -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-info">
+                                <i class="fas fa-certificate me-2"></i>
+                                Competencias Asignadas
+                            </h5>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div id="competencias-container" class="row">
+                                        <div class="col-12 text-muted">
+                                            Las competencias se asignarán automáticamente según los roles seleccionados
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: PERMISOS ADICIONALES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-warning">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Permisos Específicos
+                            </h5>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Los permisos se asignan automáticamente según el nivel jerárquico.
+                                Solo modifique si es necesario.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="puede_aprobar_capa" name="puede_aprobar_capa">
+                                        <label class="form-check-label" for="puede_aprobar_capa">
+                                            Puede aprobar CAPAs
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="puede_autorizar_cambios" name="puede_autorizar_cambios">
+                                        <label class="form-check-label" for="puede_autorizar_cambios">
+                                            Puede autorizar cambios
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="puede_ver_reportes" name="puede_ver_reportes" checked>
+                                        <label class="form-check-label" for="puede_ver_reportes">
+                                            Puede ver reportes
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="puede_exportar_datos" name="puede_exportar_datos">
+                                        <label class="form-check-label" for="puede_exportar_datos">
+                                            Puede exportar datos
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: ESTADO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-toggle-on me-2"></i>Estado del Usuario
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="activo" name="activo" checked>
+                                                <label class="form-check-label" for="activo">
+                                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                                    Usuario activo
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="requiere_cambio_password" name="requiere_cambio_password">
+                                                <label class="form-check-label" for="requiere_cambio_password">
+                                                    <i class="fas fa-key text-warning me-1"></i>
+                                                    Requiere cambiar contraseña al iniciar sesión
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('usuarios.gestion_usuarios') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Crear Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Datos de roles por área (desde el backend)
+    const rolesPorArea = {{ roles_por_area|tojson|safe }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validar username en tiempo real
+        document.getElementById('username').addEventListener('blur', verificarUsername);
+        document.getElementById('email').addEventListener('blur', verificarEmail);
+        
+        // Validar contraseñas
+        document.getElementById('confirm_password').addEventListener('keyup', validarPasswords);
+        
+        // Cargar roles cuando se selecciona un área
+        document.getElementById('area_principal').addEventListener('change', cargarRoles);
+        
+        // Validar formulario antes de enviar
+        document.getElementById('formNuevoUsuario').addEventListener('submit', validarFormulario);
+    });
+
+    function verificarUsername() {
+        const username = document.getElementById('username').value;
+        if (username.length < 3) return;
+        
+        fetch(`/usuarios/api/verificar-username?username=${username}`)
+            .then(response => response.json())
+            .then(data => {
+                const input = document.getElementById('username');
+                if (!data.disponible) {
+                    input.classList.add('is-invalid');
+                    document.getElementById('username-feedback').textContent = 'Este nombre de usuario ya está en uso';
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                }
+            });
+    }
+
+    function verificarEmail() {
+        const email = document.getElementById('email').value;
+        if (!email.includes('@')) return;
+        
+        fetch(`/usuarios/api/verificar-email?email=${email}`)
+            .then(response => response.json())
+            .then(data => {
+                const input = document.getElementById('email');
+                if (!data.disponible) {
+                    input.classList.add('is-invalid');
+                    document.getElementById('email-feedback').textContent = 'Este email ya está registrado';
+                } else {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                }
+            });
+    }
+
+    function validarPasswords() {
+        const pass = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        
+        if (pass && confirm) {
+            if (pass !== confirm) {
+                document.getElementById('confirm_password').setCustomValidity('Las contraseñas no coinciden');
+                document.getElementById('confirm_password').classList.add('is-invalid');
+            } else {
+                document.getElementById('confirm_password').setCustomValidity('');
+                document.getElementById('confirm_password').classList.remove('is-invalid');
+                document.getElementById('confirm_password').classList.add('is-valid');
+            }
+        }
+    }
+
+    function cargarRoles() {
+        const area = document.getElementById('area_principal').value;
+        const container = document.getElementById('roles-container');
+        const competenciasContainer = document.getElementById('competencias-container');
+        
+        if (!area || !rolesPorArea[area]) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Primero seleccione un área para ver los roles disponibles
+                </div>
+            `;
+            competenciasContainer.innerHTML = '<div class="col-12 text-muted">Seleccione roles para ver competencias</div>';
+            return;
+        }
+        
+        let html = '<div class="row">';
+        rolesPorArea[area].forEach(rol => {
+            html += `
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100 border-success">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input role-checkbox" type="checkbox" 
+                                       name="roles[]" value="${rol.id}" id="rol_${rol.id}"
+                                       data-competencias='${JSON.stringify(rol.competencias)}'
+                                       onchange="actualizarCompetencias()">
+                                <label class="form-check-label fw-bold" for="rol_${rol.id}">
+                                    ${rol.nombre}
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                Competencias: ${rol.competencias.length}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        container.innerHTML = html;
+    }
+
+    function actualizarCompetencias() {
+        const checkboxes = document.querySelectorAll('.role-checkbox:checked');
+        const competenciasContainer = document.getElementById('competencias-container');
+        
+        if (checkboxes.length === 0) {
+            competenciasContainer.innerHTML = '<div class="col-12 text-muted">No hay competencias seleccionadas</div>';
+            return;
+        }
+        
+        let todasCompetencias = [];
+        checkboxes.forEach(cb => {
+            const competencias = JSON.parse(cb.dataset.competencias || '[]');
+            todasCompetencias = [...todasCompetencias, ...competencias];
+        });
+        
+        // Eliminar duplicados
+        todasCompetencias = [...new Set(todasCompetencias)];
+        
+        if (todasCompetencias.length === 0) {
+            competenciasContainer.innerHTML = '<div class="col-12 text-muted">Este rol no tiene competencias específicas</div>';
+            return;
+        }
+        
+        let html = '';
+        todasCompetencias.forEach(comp => {
+            html += `
+                <div class="col-md-4 mb-2">
+                    <span class="badge bg-info p-2">
+                        <i class="fas fa-check-circle me-1"></i>${comp.replace('_', ' ')}
+                    </span>
+                </div>
+            `;
+        });
+        
+        competenciasContainer.innerHTML = html;
+    }
+
+    function validarFormulario(e) {
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+        const area = document.getElementById('area_principal').value;
+        const nivel = document.getElementById('nivel_jerarquico').value;
+        const roles = document.querySelectorAll('.role-checkbox:checked').length;
+        
+        let errores = [];
+        
+        if (!username) errores.push('Usuario');
+        if (!email) errores.push('Email');
+        if (!password) errores.push('Contraseña');
+        if (password && password.length < 6) errores.push('Contraseña (mínimo 6 caracteres)');
+        if (password !== confirm) errores.push('Las contraseñas no coinciden');
+        if (!area) errores.push('Área principal');
+        if (!nivel) errores.push('Nivel jerárquico');
+        if (roles === 0) errores.push('Al menos un rol');
+        
+        if (errores.length > 0) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos requeridos',
+                html: `Complete los siguientes campos:<br><strong>${errores.join('<br>')}</strong>`
+            });
+            return;
+        }
+        
+        // Confirmación final
+        e.preventDefault();
+        
+        const rolesSeleccionados = Array.from(document.querySelectorAll('.role-checkbox:checked'))
+            .map(cb => cb.nextElementSibling.textContent.trim());
+        
+        Swal.fire({
+            title: '¿Confirmar creación?',
+            html: `
+                <p><strong>Usuario:</strong> ${username}</p>
+                <p><strong>Área:</strong> ${area}</p>
+                <p><strong>Roles:</strong> ${rolesSeleccionados.join(', ')}</p>
+                <p class="text-muted small">El usuario podrá iniciar sesión inmediatamente</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, crear usuario',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('formNuevoUsuario').submit();
+            }
+        });
+    }
+</script>
+
+<style>
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: 20px;
+}
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+.card {
+    transition: all 0.2s;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+</style>
+{% endblock %}

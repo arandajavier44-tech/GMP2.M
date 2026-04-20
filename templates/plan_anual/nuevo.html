@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Plan Anual{% endblock %}
+{% block page_title %}Crear Plan Anual de Mantenimiento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>Nuevo Plan Anual
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="año" class="form-label gmp-required">Año *</label>
+                        <select class="form-select" id="año" name="año" required>
+                            <option value="">Seleccionar año...</option>
+                            {% for año in range(2024, 2031) %}
+                            <option value="{{ año }}" {% if año == now.year %}selected{% endif %}>{{ año }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre del Plan</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" 
+                               placeholder="Ej: Plan de Mantenimiento {{ now.year }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('plan_anual.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Crear Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

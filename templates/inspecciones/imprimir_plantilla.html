@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Imprimir Plantilla: {{ plantilla.nombre }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4>
+                <i class="fas fa-print me-2"></i>
+                Plantilla: {{ plantilla.nombre }}
+            </h4>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fas fa-print me-2"></i>Imprimir / Guardar PDF
+                </button>
+                <a href="{{ url_for('inspecciones.ver_plantilla', plantilla_id=plantilla.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario para impresión -->
+<div class="card shadow" id="print-area">
+    <div class="card-header bg-primary text-white">
+        <div class="row">
+            <div class="col-6">
+                <h4 class="mb-0">GMP MAINTENANCE SYSTEM</h4>
+                <small>Sistema de Gestión de Mantenimiento - Industria Farmacéutica</small>
+            </div>
+            <div class="col-6 text-end">
+                <h5>REGISTRO DE INSPECCIÓN GMP</h5>
+                <small>Código: INSP-{{ plantilla.id }}-{{ now.strftime('%Y%m%d') }}</small>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Encabezado del formulario -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <table class="table table-sm table-bordered">
+                    <tr>
+                        <th width="35%">Plantilla:</th>
+                        <td colspan="3">{{ plantilla.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <th>Descripción:</th>
+                        <td colspan="3">{{ plantilla.descripcion or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Frecuencia:</th>
+                        <td>{{ plantilla.frecuencia|capitalize }}</td>
+                        <th>Categoría GMP:</th>
+                        <td>{{ plantilla.categoria_gmp or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Grado GMP:</th>
+                        <td>{{ plantilla.gmp_grade or 'N/A' }}</td>
+                        <th>Tiempo estimado:</th>
+                        <td>{{ plantilla.tiempo_estimado_min or 15 }} minutos</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm table-bordered">
+                    <tr>
+                        <th width="35%">Fecha:</th>
+                        <td>____/____/________</td>
+                    </tr>
+                    <tr>
+                        <th>Hora inicio:</th>
+                        <td>____:____</td>
+                        <th>Hora fin:</th>
+                        <td>____:____</td>
+                    </tr>
+                    <tr>
+                        <th>Inspector:</th>
+                        <td colspan="3">_________________________________</td>
+                    </tr>
+                    <tr>
+                        <th>Equipo/Área:</th>
+                        <td colspan="3">
+                            {% if plantilla.equipo %}
+                                {{ plantilla.equipo.code }} - {{ plantilla.equipo.name }}
+                            {% elif plantilla.area %}
+                                {{ plantilla.area }}
+                            {% else %}
+                                General
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de items -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="items-table">
+                <thead class="table-light">
+                    <tr class="text-center">
+                        <th style="width: 5%">#</th>
+                        <th style="width: 35%">Descripción / Criterio</th>
+                        <th style="width: 15%">Tipo</th>
+                        <th style="width: 15%">Respuesta</th>
+                        <th style="width: 20%">Observación</th>
+                        <th style="width: 10%">Conforme</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="text-center">{{ item.orden }}</td>
+                        <td>
+                            <strong>{{ item.descripcion }}</strong>
+                            {% if item.criterio %}
+                                <br><small class="text-muted">Criterio: {{ item.criterio }}</small>
+                            {% endif %}
+                            {% if item.es_critico %}
+                                <br><span class="badge bg-danger">CRÍTICO</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if item.tipo_respuesta == 'booleano' %}
+                                Sí / No
+                            {% elif item.tipo_respuesta == 'numerico' %}
+                                Numérico
+                            {% elif item.tipo_respuesta == 'texto' %}
+                                Texto
+                            {% elif item.tipo_respuesta == 'rango' %}
+                                Rango ({{ item.valor_minimo or '' }} - {{ item.valor_maximo or '' }} {{ item.unidad or '' }})
+                            {% else %}
+                                {{ item.tipo_respuesta|capitalize }}
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if item.tipo_respuesta == 'booleano' %}
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="item_{{ item.id }}" value="si"> Sí
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="item_{{ item.id }}" value="no"> No
+                                </div>
+                            {% elif item.tipo_respuesta == 'numerico' or item.tipo_respuesta == 'rango' %}
+                                __________ {{ item.unidad or '' }}
+                            {% else %}
+                                ____________________
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="form-group">
+                                <textarea class="form-control" rows="2" style="width: 100%;" 
+                                          placeholder="Observaciones..."></textarea>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox">
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Observaciones generales -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning">
+                        <strong><i class="fas fa-comment me-2"></i>Observaciones Generales</strong>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" rows="4" placeholder="Registrar observaciones generales, desviaciones, hallazgos..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones tomadas -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <strong><i class="fas fa-tasks me-2"></i>Acciones Tomadas / Correctivas</strong>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" rows="3" placeholder="Registrar acciones correctivas o preventivas tomadas..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lotes afectados -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <strong><i class="fas fa-boxes me-2"></i>Lotes / Productos Afectados (si aplica)</strong>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" class="form-control" placeholder="Números de lote afectados por la no conformidad">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Firmas -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="text-center">
+                    <p>_________________________</p>
+                    <p><strong>Firma del Inspector</strong></p>
+                    <p><small>Nombre: _________________</small></p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="text-center">
+                    <p>_________________________</p>
+                    <p><strong>Firma Supervisor Calidad</strong></p>
+                    <p><small>Nombre: _________________</small></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <hr>
+                <div class="text-center text-muted small">
+                    <p>GMP Maintenance System - Documento controlado v1.0</p>
+                    <p>Este documento debe ser archivado en el expediente de calidad por 5 años</p>
+                    <p>Fecha de impresión: {{ now.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style media="print">
+    /* Ocultar elementos no deseados en impresión */
+    .sidebar, .navbar, .breadcrumb, .btn, footer, .card-header .btn, .bg-primary .btn {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background-color: #f8f9fa !important;
+        color: black !important;
+        border: 1px solid #ddd !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .table-bordered {
+        border: 1px solid #ddd !important;
+    }
+    
+    .table-bordered th, .table-bordered td {
+        border: 1px solid #ddd !important;
+    }
+    
+    .form-check-input, .form-control {
+        border: 1px solid #000 !important;
+        background: white !important;
+    }
+    
+    textarea.form-control {
+        border: 1px solid #000 !important;
+        min-height: 60px;
+    }
+    
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+    
+    body {
+        background: white;
+        font-size: 10pt;
+    }
+    
+    .badge {
+        border: 1px solid #000;
+        background: transparent !important;
+        color: black !important;
+    }
+    
+    /* Evitar saltos de página dentro de la tabla */
+    tr, td, th {
+        break-inside: avoid;
+    }
+    
+    .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+</style>
+
+<script>
+    // Ajustar altura de textareas para impresión
+    window.onload = function() {
+        var textareas = document.querySelectorAll('textarea');
+        textareas.forEach(function(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = (ta.scrollHeight) + 'px';
+        });
+    }
+</script>
+{% endblock %}

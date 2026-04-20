@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Asignar Repuestos{% endblock %}
+{% block page_title %}Asignar Repuestos a {{ equipo.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('equipos.gestion_equipos') }}">Equipos</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}">{{ equipo.code }}</a></li>
+                <li class="breadcrumb-item active">Asignar Repuestos</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Formulario de asignación -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-boxes me-2"></i>Asignar Nuevo Repuesto al Equipo
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('equipos.asignar_repuesto', equipo_id=equipo.id) }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="repuesto_id" class="form-label">Repuesto *</label>
+                            <select class="form-select" id="repuesto_id" name="repuesto_id" required>
+                                <option value="">Seleccionar repuesto...</option>
+                                {% for repuesto in repuestos_disponibles %}
+                                <option value="{{ repuesto.id }}" data-stock="{{ repuesto.stock_actual }}">
+                                    {{ repuesto.codigo }} - {{ repuesto.nombre }} (Stock: {{ repuesto.stock_actual }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="cantidad_por_uso" class="form-label">Cantidad por uso</label>
+                            <input type="number" class="form-control" id="cantidad_por_uso" name="cantidad_por_uso" value="1" min="1">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="es_critico" class="form-label">Criticidad</label>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="es_critico" name="es_critico">
+                                <label class="form-check-label" for="es_critico">
+                                    Repuesto Crítico
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Asignar Repuesto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Repuestos ya asignados -->
+        <div class="card shadow">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>Repuestos Asignados Actualmente
+                </h5>
+                <span class="badge bg-light text-dark">{{ equipo.repuestos_asignados|length }} repuestos</span>
+            </div>
+            <div class="card-body">
+                {% if equipo.repuestos_asignados %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Cantidad por uso</th>
+                                    <th>Criticidad</th>
+                                    <th>Stock Actual</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asig in equipo.repuestos_asignados %}
+                                <tr>
+                                    <td><strong>{{ asig.repuesto.codigo }}</strong></td>
+                                    <td>{{ asig.repuesto.nombre }}</td>
+                                    <td>{{ asig.cantidad_por_uso }}</td>
+                                    <td>
+                                        {% if asig.es_critico %}
+                                            <span class="badge bg-danger">Crítico</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Normal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if asig.repuesto.stock_actual <= asig.repuesto.stock_minimo else 'warning' if asig.repuesto.stock_actual <= asig.repuesto.stock_minimo * 2 else 'success' }}">
+                                            {{ asig.repuesto.stock_actual }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('equipos.eliminar_asignacion_repuesto', equipo_id=equipo.id, asignacion_id=asig.id) }}" 
+                                              style="display: inline;" 
+                                              onsubmit="return confirm('¿Eliminar esta asignación?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar asignación">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-3 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No hay repuestos asignados a este equipo
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Información del equipo -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-industry me-2"></i>Información del Equipo
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Código:</th>
+                        <td>{{ equipo.code }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nombre:</th>
+                        <td>{{ equipo.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Clasificación:</th>
+                        <td><span class="badge bg-info">{{ equipo.gmp_classification }}</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Repuestos críticos -->
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Repuestos Críticos
+                </h5>
+            </div>
+            <div class="card-body">
+                {% set criticos = equipo.get_repuestos_criticos() %}
+                {% if criticos %}
+                    <ul class="list-group">
+                        {% for asig in criticos %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ asig.repuesto.codigo }} - {{ asig.repuesto.nombre }}
+                            <span class="badge bg-danger rounded-pill">{{ asig.repuesto.stock_actual }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-center text-muted mb-0">
+                        No hay repuestos críticos
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar alerta si el stock es bajo al seleccionar
+        document.getElementById('repuesto_id').addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            if (selected && selected.dataset.stock) {
+                const stock = parseInt(selected.dataset.stock);
+                if (stock < 10) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Stock Bajo',
+                        text: `Este repuesto tiene solo ${stock} unidades en stock.`,
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

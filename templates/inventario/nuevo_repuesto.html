@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Repuesto{% endblock %}
+{% block page_title %}Nuevo Repuesto - Inventario GMP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-boxes me-2"></i>Registrar Nuevo Repuesto
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <!-- NUEVO CAMPO: Equipo asociado -->
+                        <div class="col-md-6 mb-3">
+                            <label for="equipo_id" class="form-label">Equipo asociado (opcional)</label>
+                            <select class="form-select" id="equipo_id" name="equipo_id">
+                                <option value="">Sin equipo (inventario general)</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Si no selecciona equipo, podrá asignarlo más tarde desde tareas de mantenimiento</small>>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="codigo" class="form-label gmp-required">Código *</label>
+                            <input type="text" class="form-control" id="codigo" name="codigo" required
+                                   placeholder="Ej: REP-001, ROD-123">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label gmp-required">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required
+                                   placeholder="Ej: Rodamiento SKF 6205">
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="categoria" name="categoria">
+                                <option value="">Seleccionar...</option>
+                                <option value="Mecánico">Mecánico</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Neumático">Neumático</option>
+                                <option value="Hidráulico">Hidráulico</option>
+                                <option value="Electrónico">Electrónico</option>
+                                <option value="Instrumentación">Instrumentación</option>
+                                <option value="Sellos">Sellos y Empaques</option>
+                                <option value="Filtros">Filtros</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="ubicacion" class="form-label">Ubicación</label>
+                            <input type="text" class="form-control" id="ubicacion" name="ubicacion"
+                                   placeholder="Ej: Almacén A - Estante 5">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="proveedores" class="form-label">Proveedores</label>
+                            <select class="form-select" id="proveedores" name="proveedores" multiple size="3">
+                                {% for proveedor in proveedores %}
+                                <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Seleccione uno o más proveedores (Ctrl+clic para múltiple)</small>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3 text-primary">Control de Stock</h6>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="stock_actual" class="form-label">Stock Inicial</label>
+                            <input type="number" class="form-control" id="stock_actual" name="stock_actual" value="0" min="0">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="stock_minimo" class="form-label">Stock Mínimo</label>
+                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" value="5" min="0">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="stock_maximo" class="form-label">Stock Máximo</label>
+                            <input type="number" class="form-control" id="stock_maximo" name="stock_maximo" value="50" min="0">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="costo_unitario" class="form-label">Costo Unitario ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="costo_unitario" name="costo_unitario">
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3 text-primary">Especificaciones Técnicas</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="fabricante" class="form-label">Fabricante</label>
+                            <input type="text" class="form-control" id="fabricante" name="fabricante">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="modelo" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="modelo" name="modelo">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="numero_parte" class="form-label">Número de Parte</label>
+                            <input type="text" class="form-control" id="numero_parte" name="numero_parte">
+                        </div>
+                    </div>
+                    
+                    <!-- Detalles por Proveedor -->
+                    <h6 class="mt-4 mb-3 text-primary">Detalles por Proveedor</h6>
+                    <div id="proveedores-detalles" class="row">
+                        <div class="col-12 text-muted">Seleccione al menos un proveedor</div>
+                    </div>
+                    
+                    <h6 class="mt-4 mb-3 text-primary">Trazabilidad GMP</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requiere_trazabilidad" name="requiere_trazabilidad" checked>
+                                <label class="form-check-label" for="requiere_trazabilidad">
+                                    Requiere trazabilidad (lote/vencimiento)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="numero_lote" class="form-label">Número de Lote</label>
+                            <input type="text" class="form-control" id="numero_lote" name="numero_lote">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
+                            <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento">
+                        </div>
+                    </div>
+                    
+                    <hr class="mt-4">
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('inventario.gestion_inventario') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Repuesto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validar que stock_maximo >= stock_minimo
+        document.getElementById('stock_maximo').addEventListener('change', function() {
+            const min = parseInt(document.getElementById('stock_minimo').value) || 0;
+            const max = parseInt(this.value) || 0;
+            
+            if (max < min) {
+                alert('El stock máximo no puede ser menor que el stock mínimo');
+                this.value = min;
+            }
+        });
+        
+        document.getElementById('stock_minimo').addEventListener('change', function() {
+            const max = parseInt(document.getElementById('stock_maximo').value) || 0;
+            const min = parseInt(this.value) || 0;
+            
+            if (max < min) {
+                document.getElementById('stock_maximo').value = min;
+            }
+        });
+
+        // Manejar selección múltiple de proveedores
+        const proveedoresSelect = document.getElementById('proveedores');
+        const detallesContainer = document.getElementById('proveedores-detalles');
+        
+        // Función para actualizar los detalles de proveedores seleccionados
+        function actualizarDetallesProveedores() {
+            const selectedOptions = Array.from(proveedoresSelect.selectedOptions);
+            
+            if (selectedOptions.length === 0) {
+                detallesContainer.innerHTML = '<div class="col-12 text-muted">Seleccione al menos un proveedor</div>';
+                return;
+            }
+            
+            let html = '';
+            selectedOptions.forEach((option, index) => {
+                const proveedorId = option.value;
+                const proveedorNombre = option.text;
+                
+                html += `
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white py-2">
+                                <h6 class="mb-0">${proveedorNombre}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <label class="form-label small">Código del Proveedor</label>
+                                    <input type="text" class="form-control form-control-sm" 
+                                           name="codigo_proveedor_${proveedorId}" 
+                                           placeholder="Código en sistema del proveedor">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Precio Referencia</label>
+                                    <input type="number" step="0.01" class="form-control form-control-sm" 
+                                           name="precio_${proveedorId}" placeholder="0.00">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Plazo entrega (días)</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           name="plazo_${proveedorId}" value="0" min="0">
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" 
+                                           name="proveedor_principal" value="${proveedorId}" 
+                                           ${index === 0 ? 'checked' : ''}>
+                                    <label class="form-check-label small">
+                                        Proveedor principal
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            detallesContainer.innerHTML = html;
+        }
+        
+        proveedoresSelect.addEventListener('change', actualizarDetallesProveedores);
+        
+        // Inicializar si hay opciones preseleccionadas
+        if (proveedoresSelect.selectedOptions.length > 0) {
+            actualizarDetallesProveedores();
+        }
+    });
+</script>
+{% endblock %}

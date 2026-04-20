@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT {{ orden.numero_ot }} - {{ orden.equipo.code }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: white; padding: 20px; font-size: 12px; }
+        .print-container { max-width: 1200px; margin: 0 auto; }
+        .gmp-header { margin-bottom: 30px; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; }
+        .gmp-title { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        .gmp-subtitle { color: #7f8c8d; font-size: 12px; }
+        .document-code { text-align: right; font-size: 11px; color: #7f8c8d; }
+        .card { border: 1px solid #ddd; margin-bottom: 20px; break-inside: avoid; page-break-inside: avoid; }
+        .card-header { background-color: #f0f0f0; padding: 10px 15px; font-weight: bold; border-bottom: 1px solid #ddd; }
+        .card-body { padding: 15px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+        .firmas { margin-top: 40px; display: flex; justify-content: space-between; }
+        .firma-item { width: 30%; text-align: center; }
+        .firma-linea { border-top: 1px solid #000; margin-top: 40px; padding-top: 8px; }
+        .footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; text-align: center; color: #7f8c8d; }
+        .repuesto-row { border-left: 3px solid #ffc107; }
+        @media print {
+            body { padding: 0; margin: 0; }
+            .no-print { display: none; }
+            .card { break-inside: avoid; page-break-inside: avoid; }
+            .badge { border: 1px solid #000; background: none !important; color: #000 !important; }
+            .repuesto-row { border-left: 3px solid #000; }
+        }
+        .print-btn { text-align: center; margin-bottom: 20px; }
+        .btn-print { padding: 10px 20px; background: #2c3e50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn-close { padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-left: 10px; }
+        .alert-gmp-info { background-color: #e7f3ff; border-color: #b8daff; color: #004085; border-radius: 0.5rem; padding: 10px 15px; }
+        .row::after { content: ""; clear: both; display: table; }
+        .col-6 { float: left; width: 48%; margin: 1%; }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <div class="print-btn no-print">
+            <button class="btn-print" onclick="window.print()">🖨️ Imprimir Orden</button>
+            <button class="btn-close" onclick="window.close()">✖ Cerrar</button>
+        </div>
+        
+        <!-- QR Code -->
+        <div class="card">
+            <div class="card-header">Código QR de la Orden</div>
+            <div class="card-body text-center">
+                {% if orden.qr_code %}
+                    <img src="{{ url_for('static', filename=orden.qr_code) }}" alt="QR Code" style="max-width: 120px;">
+                    <p class="small text-muted mt-2">Escanee para ver detalle digital</p>
+                {% else %}
+                    <div style="background: #ffcccc; padding: 15px; border-radius: 5px;">
+                        <p><strong>⚠️ Código QR no generado</strong></p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Encabezado -->
+        <div class="gmp-header">
+            <div style="display: flex; justify-content: space-between;">
+                <div>
+                    <div class="gmp-title">ORDEN DE TRABAJO</div>
+                    <div class="gmp-subtitle">Mantenimiento - Cumplimiento GMP</div>
+                </div>
+                <div class="document-code">
+                    <strong>N° OT:</strong> {{ orden.numero_ot }}<br>
+                    <strong>Fecha:</strong> {{ orden.fecha_creacion.strftime('%d/%m/%Y') }}<br>
+                    <strong>Estado:</strong> {{ orden.estado }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- DATOS DEL EQUIPO -->
+        <div class="card">
+            <div class="card-header">1. DATOS GMP DEL EQUIPO</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <table style="width: 100%;">
+                            <tr><th style="width: 40%;">Código GMP:</th><td><strong>{{ orden.equipo.code }}</strong></td></tr>
+                            <tr><th>Nombre del Equipo:</th><td>{{ orden.equipo.name }}</td></tr>
+                            <tr><th>ID GMP Interno:</th><td>{{ orden.equipo.gmp_id or 'N/E' }}</td></tr>
+                            <tr><th>Clasificación GMP:</th><td><span class="badge">{{ orden.equipo.gmp_classification }}</span></td></tr>
+                            <tr><th>Contacto con Producto:</th><td>{{ orden.equipo.product_contact }}</span></td>
+                            <tr><th>Nivel de Limpieza:</th><td>{{ orden.equipo.cleaning_level or 'N/E' }}</span></td>
+                            <tr><th>Área de Producción:</th><td>{{ orden.equipo.production_area or 'N/E' }}</span></td>
+                        </table>
+                    </div>
+                    <div class="col-6">
+                        <table style="width: 100%;">
+                            <tr><th>Ubicación Física:</th><td>{{ orden.equipo.location or 'N/E' }}</span></td>
+                            <tr><th>Sala/Número:</th><td>{{ orden.equipo.room_number or 'N/E' }}</span></span></td>
+                            <tr><th>Fabricante:</th><td>{{ orden.equipo.manufacturer or 'N/E' }}</span></span></td>
+                            <tr><th>Modelo:</th><td>{{ orden.equipo.model or 'N/E' }}</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> </span></span></td>
+                            <tr><th>N° Serie:</th><td>{{ orden.equipo.serial_number or 'N/E' }}</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> </span></span></td>
+                            <tr><th>Estado Validación:</th><td>{{ orden.equipo.validation_status or 'No Validado' }}{% if orden.equipo.validation_date %}<br><small>({{ orden.equipo.validation_date.strftime('%d/%m/%Y') }})</small>{% endif %}</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> </span></span></td>
+                            <tr><th>Próxima Validación:</th><td>{{ orden.equipo.next_validation.strftime('%d/%m/%Y') if orden.equipo.next_validation else 'N/E' }}</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span> </span></span></td>
+                        </table>
+                    </div>
+                </div>
+                <div style="clear: both;"></div>
+                <div class="mt-3">
+                    <div class="alert-gmp-info">
+                        <strong>Documentación GMP Asociada:</strong><br>
+                        SOP Operación: {{ orden.equipo.sop_number or 'N/E' }} | 
+                        SOP Mantenimiento: {{ orden.equipo.maintenance_sop or 'N/E' }} | 
+                        SOP Limpieza: {{ orden.equipo.cleaning_sop or 'N/E' }} | 
+                        SOP Calibración: {{ orden.equipo.calibration_sop or 'N/E' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DESCRIPCIÓN DE LA ORDEN -->
+        <div class="card">
+            <div class="card-header">2. DESCRIPCIÓN DE LA ORDEN</div>
+            <div class="card-body">
+                <p><strong>Título:</strong> {{ orden.titulo }}</p>
+                
+                <!-- Tareas Programadas -->
+                {% if orden.tipo == 'Preventivo' and orden.tareas_seleccionadas %}
+                <div class="mt-3">
+                    <strong>Tareas Programadas:</strong>
+                    <ul>
+                        {% for tarea in orden.tareas_seleccionadas %}
+                        <li>☐ {{ tarea.descripcion }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- REPUESTOS CRÍTICOS - CORREGIDO -->
+                {% if orden.tipo == 'Preventivo' and orden.tareas_seleccionadas %}
+                    <div class="mt-3">
+                        <strong><i class="fas fa-boxes"></i> Repuestos Críticos Requeridos:</strong>
+                        <table style="margin-top: 10px; width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 35%; border: 1px solid #ddd; padding: 8px; background-color: #f8f9fa;">Tarea</th>
+                                    <th style="width: 15%; border: 1px solid #ddd; padding: 8px; background-color: #f8f9fa;">Código</th>
+                                    <th style="width: 30%; border: 1px solid #ddd; padding: 8px; background-color: #f8f9fa;">Repuesto</th>
+                                    <th style="width: 10%; border: 1px solid #ddd; padding: 8px; background-color: #f8f9fa; text-align: center;">Cantidad</th>
+                                    <th style="width: 10%; border: 1px solid #ddd; padding: 8px; background-color: #f8f9fa; text-align: center;">¿Se utilizó?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tarea in orden.tareas_seleccionadas %}
+                                    {% if tarea.repuestos and tarea.repuestos|length > 0 %}
+                                        {% for rep in tarea.repuestos %}
+                                        <tr class="repuesto-row">
+                                            <td>{{ tarea.descripcion[:50] }}{% if tarea.descripcion|length > 50 %}...{% endif %}</span>
+                                            <td><strong>{{ rep.codigo }}</strong></span>
+                                            <td>{{ rep.nombre }}</span>
+                                            <td style="text-align: center;">{{ rep.cantidad_requerida }}</span>
+                                            <td style="text-align: center;">
+                                                <span style="display: inline-block; width: 18px; height: 18px; border: 1px solid #333; margin-right: 5px;"></span>
+                                                <span style="display: inline-block; width: 18px; height: 18px; border: 1px solid #333; margin: 0 5px;"></span>
+                                                <span style="font-size: 10px;">No / Sí</span>
+                                            </span>
+                                          </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <div class="mt-2"><strong>Observaciones sobre repuestos:</strong> _________________________________</div>
+                    </div>
+                {% endif %}
+                
+                {% if orden.tipo == 'Correctivo' %}
+                <div class="mt-3"><strong>Falla Reportada:</strong> {{ orden.falla_reportada or '_________________________________' }}</div>
+                <div class="row mt-2">
+                    <div class="col-6"><strong>Síntomas:</strong> {{ orden.sintomas or '_________________' }}</div>
+                    <div class="col-6"><strong>Causa probable:</strong> {{ orden.causa_probable or '_________________' }}</div>
+                </div>
+                <div class="mt-3"><strong>Diagnóstico y Acciones Realizadas:</strong><br>_________________________________<br>_________________________________<br>_________________________________</div>
+                {% endif %}
+                
+                {% if orden.tipo == 'Servicio' %}
+                <div><strong>Solicitante:</strong> {{ orden.solicitante or '_________________' }}</div>
+                <div><strong>Sector:</strong> {{ orden.sector or '_________________' }}</div>
+                <div class="mt-2"><strong>Servicio Solicitado:</strong> {{ orden.descripcion or '_________________________________________________________________' }}</div>
+                {% endif %}
+                
+                <div class="mt-3"><strong>Observaciones:</strong> _________________________________</div>
+            </div>
+        </div>
+        
+        <!-- OTROS REPUESTOS -->
+        <div class="card">
+            <div class="card-header">3. REGISTRO DE OTROS REPUESTOS UTILIZADOS</div>
+            <div class="card-body">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 15%">Código</th>
+                            <th style="width: 30%">Descripción</th>
+                            <th style="width: 10%">Cantidad</th>
+                            <th style="width: 20%">N° Lote</th>
+                            <th style="width: 10%">Verificado</th>
+                            <th style="width: 10%">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="text-align:center">1</td><td>__________</td><td>__________</td><td>___</td><td>___________</td><td style="text-align:center">☐</td><td style="text-align:center">☐ Reemplazado<br>☐ Inspección</td></tr>
+                        <tr><td style="text-align:center">2</td><td>__________</td><td>__________</td><td>___</td><td>___________</td><td style="text-align:center">☐</td><td style="text-align:center">☐ Reemplazado<br>☐ Inspección</td></tr>
+                        <tr><td style="text-align:center">3</td><td>__________</td><td>__________</td><td>___</td><td>___________</td><td style="text-align:center">☐</td><td style="text-align:center">☐ Reemplazado<br>☐ Inspección</td></tr>
+                        <tr><td style="text-align:center">4</td><td>__________</td><td>__________</td><td>___</td><td>___________</td><td style="text-align:center">☐</td><td style="text-align:center">☐ Reemplazado<br>☐ Inspección</td></tr>
+                        <tr><td style="text-align:center">5</td><td>__________</td><td>__________</td><td>___</td><td>___________</td><td style="text-align:center">☐</td><td style="text-align:center">☐ Reemplazado<br>☐ Inspección</td></tr>
+                    </tbody>
+                </table>
+                <div class="mt-2"><strong>Observaciones sobre repuestos adicionales:</strong> _________________________________________________________________</div>
+            </div>
+        </div>
+        
+        <!-- RESULTADO -->
+        <div class="card">
+            <div class="card-header">4. RESULTADO Y OBSERVACIONES</div>
+            <div class="card-body">
+                <div><strong>Resultado de la intervención:</strong></div>
+                <div class="mt-1">☐ Solucionado completamente</div>
+                <div>☐ Solucionado parcialmente</div>
+                <div>☐ No solucionado - requiere seguimiento</div>
+                <div>☐ Desvío - requiere CAPA</div>
+                <div class="mt-3"><strong>Tiempo de ejecución:</strong> _____ horas _____ minutos</div>
+                <div class="mt-3"><strong>Observaciones y recomendaciones:</strong><br>_________________________________________________________________<br>_________________________________________________________________<br>_________________________________________________________________</div>
+            </div>
+        </div>
+        
+        <!-- FIRMAS -->
+        <div class="card">
+            <div class="card-header">5. FIRMAS Y APROBACIONES GMP</div>
+            <div class="card-body">
+                <div class="firmas">
+                    <div class="firma-item">
+                        <div class="firma-linea"></div>
+                        <strong>TÉCNICO DE MANTENIMIENTO</strong>
+                        <div>Nombre: _________________________</div>
+                        <div>Fecha: ____/____/______</div>
+                    </div>
+                    <div class="firma-item">
+                        <div class="firma-linea"></div>
+                        <strong>SUPERVISOR DE MANTENIMIENTO</strong>
+                        <div>Nombre: _________________________</div>
+                        <div>Fecha: ____/____/______</div>
+                    </div>
+                    <div class="firma-item">
+                        <div class="firma-linea"></div>
+                        <strong>CONTROL DE CALIDAD</strong>
+                        <div>Nombre: _________________________</div>
+                        <div>Fecha: ____/____/______</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div>☐ ¿Esta situación requiere apertura de CAPA?</div>
+                    <div class="mt-2"><strong>Motivo de la CAPA:</strong><br>_________________________________________________________________</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- INFORMACIÓN ADICIONAL -->
+        <div class="card">
+            <div class="card-header">6. INFORMACIÓN ADICIONAL</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6"><strong>Fecha estimada:</strong> {{ orden.fecha_estimada.strftime('%d/%m/%Y') if orden.fecha_estimada else '___/___/______' }}</div>
+                    <div class="col-6"><strong>Tiempo estimado:</strong> {{ orden.tiempo_estimado or '_____' }} horas</div>
+                </div>
+                <hr>
+                <div><strong>Observaciones generales:</strong><br>_________________________________________________________________<br>_________________________________________________________________</div>
+            </div>
+        </div>
+        
+        <!-- Pie -->
+        <div class="footer">
+            <p>Documento generado el {{ orden.fecha_creacion.strftime('%d/%m/%Y %H:%M') if orden.fecha_creacion else now.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+</body>
+</html>

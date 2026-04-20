@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}Expedientes por Equipo{% endblock %}
+{% block page_title %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <i class="fas fa-folder-tree me-2"></i>Expedientes de Equipos GMP
+    </div>
+    <div>
+        <input type="text" id="buscadorEquipos" class="form-control" placeholder="🔍 Buscar equipo..." style="width: 280px;">
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('documentacion.index') }}">Documentación GMP</a></li>
+                <li class="breadcrumb-item active">Expedientes por Equipo</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Resumen rápido -->
+<div class="row mb-4" id="resumenEquipos">
+    <div class="col-md-3 mb-2">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body text-center">
+                <h3>{{ equipos_docs|length }}</h3>
+                <small>Equipos registrados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body text-center">
+                <h3>{{ equipos_docs|sum(attribute='total_documentos') }}</h3>
+                <small>Documentos totales</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card bg-info text-white shadow">
+            <div class="card-body text-center">
+                <h3>{{ equipos_docs|selectattr('estado_color', 'equalto', 'green')|list|length }}</h3>
+                <small>Equipos Operativos</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card bg-warning text-dark shadow">
+            <div class="card-body text-center">
+                <h3>{{ equipos_docs|selectattr('estado_color', 'equalto', 'yellow')|list|length }}</h3>
+                <small>En Mantenimiento</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acordeón de equipos -->
+<div id="accordionEquipos" class="accordion">
+    {% for item in equipos_docs %}
+    {% set equipo = item.equipo %}
+    {% set docs = item.documentos %}
+    {% set total_docs = item.total_documentos %}
+    {% set riesgos = item.riesgos %}
+    
+    <div class="accordion-item equipo-item mb-3 border rounded shadow-sm" data-equipo-nombre="{{ equipo.code }} {{ equipo.name }} {{ equipo.location }}">
+        <h2 class="accordion-header" id="heading{{ equipo.id }}">
+            <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#collapse{{ equipo.id }}" 
+                    aria-expanded="{% if loop.first %}true{% else %}false{% endif %}" 
+                    aria-controls="collapse{{ equipo.id }}">
+                <div class="d-flex justify-content-between align-items-center w-100 me-3 flex-wrap">
+                    <div>
+                        <i class="fas fa-microchip me-2"></i>
+                        <strong>{{ equipo.code }}</strong> - {{ equipo.name }}
+                        <span class="badge bg-{{ 'success' if equipo.current_status == 'Operativo' else 'warning' if equipo.current_status == 'En Mantenimiento' else 'danger' }} ms-2">
+                            {{ equipo.current_status }}
+                        </span>
+                    </div>
+                    <div class="mt-1 mt-sm-0">
+                        <span class="badge bg-primary rounded-pill me-2">
+                            <i class="fas fa-file-alt me-1"></i>{{ total_docs }} docs
+                        </span>
+                        <span class="badge bg-{{ 'danger' if riesgos|length > 0 else 'secondary' }} rounded-pill">
+                            <i class="fas fa-exclamation-triangle me-1"></i>{{ riesgos|length }} riesgos
+                        </span>
+                    </div>
+                </div>
+            </button>
+        </h2>
+        <div id="collapse{{ equipo.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+             aria-labelledby="heading{{ equipo.id }}" data-bs-parent="#accordionEquipos">
+            <div class="accordion-body bg-light">
+                <!-- Información del equipo -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <i class="fas fa-info-circle me-2"></i>Información del Equipo
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-bordered">
+                                    <tr><th width="35%">Código GMP:</th><td>{{ equipo.code }}</td></tr>
+                                    <tr><th>Nombre:</th><td>{{ equipo.name }}</td></tr>
+                                    <tr><th>Clasificación GMP:</th><td>{{ equipo.gmp_classification }}</td></tr>
+                                    <tr><th>Ubicación:</th><td>{{ equipo.location or 'N/E' }}</td></tr>
+                                    <tr><th>Área:</th><td>{{ equipo.production_area or 'N/E' }}</td></tr>
+                                    <tr><th>Fabricante:</th><td>{{ equipo.manufacturer or 'N/E' }}</td></tr>
+                                    <tr><th>Modelo/Serie:</th><td>{{ equipo.model or 'N/E' }} / {{ equipo.serial_number or 'N/E' }}</td></tr>
+                                    <tr><th>Fecha Instalación:</th><td>{{ equipo.installation_date.strftime('%d/%m/%Y') if equipo.installation_date else 'N/E' }}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <i class="fas fa-chart-line me-2"></i>Estadísticas Rápidas
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <h4 class="text-primary">{{ docs.sop|length + docs.sop_mantenimiento|length + docs.sop_calibracion|length + docs.sop_limpieza|length }}</h4>
+                                            <small>SOPs</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <h4 class="text-success">{{ docs.ficha|length + docs.reporte|length }}</h4>
+                                            <small>Fichas/Reportes</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <h4 class="text-info">{{ docs.protocolo|length + docs.certificado|length }}</h4>
+                                            <small>Validaciones</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="text-center">
+                                    <a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>Ver ficha completa
+                                    </a>
+                                    <a href="{{ url_for('equipos.imprimir_ficha', equipo_id=equipo.id) }}" class="btn btn-sm btn-outline-secondary" target="_blank">
+                                        <i class="fas fa-print me-1"></i>Imprimir ficha
+                                    </a>
+                                    <a href="{{ url_for('documentacion.index') }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-plus me-1"></i>Generar documento
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentación organizada por carpetas -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white">
+                                <i class="fas fa-folder-open me-2"></i>Documentación GMP
+                            </div>
+                            <div class="card-body">
+                                
+                                <!-- SOPs -->
+                                {% if docs.sop or docs.sop_mantenimiento or docs.sop_calibracion or docs.sop_limpieza %}
+                                <div class="mb-4">
+                                    <h6 class="text-primary border-bottom pb-2">
+                                        <i class="fas fa-file-alt me-2"></i>Procedimientos Operativos (SOPs)
+                                        <span class="badge bg-primary ms-2">{{ docs.sop|length + docs.sop_mantenimiento|length + docs.sop_calibracion|length + docs.sop_limpieza|length }}</span>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Código</th>
+                                                    <th>Título</th>
+                                                    <th>Tipo</th>
+                                                    <th>Versión</th>
+                                                    <th>Fecha</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for doc in docs.sop %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-primary">SOP General</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% for doc in docs.sop_mantenimiento %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-success">SOP Mantenimiento</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% for doc in docs.sop_calibracion %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-info">SOP Calibración</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% for doc in docs.sop_limpieza %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-warning text-dark">SOP Limpieza</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Fichas Técnicas y Reportes -->
+                                {% if docs.ficha or docs.reporte %}
+                                <div class="mb-4">
+                                    <h6 class="text-success border-bottom pb-2">
+                                        <i class="fas fa-industry me-2"></i>Fichas Técnicas y Reportes
+                                        <span class="badge bg-success ms-2">{{ docs.ficha|length + docs.reporte|length }}</span>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Código</th>
+                                                    <th>Título</th>
+                                                    <th>Tipo</th>
+                                                    <th>Versión</th>
+                                                    <th>Fecha</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for doc in docs.ficha %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-secondary">Ficha Técnica</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% for doc in docs.reporte %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-danger">Reporte Mantenimiento</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Validaciones y Certificados -->
+                                {% if docs.protocolo or docs.certificado %}
+                                <div class="mb-4">
+                                    <h6 class="text-info border-bottom pb-2">
+                                        <i class="fas fa-flask me-2"></i>Validaciones y Certificados
+                                        <span class="badge bg-info ms-2">{{ docs.protocolo|length + docs.certificado|length }}</span>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Código</th>
+                                                    <th>Título</th>
+                                                    <th>Tipo</th>
+                                                    <th>Subtipo</th>
+                                                    <th>Versión</th>
+                                                    <th>Fecha</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for doc in docs.protocolo %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:50] }}{% if doc.titulo|length > 50 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-primary">Protocolo</span></td>
+                                                    <td><span class="badge bg-dark">{{ doc.subtipo|upper }}</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% for doc in docs.certificado %}
+                                                <tr>
+                                                    <td><code>{{ doc.codigo }}</code></td>
+                                                    <td>{{ doc.titulo[:50] }}{% if doc.titulo|length > 50 %}...{% endif %}</td>
+                                                    <td><span class="badge bg-success">Certificado</span></td>
+                                                    <td><span class="badge bg-dark">Calibración</span></td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td><span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">{{ doc.estado }}</span></td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Matriz de Riesgos -->
+                                {% if riesgos %}
+                                <div class="mb-4">
+                                    <h6 class="text-danger border-bottom pb-2">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Matriz de Riesgos
+                                        <span class="badge bg-danger ms-2">{{ riesgos|length }}</span>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Riesgo Identificado</th>
+                                                    <th>Probabilidad</th>
+                                                    <th>Severidad</th>
+                                                    <th>Nivel</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for riesgo in riesgos %}
+                                                <tr>
+                                                    <td><code>R-{{ riesgo.id }}</code></td>
+                                                    <td>{{ riesgo.descripcion[:50] }}{% if riesgo.descripcion|length > 50 %}...{% endif %}</td>
+                                                    <td>{{ riesgo.probabilidad }}</td>
+                                                    <td>{{ riesgo.severidad }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ 'danger' if riesgo.nivel_riesgo == 'Alto' else 'warning' if riesgo.nivel_riesgo == 'Medio' else 'success' }}">
+                                                            {{ riesgo.nivel_riesgo }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ riesgo.estado }}</td>
+                                                    <td>
+                                                        <a href="{{ url_for('riesgos.ver_riesgo', riesgo_id=riesgo.id) }}" class="btn btn-sm btn-outline-info">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Mensaje si no hay documentación -->
+                                {% if total_docs == 0 and riesgos|length == 0 %}
+                                <div class="alert alert-warning text-center">
+                                    <i class="fas fa-folder-open fa-2x mb-2 d-block"></i>
+                                    <p>No hay documentación generada para este equipo.</p>
+                                    <a href="{{ url_for('documentacion.index') }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus me-1"></i>Generar documentación
+                                    </a>
+                                </div>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+.accordion-button .badge {
+    font-size: 0.75rem;
+}
+.accordion-item {
+    border-radius: 8px;
+    overflow: hidden;
+}
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+    vertical-align: middle;
+}
+#buscadorEquipos {
+    border-radius: 20px;
+    padding: 8px 15px;
+}
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-2px);
+}
+</style>
+
+<script>
+    // Buscador de equipos
+    document.getElementById('buscadorEquipos').addEventListener('keyup', function() {
+        const searchTerm = this.value.toLowerCase();
+        const equipos = document.querySelectorAll('.equipo-item');
+        
+        equipos.forEach(equipo => {
+            const nombreEquipo = equipo.getAttribute('data-equipo-nombre').toLowerCase();
+            if (nombreEquipo.includes(searchTerm)) {
+                equipo.style.display = '';
+            } else {
+                equipo.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

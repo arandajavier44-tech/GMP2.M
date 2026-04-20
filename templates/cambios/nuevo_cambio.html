@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Cambio - GMP{% endblock %}
+{% block page_title %}Solicitud de Cambio - Control GMP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>Nueva Solicitud de Cambio - Normas GMP
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formNuevoCambio">
+                    
+                    <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Información Básica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label for="titulo" class="form-label gmp-required">Título del Cambio *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required
+                                   placeholder="Ej: Modificación en sistema de refrigeración">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="tipo" class="form-label gmp-required">Tipo de Cambio *</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Equipo">Equipo</option>
+                                <option value="Proceso">Proceso</option>
+                                <option value="Documentación">Documentación</option>
+                                <option value="Instalación">Instalación</option>
+                                <option value="Proveedor">Proveedor</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="descripcion" class="form-label gmp-required">Descripción General *</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required
+                                      placeholder="Describa el cambio de manera general..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: CLASIFICACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-clipboard-check me-2"></i>
+                                Clasificación GMP e Impacto
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="clasificacion_gmp" class="form-label gmp-required">Clasificación GMP *</label>
+                            <select class="form-select" id="clasificacion_gmp" name="cllasificacion_gmp" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Crítico">Crítico (Afecta calidad producto)</option>
+                                <option value="Importante">Importante (Afecta proceso)</option>
+                                <option value="Menor">Menor (No afecta calidad)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="impacto_calidad" class="form-label gmp-required">Impacto en Calidad *</label>
+                            <select class="form-select" id="impacto_calidad" name="impacto_calidad" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Alto">Alto</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Bajo">Bajo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="impacto_validacion" class="form-label">Impacto en Validación</label>
+                            <select class="form-select" id="impacto_validacion" name="impacto_validacion">
+                                <option value="No Requiere">No requiere revalidación</option>
+                                <option value="Requiere Revalidación">Requiere revalidación</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: RELACIONES (OPCIONAL) -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-link me-2"></i>
+                                Relaciones (Opcional)
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="equipo_id" class="form-label">Equipo relacionado</label>
+                            <select class="form-select" id="equipo_id" name="equipo_id">
+                                <option value="">Seleccionar equipo...</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="sistema_id" class="form-label">Sistema relacionado</label>
+                            <select class="form-select" id="sistema_id" name="sistema_id" disabled>
+                                <option value="">Primero seleccione un equipo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="orden_trabajo_id" class="form-label">Orden de Trabajo</label>
+                            <select class="form-select" id="orden_trabajo_id" name="orden_trabajo_id">
+                                <option value="">Seleccionar orden...</option>
+                                {% for orden in ordenes %}
+                                <option value="{{ orden.id }}">{{ orden.numero_ot }} - {{ orden.titulo[:30] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: SOLICITANTE -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-user me-2"></i>
+                                Solicitante
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="departamento" class="form-label gmp-required">Departamento *</label>
+                            <input type="text" class="form-control" id="departamento" name="departamento" required
+                                   value="{{ session.get('departamento', '') }}" placeholder="Ej: Mantenimiento, Calidad, Producción">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: JUSTIFICACIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-question-circle me-2"></i>
+                                Justificación del Cambio
+                            </h5>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="motivo" class="form-label gmp-required">Motivo del Cambio *</label>
+                            <textarea class="form-control" id="motivo" name="motivo" rows="3" required
+                                      placeholder="¿Por qué es necesario este cambio?"></textarea>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="beneficio" class="form-label">Beneficio esperado</label>
+                            <textarea class="form-control" id="beneficio" name="beneficio" rows="2"
+                                      placeholder="¿Qué beneficios se esperan obtener?"></textarea>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="riesgo" class="form-label">Análisis de Riesgo</label>
+                            <textarea class="form-control" id="riesgo" name="riesgo" rows="3"
+                                      placeholder="Describa los riesgos potenciales y medidas de mitigación"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: DETALLE DEL CAMBIO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-pencil-alt me-2"></i>
+                                Detalle del Cambio
+                            </h5>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="estado_actual" class="form-label">Estado Actual</label>
+                            <textarea class="form-control" id="estado_actual" name="estado_actual" rows="2"
+                                      placeholder="Describa la situación actual"></textarea>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="cambio_propuesto" class="form-label">Cambio Propuesto</label>
+                            <textarea class="form-control" id="cambio_propuesto" name="cambio_propuesto" rows="3"
+                                      placeholder="Describa en detalle el cambio propuesto"></textarea>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="estado_nuevo" class="form-label">Estado Después del Cambio</label>
+                            <textarea class="form-control" id="estado_nuevo" name="estado_nuevo" rows="2"
+                                      placeholder="Describa cómo quedará después del cambio"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 7: DOCUMENTACIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Documentación
+                            </h5>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="documentos_afectados" class="form-label">Documentos Afectados</label>
+                            <textarea class="form-control" id="documentos_afectados" name="documentos_afectados" rows="2"
+                                      placeholder="Ej: SOP-001, Manual de operación, Especificación técnica..."></textarea>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="nuevos_documentos" class="form-label">Nuevos Documentos Requeridos</label>
+                            <textarea class="form-control" id="nuevos_documentos" name="nuevos_documentos" rows="2"
+                                      placeholder="Lista de nuevos documentos a crear"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 8: VALIDACIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-flask me-2"></i>
+                                Validación
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requiere_validacion" name="requiere_validacion" checked>
+                                <label class="form-check-label" for="requiere_validacion">
+                                    Este cambio requiere validación
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3" id="plan_validacion_container">
+                            <label for="plan_validacion" class="form-label">Plan de Validación</label>
+                            <textarea class="form-control" id="plan_validacion" name="plan_validacion" rows="3"
+                                      placeholder="Describa el plan de validación requerido"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 9: FIRMA GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-signature me-2"></i>Certificación GMP
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="gmp_compliance" name="gmp_compliance" required>
+                                        <label class="form-check-label" for="gmp_compliance">
+                                            <i class="fas fa-check-double me-1"></i>
+                                            Certifico que la información proporcionada es correcta y el cambio será gestionado según las normas GMP *
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('cambios.gestion_cambios') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Crear Solicitud
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cargar sistemas cuando se selecciona un equipo
+        document.getElementById('equipo_id').addEventListener('change', function() {
+            const equipoId = this.value;
+            const sistemaSelect = document.getElementById('sistema_id');
+            
+            if (equipoId) {
+                fetch(`/cambios/api/sistemas-por-equipo/${equipoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        sistemaSelect.innerHTML = '<option value="">Seleccionar sistema...</option>';
+                        data.forEach(s => {
+                            sistemaSelect.innerHTML += `<option value="${s.id}">${s.nombre} (${s.categoria})</option>`;
+                        });
+                        sistemaSelect.disabled = false;
+                    });
+            } else {
+                sistemaSelect.innerHTML = '<option value="">Primero seleccione un equipo</option>';
+                sistemaSelect.disabled = true;
+            }
+        });
+
+        // Mostrar/ocultar plan de validación
+        document.getElementById('requiere_validacion').addEventListener('change', function() {
+            document.getElementById('plan_validacion_container').style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Validación antes de enviar
+        document.getElementById('formNuevoCambio').addEventListener('submit', function(e) {
+            const titulo = document.getElementById('titulo').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const tipo = document.getElementById('tipo').value;
+            const clasificacion = document.getElementById('clasificacion_gmp').value;
+            const impacto = document.getElementById('impacto_calidad').value;
+            const motivo = document.getElementById('motivo').value;
+            const departamento = document.getElementById('departamento').value;
+            const compliance = document.getElementById('gmp_compliance').checked;
+            
+            let errores = [];
+            if (!titulo) errores.push('Título');
+            if (!descripcion) errores.push('Descripción');
+            if (!tipo) errores.push('Tipo de cambio');
+            if (!clasificacion) errores.push('Clasificación GMP');
+            if (!impacto) errores.push('Impacto en calidad');
+            if (!motivo) errores.push('Motivo');
+            if (!departamento) errores.push('Departamento');
+            if (!compliance) errores.push('Certificación GMP');
+            
+            if (errores.length > 0) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos requeridos',
+                    html: `Faltan: <strong>${errores.join(', ')}</strong>`
+                });
+            }
+        });
+    });
+</script>
+
+<style>
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: 20px;
+}
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Matriz de Riesgos{% endblock %}
+{% block page_title %}Nueva Matriz de Riesgos - Análisis GMP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Crear Nueva Matriz de Riesgos
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formMatriz">
+                    
+                    <!-- Sección 1: Información Básica -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold border-bottom pb-2">Información General</h6>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label gmp-required">Nombre de la Matriz *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required
+                                   placeholder="Ej: Análisis de Riesgos - Autoclave">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="version" class="form-label">Versión</label>
+                            <input type="text" class="form-control" id="version" name="version" value="1.0">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="equipo_id" class="form-label">Equipo</label>
+                            <select class="form-select" id="equipo_id" name="equipo_id">
+                                <option value="">Seleccionar equipo (opcional)</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="area" class="form-label">Área</label>
+                            <input type="text" class="form-control" id="area" name="area" 
+                                   placeholder="Ej: Producción, Mantenimiento">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="proceso" class="form-label">Proceso</label>
+                            <input type="text" class="form-control" id="proceso" name="proceso"
+                                   placeholder="Ej: Esterilización">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="metodologia" class="form-label">Metodología</label>
+                            <select class="form-select" id="metodologia" name="metodologia">
+                                <option value="FMEA">FMEA (Análisis de Modo y Efecto de Falla)</option>
+                                <option value="HAZOP">HAZOP (Análisis de Peligros y Operabilidad)</option>
+                                <option value="What-If">What-If (Qué pasa si...)</option>
+                                <option value="PHA">PHA (Análisis Preliminar de Peligros)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_revision" class="form-label">Fecha de Revisión</label>
+                            <input type="date" class="form-control" id="fecha_revision" name="fecha_revision"
+                                   value="{{ now.strftime('%Y-%m-%d') }}">
+                        </div>
+                    </div>
+
+                    <!-- Sección 2: Responsables -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold border-bottom pb-2">Responsables</h6>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="elaborado_por" class="form-label">Elaborado por</label>
+                            <input type="text" class="form-control" id="elaborado_por" name="elaborado_por"
+                                   value="{{ session.nombre_completo or session.username }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="revisado_por" class="form-label">Revisado por</label>
+                            <input type="text" class="form-control" id="revisado_por" name="revisado_por"
+                                   placeholder="Nombre del revisor">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="aprobado_por" class="form-label">Aprobado por</label>
+                            <input type="text" class="form-control" id="aprobado_por" name="aprobado_por"
+                                   placeholder="Nombre del aprobador">
+                        </div>
+                    </div>
+
+                    <!-- Sección 3: Escalas de Evaluación -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold border-bottom pb-2">Escalas de Evaluación</h6>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Defina las escalas para calcular el NPR (Número Prioritario de Riesgo)
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Severidad</label>
+                            <div class="small text-muted mb-2">1: Insignificante - 5: Catastrófico</div>
+                            <div class="d-flex gap-2">
+                                <input type="number" class="form-control" id="sev_min" value="1" min="1" max="5" readonly disabled style="width: 70px;">
+                                <span class="mt-2">a</span>
+                                <input type="number" class="form-control" id="sev_max" value="5" min="1" max="5" readonly disabled style="width: 70px;">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Ocurrencia</label>
+                            <div class="small text-muted mb-2">1: Improbable - 5: Frecuente</div>
+                            <div class="d-flex gap-2">
+                                <input type="number" class="form-control" value="1" readonly disabled style="width: 70px;">
+                                <span class="mt-2">a</span>
+                                <input type="number" class="form-control" value="5" readonly disabled style="width: 70px;">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Detectabilidad</label>
+                            <div class="small text-muted mb-2">1: Siempre detectable - 5: Imposible detectar</div>
+                            <div class="d-flex gap-2">
+                                <input type="number" class="form-control" value="1" readonly disabled style="width: 70px;">
+                                <span class="mt-2">a</span>
+                                <input type="number" class="form-control" value="5" readonly disabled style="width: 70px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección 4: Botones -->
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('riesgos.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-save me-2"></i>Crear Matriz
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('formMatriz').addEventListener('submit', function(e) {
+        const nombre = document.getElementById('nombre').value.trim();
+        
+        if (!nombre) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Nombre requerido',
+                text: 'Debe ingresar un nombre para la matriz'
+            });
+            return;
+        }
+        
+        Swal.fire({
+            title: '¿Crear matriz?',
+            text: 'Se creará una nueva matriz de riesgos. Luego podrá agregar los riesgos específicos.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, crear',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+
+<style>
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

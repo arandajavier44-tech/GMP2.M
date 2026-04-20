@@ -1,0 +1,16 @@
+{
+  "code": "GMP-PR-COM-002",
+  "name": "Zanches",
+  "gmp_classification": "Calificado",
+  "current_status": "Operativo",
+  "ubicacion": "Comprensión ",
+  "manufacturer": "Zanches Heavy Equipment",
+  "model": " ZX-5001",
+  "metadata": {
+    "tipo": "equipo",
+    "fecha_generacion": "2026-04-07T19:59:01.537430",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/equipos/3"
+}

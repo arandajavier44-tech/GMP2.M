@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - GMP{% endblock %}
+{% block page_title %}Gestión de Usuarios y Roles{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4><i class="fas fa-users-cog me-2"></i>Listado de Usuarios</h4>
+        <a href="{{ url_for('usuarios.nuevo_usuario') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+        </a>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Usuarios</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ usuarios|length }}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Activos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_activos }}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-check-circle fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Mantenimiento</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tecnico }}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-tools fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Supervisores</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_supervisor }}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-user-tie fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- USUARIOS AGRUPADOS POR SECTOR - VERSIÓN SIMPLIFICADA -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-building me-2"></i>Usuarios por Sector</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="accordionUsuarios">
+                    
+                    <!-- Mantenimiento -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingMantenimiento">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMantenimiento">
+                                <i class="fas fa-tools me-2 text-primary"></i>
+                                <strong>Mantenimiento</strong>
+                                <span class="badge bg-primary ms-2">{{ usuarios|selectattr('area_principal', 'equalto', 'mantenimiento')|list|length }}</span>
+                            </button>
+                        </h2>
+                        <div id="collapseMantenimiento" class="accordion-collapse collapse show" data-bs-parent="#accordionUsuarios">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Usuario</th>
+                                                <th>Nombre</th>
+                                                <th>Email</th>
+                                                <th>Nivel</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for u in usuarios %}
+                                                {% if u.area_principal == 'mantenimiento' %}
+                                                <tr>
+                                                    <td><strong>{{ u.username }}</strong></td>
+                                                    <td>{{ u.nombre_completo or 'N/A' }}</td>
+                                                    <td>{{ u.email }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ 'danger' if u.nivel_jerarquico == 'jefe' else 'warning' if u.nivel_jerarquico == 'supervisor' else 'primary' }}">
+                                                            {{ u.nivel_jerarquico|capitalize }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {% if u.activo %}
+                                                            <span class="badge bg-success">Activo</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">Inactivo</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group" role="group">
+                                                            <a href="{{ url_for('usuarios.detalle_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                                            <a href="{{ url_for('usuarios.editar_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-warning" title="Editar"><i class="fas fa-edit"></i></a>
+                                                            {% if session.user_id != u.id %}
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar({{ u.id }}, '{{ u.username }}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Producción -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingProduccion">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProduccion">
+                                <i class="fas fa-industry me-2 text-success"></i>
+                                <strong>Producción</strong>
+                                <span class="badge bg-success ms-2">{{ usuarios|selectattr('area_principal', 'equalto', 'produccion')|list|length }}</span>
+                            </button>
+                        </h2>
+                        <div id="collapseProduccion" class="accordion-collapse collapse" data-bs-parent="#accordionUsuarios">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Nivel</th><th>Estado</th><th>Acciones</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for u in usuarios %}
+                                                {% if u.area_principal == 'produccion' %}
+                                                <tr>
+                                                    <td><strong>{{ u.username }}</strong></td>
+                                                    <td>{{ u.nombre_completo or 'N/A' }}</td>
+                                                    <td>{{ u.email }}</td>
+                                                    <td><span class="badge bg-{{ 'danger' if u.nivel_jerarquico == 'jefe' else 'warning' if u.nivel_jerarquico == 'supervisor' else 'primary' }}">{{ u.nivel_jerarquico|capitalize }}</span></td>
+                                                    <td>{% if u.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-danger">Inactivo</span>{% endif %}</td>
+                                                    <td><div class="btn-group"><a href="{{ url_for('usuarios.detalle_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a><a href="{{ url_for('usuarios.editar_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>{% if session.user_id != u.id %}<button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar({{ u.id }}, '{{ u.username }}')"><i class="fas fa-trash"></i></button>{% endif %}</div></td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calidad -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingCalidad">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCalidad">
+                                <i class="fas fa-clipboard-check me-2 text-info"></i>
+                                <strong>Calidad</strong>
+                                <span class="badge bg-info ms-2">{{ usuarios|selectattr('area_principal', 'equalto', 'calidad')|list|length }}</span>
+                            </button>
+                        </h2>
+                        <div id="collapseCalidad" class="accordion-collapse collapse" data-bs-parent="#accordionUsuarios">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light"><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Nivel</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                        <tbody>
+                                            {% for u in usuarios %}
+                                                {% if u.area_principal == 'calidad' %}
+                                                <tr>
+                                                    <td><strong>{{ u.username }}</strong></td>
+                                                    <td>{{ u.nombre_completo or 'N/A' }}</td>
+                                                    <td>{{ u.email }}</td>
+                                                    <td><span class="badge bg-{{ 'danger' if u.nivel_jerarquico == 'jefe' else 'warning' if u.nivel_jerarquico == 'supervisor' else 'primary' }}">{{ u.nivel_jerarquico|capitalize }}</span></td>
+                                                    <td>{% if u.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-danger">Inactivo</span>{% endif %}</td>
+                                                    <td><div class="btn-group"><a href="{{ url_for('usuarios.detalle_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a><a href="{{ url_for('usuarios.editar_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>{% if session.user_id != u.id %}<button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar({{ u.id }}, '{{ u.username }}')"><i class="fas fa-trash"></i></button>{% endif %}</div></td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Almacén -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingAlmacen">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAlmacen">
+                                <i class="fas fa-warehouse me-2 text-warning"></i>
+                                <strong>Almacén</strong>
+                                <span class="badge bg-warning ms-2">{{ usuarios|selectattr('area_principal', 'equalto', 'almacen')|list|length }}</span>
+                            </button>
+                        </h2>
+                        <div id="collapseAlmacen" class="accordion-collapse collapse" data-bs-parent="#accordionUsuarios">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light"><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Nivel</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                        <tbody>
+                                            {% for u in usuarios %}
+                                                {% if u.area_principal == 'almacen' %}
+                                                <tr>
+                                                    <td><strong>{{ u.username }}</strong></td>
+                                                    <td>{{ u.nombre_completo or 'N/A' }}</td>
+                                                    <td>{{ u.email }}</td>
+                                                    <td><span class="badge bg-{{ 'danger' if u.nivel_jerarquico == 'jefe' else 'warning' if u.nivel_jerarquico == 'supervisor' else 'primary' }}">{{ u.nivel_jerarquico|capitalize }}</span></td>
+                                                    <td>{% if u.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-danger">Inactivo</span>{% endif %}</td>
+                                                    <td><div class="btn-group"><a href="{{ url_for('usuarios.detalle_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a><a href="{{ url_for('usuarios.editar_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>{% if session.user_id != u.id %}<button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar({{ u.id }}, '{{ u.username }}')"><i class="fas fa-trash"></i></button>{% endif %}</div></td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Administración -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingAdmin">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdmin">
+                                <i class="fas fa-building me-2 text-danger"></i>
+                                <strong>Administración</strong>
+                                <span class="badge bg-danger ms-2">{{ usuarios|selectattr('area_principal', 'equalto', 'administracion')|list|length }}</span>
+                            </button>
+                        </h2>
+                        <div id="collapseAdmin" class="accordion-collapse collapse" data-bs-parent="#accordionUsuarios">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light"><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Nivel</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                        <tbody>
+                                            {% for u in usuarios %}
+                                                {% if u.area_principal == 'administracion' %}
+                                                <tr>
+                                                    <td><strong>{{ u.username }}</strong></td>
+                                                    <td>{{ u.nombre_completo or 'N/A' }}</td>
+                                                    <td>{{ u.email }}</td>
+                                                    <td><span class="badge bg-{{ 'danger' if u.nivel_jerarquico == 'jefe' else 'warning' if u.nivel_jerarquico == 'supervisor' else 'info' }}">{{ u.nivel_jerarquico|capitalize }}</span></td>
+                                                    <td>{% if u.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-danger">Inactivo</span>{% endif %}</td>
+                                                    <td><div class="btn-group"><a href="{{ url_for('usuarios.detalle_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a><a href="{{ url_for('usuarios.editar_usuario', usuario_id=u.id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-edit"></i></a>{% if session.user_id != u.id %}<button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarEliminar({{ u.id }}, '{{ u.username }}')"><i class="fas fa-trash"></i></button>{% endif %}</div></td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="confirmarEliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de eliminar al usuario <strong id="usuarioEliminar"></strong>?</p>
+                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+            </div>
+            <div class="modal-footer">
+                <form id="formEliminar" method="POST">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmarEliminar(usuarioId, username) {
+        document.getElementById('usuarioEliminar').textContent = username;
+        document.getElementById('formEliminar').action = `/usuarios/${usuarioId}/eliminar`;
+        new bootstrap.Modal(document.getElementById('confirmarEliminarModal')).show();
+    }
+</script>
+{% endblock %}

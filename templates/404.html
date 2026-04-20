@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Página no encontrada{% endblock %}
+{% block page_title %}Error 404{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="card shadow">
+            <div class="card-body py-5">
+                <i class="fas fa-exclamation-triangle fa-5x text-warning mb-4"></i>
+                <h2 class="mb-3">Página no encontrada</h2>
+                <p class="lead text-muted mb-4">
+                    La página que estás buscando no existe o ha sido movida.
+                </p>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-home me-2"></i>Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

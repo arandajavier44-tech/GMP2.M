@@ -1,0 +1,542 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle del Proveedor - {{ proveedor.nombre }}{% endblock %}
+{% block page_title %}Detalle del Proveedor{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('proveedores.gestion_proveedores') }}" class="text-decoration-none">Proveedores</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ proveedor.nombre }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Cabecera con acciones -->
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1">
+                <i class="fas fa-truck me-2 text-primary"></i>{{ proveedor.nombre }}
+                <small class="text-muted fs-6 ms-2">{{ proveedor.codigo }}</small>
+            </h4>
+            <div class="mt-2">
+                {% if proveedor.activo %}
+                    <span class="badge bg-success me-2">Activo</span>
+                {% else %}
+                    <span class="badge bg-danger me-2">Inactivo</span>
+                {% endif %}
+                
+                {% if proveedor.es_proveedor_gmp %}
+                    <span class="badge bg-warning text-dark me-2" title="Proveedor calificado GMP">
+                        <i class="fas fa-certificate me-1"></i>GMP
+                    </span>
+                {% endif %}
+                
+                <span class="badge bg-{{ 'primary' if proveedor.tipo == 'insumos' else 'success' if proveedor.tipo == 'servicios' else 'info' if proveedor.tipo == 'equipos' else 'warning' if proveedor.tipo == 'calibraciones' else 'secondary' }}">
+                    <i class="fas fa-{{ 'box' if proveedor.tipo == 'insumos' else 'wrench' if proveedor.tipo == 'servicios' else 'microscope' if proveedor.tipo == 'equipos' else 'ruler' if proveedor.tipo == 'calibraciones' else 'tag' }} me-1"></i>
+                    {{ proveedor.tipo|upper }}
+                </span>
+            </div>
+        </div>
+        <div>
+            <a href="{{ url_for('proveedores.editar_proveedor', proveedor_id=proveedor.id) }}" class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Editar
+            </a>
+            <a href="{{ url_for('proveedores.gestion_proveedores') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Calificación</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% for i in range(5) %}
+                                {% if i < proveedor.calificacion %}
+                                    <i class="fas fa-star text-warning"></i>
+                                {% else %}
+                                    <i class="far fa-star text-warning"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-star fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Repuestos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ repuestos|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Servicios</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ servicios|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tools fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Compras</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ compras|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Columna izquierda: Información general -->
+    <div class="col-lg-4">
+        <!-- Información de contacto -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-address-card me-2"></i>Información de Contacto
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Nombre de contacto</label>
+                    <p class="fw-bold mb-0">{{ proveedor.contacto_nombre or 'No especificado' }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Cargo</label>
+                    <p class="fw-bold mb-0">{{ proveedor.contacto_cargo or 'No especificado' }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Teléfono</label>
+                    <p class="fw-bold mb-0">
+                        {% if proveedor.telefono %}
+                            <i class="fas fa-phone me-2 text-success"></i>{{ proveedor.telefono }}
+                        {% else %}
+                            No especificado
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Email</label>
+                    <p class="fw-bold mb-0">
+                        {% if proveedor.email %}
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            <a href="mailto:{{ proveedor.email }}">{{ proveedor.email }}</a>
+                        {% else %}
+                            No especificado
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Sitio web</label>
+                    <p class="fw-bold mb-0">
+                        {% if proveedor.sitio_web %}
+                            <i class="fas fa-globe me-2 text-info"></i>
+                            <a href="{{ proveedor.sitio_web }}" target="_blank">{{ proveedor.sitio_web }}</a>
+                        {% else %}
+                            No especificado
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dirección -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-map-marker-alt me-2"></i>Dirección
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-1 fw-bold">{{ proveedor.direccion or 'No especificada' }}</p>
+                <p class="mb-0 text-muted">
+                    {{ proveedor.ciudad or '' }}{{ ', ' + proveedor.provincia if proveedor.provincia }}{{ ', ' + proveedor.pais if proveedor.pais }}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Datos fiscales y bancarios -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-file-invoice me-2"></i>Datos Fiscales y Bancarios
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">CUIT</label>
+                    <p class="fw-bold mb-0">{{ proveedor.cuit or 'No especificado' }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Condición IVA</label>
+                    <p class="fw-bold mb-0">{{ proveedor.condicion_iva or 'No especificado' }}</p>
+                </div>
+                <hr>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Banco</label>
+                    <p class="fw-bold mb-0">{{ proveedor.banco or 'No especificado' }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">CBU</label>
+                    <p class="fw-bold mb-0">{{ proveedor.cbu or 'No especificado' }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small mb-1">Alias</label>
+                    <p class="fw-bold mb-0">{{ proveedor.alias or 'No especificado' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Columna derecha -->
+    <div class="col-lg-8">
+        <!-- Calificación GMP -->
+        {% if proveedor.es_proveedor_gmp %}
+        <div class="card shadow mb-4 border-warning">
+            <div class="card-header bg-warning text-dark py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-certificate me-2"></i>Calificación GMP
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Fecha de calificación</label>
+                        <p class="fw-bold">{{ proveedor.fecha_calificacion.strftime('%d/%m/%Y') if proveedor.fecha_calificacion else 'No especificada' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small mb-1">Fecha de vencimiento</label>
+                        <p class="fw-bold {% if proveedor.fecha_vencimiento_calificacion and proveedor.fecha_vencimiento_calificacion < now.date() %}text-danger{% endif %}">
+                            {{ proveedor.fecha_vencimiento_calificacion.strftime('%d/%m/%Y') if proveedor.fecha_vencimiento_calificacion else 'No especificada' }}
+                            {% if proveedor.fecha_vencimiento_calificacion and proveedor.fecha_vencimiento_calificacion < now.date() %}
+                                <span class="badge bg-danger ms-2">Vencida</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if proveedor.certificacion_gmp %}
+                <div class="mt-3">
+                    <a href="{{ proveedor.certificacion_gmp }}" class="btn btn-sm btn-outline-warning" target="_blank">
+                        <i class="fas fa-file-pdf me-2"></i>Ver certificado GMP
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Pestañas: Repuestos, Servicios, Compras -->
+        <div class="card shadow mb-4">
+            <div class="card-header p-0">
+                <ul class="nav nav-tabs" id="proveedorTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="repuestos-tab" data-bs-toggle="tab" data-bs-target="#repuestos" type="button" role="tab">
+                            <i class="fas fa-boxes me-2"></i>Repuestos ({{ repuestos|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="servicios-tab" data-bs-toggle="tab" data-bs-target="#servicios" type="button" role="tab">
+                            <i class="fas fa-tools me-2"></i>Servicios ({{ servicios|length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="compras-tab" data-bs-toggle="tab" data-bs-target="#compras" type="button" role="tab">
+                            <i class="fas fa-shopping-cart me-2"></i>Compras ({{ compras|length }})
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="proveedorTabsContent">
+                    <!-- Repuestos -->
+                    <div class="tab-pane fade show active" id="repuestos" role="tabpanel">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAsignarRepuesto">
+                                <i class="fas fa-plus-circle me-1"></i>Asignar Repuesto
+                            </button>
+                        </div>
+                        
+                        {% if repuestos %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Repuesto</th>
+                                        <th>Código proveedor</th>
+                                        <th>Precio ref.</th>
+                                        <th>Plazo (días)</th>
+                                        <th>Principal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in repuestos %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ r.repuesto.nombre }}</strong><br>
+                                            <small class="text-muted">{{ r.repuesto.codigo }}</small>
+                                        </td>
+                                        <td>{{ r.codigo_proveedor or 'N/A' }}</td>
+                                        <td>${{ "%.2f"|format(r.precio_referencia) if r.precio_referencia else 'N/A' }}</td>
+                                        <td>{{ r.plazo_entrega_dias or 'N/A' }}</td>
+                                        <td>
+                                            {% if r.es_proveedor_principal %}
+                                                <span class="badge bg-success">Sí</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form action="{{ url_for('proveedores.eliminar_repuesto_asignado', proveedor_id=proveedor.id, asignacion_id=r.id) }}" 
+                                                  method="POST" class="d-inline" 
+                                                  onsubmit="return confirm('¿Eliminar asignación?')">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center py-3">No hay repuestos asignados a este proveedor</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Servicios -->
+                    <div class="tab-pane fade" id="servicios" role="tabpanel">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregarServicio">
+                                <i class="fas fa-plus-circle me-1"></i>Agregar Servicio
+                            </button>
+                        </div>
+                        
+                        {% if servicios %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Descripción</th>
+                                        <th>Especialidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in servicios %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-{{ 'primary' if s.tipo_servicio == 'mantenimiento' else 'success' if s.tipo_servicio == 'calibracion' else 'info' if s.tipo_servicio == 'validacion' else 'warning' }}">
+                                                {{ s.tipo_servicio|upper }}
+                                            </span>
+                                        </td>
+                                        <td>{{ s.descripcion }}</td>
+                                        <td>{{ s.especialidad or 'N/A' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center py-3">No hay servicios registrados para este proveedor</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Compras -->
+                    <div class="tab-pane fade" id="compras" role="tabpanel">
+                        {% if compras %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>N° Compra</th>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for c in compras %}
+                                    <tr>
+                                        <td><strong>{{ c.numero_compra }}</strong></td>
+                                        <td>{{ c.fecha_compra.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ c.tipo|upper }}</td>
+                                        <td>${{ "%.2f"|format(c.total) }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if c.estado == 'Recibida' else 'warning' if c.estado == 'Pendiente' else 'danger' }}">
+                                                {{ c.estado }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center py-3">No hay compras registradas para este proveedor</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Observaciones -->
+        {% if proveedor.observaciones %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-sticky-note me-2"></i>Observaciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">{{ proveedor.observaciones }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal: Asignar Repuesto -->
+<div class="modal fade" id="modalAsignarRepuesto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Asignar Repuesto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('proveedores.asignar_repuesto', proveedor_id=proveedor.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Repuesto <span class="text-danger">*</span></label>
+                        <select class="form-select" name="repuesto_id" required>
+                            <option value="">Seleccionar repuesto...</option>
+                            {% for r in repuestos_disponibles %}
+                            <option value="{{ r.id }}">{{ r.codigo }} - {{ r.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Código del proveedor</label>
+                        <input type="text" class="form-control" name="codigo_proveedor">
+                        <small class="text-muted">Código que usa este proveedor para el repuesto</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Precio de referencia</label>
+                        <input type="number" step="0.01" class="form-control" name="precio_referencia">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Plazo de entrega (días)</label>
+                        <input type="number" class="form-control" name="plazo_entrega">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="es_principal" id="esPrincipal">
+                            <label class="form-check-label" for="esPrincipal">
+                                Es proveedor principal de este repuesto
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Agregar Servicio -->
+<div class="modal fade" id="modalAgregarServicio" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Agregar Servicio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('proveedores.agregar_servicio', proveedor_id=proveedor.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de servicio <span class="text-danger">*</span></label>
+                        <select class="form-select" name="tipo_servicio" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="calibracion">Calibración</option>
+                            <option value="validacion">Validación</option>
+                            <option value="reparacion">Reparación</option>
+                            <option value="instalacion">Instalación</option>
+                            <option value="consultoria">Consultoría</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" class="form-control" name="descripcion">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Especialidad</label>
+                        <input type="text" class="form-control" name="especialidad">
+                        <small class="text-muted">Ej: Equipos críticos, Instrumentos, etc.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Cargar repuestos disponibles para el modal
+        $.get('/proveedores/api/repuestos-disponibles', function(data) {
+            const select = $('select[name="repuesto_id"]');
+            select.empty().append('<option value="">Seleccionar repuesto...</option>');
+            data.forEach(r => {
+                select.append(`<option value="${r.id}">${r.codigo} - ${r.nombre}</option>`);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Ejecución - {{ orden.numero_ot }}</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; font-size: 12pt; }
+            .container { max-width: 100% !important; }
+            .form-control, .form-select { border: 1px solid #000 !important; background: white !important; }
+            textarea { min-height: 80px; }
+            .border { border: 1px solid #000 !important; }
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .form-ejecucion {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+        }
+        
+        .header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            background-color: #e9ecef;
+            padding: 8px 15px;
+            margin: 20px 0 15px 0;
+            font-weight: bold;
+            border-left: 4px solid #0d6efd;
+        }
+        
+        .info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .firma-line {
+            border-bottom: 1px solid #000;
+            margin: 30px 0 5px 0;
+            width: 100%;
+        }
+        
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+        
+        .checkbox-item {
+            margin-bottom: 10px;
+        }
+        
+        .material-row {
+            border-bottom: 1px dashed #ccc;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-ejecucion">
+        <!-- Encabezado -->
+        <div class="header">
+            <div class="row">
+                <div class="col-6">
+                    <h3><i class="fas fa-clipboard-list me-2"></i>FORMULARIO DE EJECUCIÓN</h3>
+                    <h4>Orden de Servicio General</h4>
+                </div>
+                <div class="col-6 text-end">
+                    <h2>{{ orden.numero_ot }}</h2>
+                    <p class="mb-0">Fecha: {{ now.strftime('%d/%m/%Y') }}</p>
+                    <span class="badge bg-{{ orden.get_prioridad_color() }}">{{ orden.prioridad }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Datos de la orden -->
+        <div class="info-box">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Título:</strong> {{ orden.titulo }}</p>
+                    <p><strong>Ubicación:</strong> {{ orden.ubicacion_detallada or 'No especificada' }}</p>
+                    <p><strong>Solicitante:</strong> {{ orden.solicitante_nombre or 'N/A' }} - {{ orden.solicitante_sector or '' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Instalación:</strong> {{ orden.instalacion.codigo if orden.instalacion else 'N/A' }} - {{ orden.instalacion.nombre if orden.instalacion else '' }}</p>
+                    <p><strong>Técnico asignado:</strong> {{ orden.asignado_a or '___________________' }}</p>
+                    <p><strong>Fecha inicio:</strong> ___________________ <strong>Hora:</strong> ____:____</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Descripción del trabajo -->
+        <div class="section-title">
+            <i class="fas fa-align-left me-2"></i>DESCRIPCIÓN DEL TRABAJO A REALIZAR
+        </div>
+        <div class="p-3 bg-light border mb-4">
+            {{ orden.descripcion|replace('\n', '<br>')|safe if orden.descripcion else 'Sin descripción' }}
+        </div>
+        
+        <!-- Diagnóstico (para completar en campo) -->
+        <div class="section-title">
+            <i class="fas fa-stethoscope me-2"></i>DIAGNÓSTICO REALIZADO
+        </div>
+        <div class="mb-4">
+            <textarea class="form-control" rows="4" placeholder="Describa el diagnóstico técnico encontrado..."></textarea>
+        </div>
+        
+        <!-- Trabajo realizado -->
+        <div class="section-title">
+            <i class="fas fa-tools me-2"></i>TRABAJO REALIZADO
+        </div>
+        <div class="mb-4">
+            <textarea class="form-control" rows="6" placeholder="Describa detalladamente las tareas realizadas..."></textarea>
+        </div>
+        
+        <!-- Checklist de seguridad (opcional) -->
+        <div class="section-title">
+            <i class="fas fa-shield-alt me-2"></i>CHECKLIST DE SEGURIDAD
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="checkbox-item">
+                    <input type="checkbox"> Bloqueo/Etiquetado realizado
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox"> EPP utilizado
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="checkbox-item">
+                    <input type="checkbox"> Área despejada
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox"> Herramientas adecuadas
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="checkbox-item">
+                    <input type="checkbox"> Permiso de trabajo
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox"> Prueba de funcionamiento
+                </div>
+            </div>
+        </div>
+        
+        <!-- Materiales utilizados -->
+        <div class="section-title">
+            <i class="fas fa-boxes me-2"></i>MATERIALES UTILIZADOS
+        </div>
+        <div class="mb-4">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Código / Descripción</th>
+                        <th style="width: 100px;">Cantidad</th>
+                        <th style="width: 100px;">Unidad</th>
+                        <th style="width: 150px;">N° Lote/Serie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td></tr>
+                    <tr><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Observaciones -->
+        <div class="section-title">
+            <i class="fas fa-clipboard me-2"></i>OBSERVACIONES / INCIDENTES
+        </div>
+        <div class="mb-4">
+            <textarea class="form-control" rows="3" placeholder="Observaciones adicionales, incidentes durante el trabajo, etc."></textarea>
+        </div>
+        
+        <!-- Recomendaciones -->
+        <div class="section-title">
+            <i class="fas fa-lightbulb me-2"></i>RECOMENDACIONES
+        </div>
+        <div class="mb-4">
+            <textarea class="form-control" rows="3" placeholder="Recomendaciones para prevenir recurrencias, mejoras sugeridas..."></textarea>
+        </div>
+        
+        <!-- Tiempos -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <label><strong>Hora de finalización:</strong></label>
+                <input type="text" class="form-control" placeholder="____:____">
+            </div>
+            <div class="col-md-4">
+                <label><strong>Tiempo total (horas):</strong></label>
+                <input type="text" class="form-control" placeholder="_____">
+            </div>
+            <div class="col-md-4">
+                <label><strong>Fecha de finalización:</strong></label>
+                <input type="text" class="form-control" placeholder="____/____/________">
+            </div>
+        </div>
+        
+        <!-- Firmas -->
+        <div class="row mt-5">
+            <div class="col-md-4 text-center">
+                <div class="firma-line"></div>
+                <p><strong>Técnico Ejecutor</strong></p>
+                <p>Nombre: ___________________</p>
+                <p>Firma: ___________________</p>
+                <p>Fecha: ____/____/________</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="firma-line"></div>
+                <p><strong>Supervisor</strong></p>
+                <p>Nombre: ___________________</p>
+                <p>Firma: ___________________</p>
+                <p>Fecha: ____/____/________</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="firma-line"></div>
+                <p><strong>Solicitante (Conforme)</strong></p>
+                <p>Nombre: ___________________</p>
+                <p>Firma: ___________________</p>
+                <p>Fecha: ____/____/________</p>
+            </div>
+        </div>
+        
+        <!-- Notas -->
+        <div class="alert alert-secondary mt-4">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Nota:</strong> Este formulario debe ser completado en su totalidad y entregado al supervisor para su verificación.
+            Los datos aquí registrados serán cargados en el sistema GMP Maintenance.
+        </div>
+        
+        <!-- Pie de página -->
+        <div class="text-center text-muted mt-4">
+            <small>GMP Maintenance System - Formulario de Ejecución v1.0</small>
+            <br>
+            <small>Orden: {{ orden.numero_ot }} | Impreso: {{ now.strftime('%d/%m/%Y %H:%M') }}</small>
+        </div>
+    </div>
+    
+    <!-- Botón de impresión -->
+    <div class="print-btn no-print">
+        <button class="btn btn-primary btn-lg shadow" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Imprimir Formulario
+        </button>
+    </div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+Flask==2.3.3
+Flask-Login==0.6.3
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.2
+APScheduler==3.11.2
+Werkzeug==2.3.7
+SQLAlchemy==2.0.44
+psycopg2-binary==2.9.10
+python-dotenv==1.1.1
+openpyxl==3.1.5
+pillow==11.3.0
+requests==2.31.0
+email-validator==2.3.0
+cryptography==46.0.2
+beautifulsoup4==4.14.3

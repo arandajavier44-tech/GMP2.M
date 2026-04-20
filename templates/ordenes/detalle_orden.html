@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Orden{% endblock %}
+{% block page_title %}Orden de Trabajo: {{ orden.numero_ot }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.gestion_ordenes') }}">Órdenes</a></li>
+                <li class="breadcrumb-item active">{{ orden.numero_ot }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Botones de acción superior -->
+<div class="row mb-3 d-print-none">
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap">
+        <div class="mb-2 mb-md-0">
+            <span class="badge bg-{{ orden.get_estado_color() }} p-2 me-2">{{ orden.estado }}</span>
+            <span class="badge bg-{{ orden.get_prioridad_color() }} p-2">{{ orden.prioridad }}</span>
+            {% if orden.asignado_a %}
+            <span class="badge bg-secondary p-2"><i class="fas fa-user me-1"></i>{{ orden.asignado_a }}</span>
+            {% endif %}
+        </div>
+        <div>
+            <a href="{{ url_for('ordenes.print_orden_activa', orden_id=orden.id) }}" class="btn btn-outline-info" target="_blank">
+                <i class="fas fa-print me-2"></i>Imprimir Orden
+            </a>
+            
+            {% if orden.estado in ['Pendiente', 'Aprobada'] %}
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#asignarModal">
+                <i class="fas fa-user-check me-2"></i>Asignar/Iniciar
+            </button>
+            {% endif %}
+            
+            {% if orden.estado == 'Pendiente' and orden.tipo == 'Servicio' %}
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#aprobarModal">
+                <i class="fas fa-check-circle me-2"></i>Aprobar
+            </button>
+            {% endif %}
+
+            <a href="{{ url_for('ordenes.ordenes_cerradas') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-archive me-2"></i>Ver Cerradas
+            </a>
+
+            {% if orden.estado == 'En Progreso' %}
+            <a href="{{ url_for('ordenes.cerrar_orden', orden_id=orden.id) }}" class="btn btn-success">
+                <i class="fas fa-check-circle me-2"></i>Completar Orden
+            </a>
+            {% endif %}
+
+            <button class="btn btn-outline-info" onclick="regenerarQR({{ orden.id }})">
+                <i class="fas fa-qrcode me-2"></i>Regenerar QR
+            </button>
+
+            {% if orden.estado not in ['Completada', 'Cancelada'] %}
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelarModal">
+                <i class="fas fa-times-circle me-2"></i>Cancelar
+            </button>
+            {% endif %}
+            
+            <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarModal">
+                <i class="fas fa-trash me-2"></i>Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ORDEN DE TRABAJO (Vista previa) -->
+<div class="orden-trabajo-container" id="ordenContainer">
+    <!-- Encabezado -->
+    <div class="gmp-header mb-4">
+        <div class="row">
+            <div class="col-8">
+                <h1 class="gmp-title">ORDEN DE TRABAJO</h1>
+                <p class="gmp-subtitle">Mantenimiento - Cumplimiento GMP</p>
+            </div>
+            <div class="col-4 text-end">
+                <div class="gmp-logo">
+                    <i class="fas fa-tools fa-3x text-primary"></i>
+                    <div class="small">GMP Maintenance v2.1</div>
+                </div>
+            </div>
+        </div>
+        <hr class="gmp-hr">
+        <div class="row gmp-document-info">
+            <div class="col-md-3">
+                <strong>N° ORDEN:</strong><br>
+                <span class="h4">{{ orden.numero_ot }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>FECHA EMISIÓN:</strong><br>
+                <span>{{ orden.fecha_creacion.strftime('%d/%m/%Y') if orden.fecha_creacion else '___/___/______' }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>TIPO:</strong><br>
+                <span class="badge bg-{{ 'primary' if orden.tipo == 'Preventivo' else 'warning' if orden.tipo == 'Correctivo' else 'info' }}">{{ orden.tipo }}</span>
+            </div>
+            <div class="col-md-3">
+                <strong>ESTADO:</strong><br>
+                <span class="badge bg-{{ orden.get_estado_color() }}">{{ orden.estado }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="card shadow mb-4 print-card" id="qrCard">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Código QR de Trazabilidad</h5>
+            <span class="badge bg-light text-dark" id="qrEstadoBadge">{{ orden.estado }}</span>
+        </div>
+        <div class="card-body text-center">
+            {% if orden.qr_code %}
+            <img src="{{ url_for('static', filename=orden.qr_code) }}" alt="QR Code" id="qrImage" style="max-width: 200px;" class="img-fluid">
+            {% else %}
+            <div class="alert alert-warning">Código QR no disponible. Haga clic en "Regenerar QR".</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SECCIÓN 1: DATOS DEL EQUIPO -->
+    <div class="card shadow mb-4 print-card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-industry me-2"></i>1. DATOS DEL EQUIPO</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered table-sm">
+                        <tr><th>Código:</th><td><strong>{{ orden.equipo.code }}</strong></span></tr>
+                        <tr><th>Nombre:</th><td>{{ orden.equipo.name }}</span></tr>
+                        <tr><th>Clasificación GMP:</th><td><span class="badge bg-info">{{ orden.equipo.gmp_classification }}</span></span></span></td>
+                        <tr><th>Ubicación:</th><td>{{ orden.equipo.location or 'N/E' }}</span></span></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered table-sm">
+                        <tr><th>Fabricante:</th><td>{{ orden.equipo.manufacturer or 'N/E' }}</span></span></tr>
+                        <tr><th>Modelo:</th><td>{{ orden.equipo.model or 'N/E' }}</span></span></tr>
+                        <tr><th>N° Serie:</th><td>{{ orden.equipo.serial_number or 'N/E' }}</span></span></tr>
+                        <tr><th>Fecha Instalación:</th><td>{{ orden.equipo.installation_date.strftime('%d/%m/%Y') if orden.equipo.installation_date else 'N/E' }}</span></span></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 2: DESCRIPCIÓN DE LA ORDEN -->
+    <div class="card shadow mb-4 print-card">
+        <div class="card-header bg-{{ 'primary' if orden.tipo == 'Preventivo' else 'warning' if orden.tipo == 'Correctivo' else 'info' }} text-white">
+            <h5 class="mb-0">2. DESCRIPCIÓN DE LA ORDEN</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="fw-bold">Título:</label>
+                <div class="border-bottom pb-2">{{ orden.titulo }}</div>
+            </div>
+            
+            {% if orden.tipo == 'Preventivo' and orden.tareas_seleccionadas %}
+            <div class="mb-4">
+                <h6 class="fw-bold bg-light p-2">Tareas Programadas</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr><th>#</th><th>Sistema</th><th>Tarea</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for tarea in orden.tareas_seleccionadas %}
+                            <tr>
+                                <td class="text-center">{{ loop.index }}</span>
+                                <td>{{ tarea.sistema_nombre if tarea.sistema_nombre else tarea.sistema_id }}</span>
+                                <td>{{ tarea.descripcion }}</span>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if orden.tipo == 'Preventivo' and orden.tareas_seleccionadas %}
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0"><i class="fas fa-boxes me-2"></i>Repuestos Críticos Requeridos</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 35%">Tarea</th>
+                                        <th style="width: 15%">Código</th>
+                                        <th style="width: 30%">Repuesto</th>
+                                        <th style="width: 10%">Cantidad</th>
+                                        <th style="width: 10%">Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tarea in orden.tareas_seleccionadas %}
+                                        {% if tarea.repuestos %}
+                                            {% for rep in tarea.repuestos %}
+                                            <tr>
+                                                <td><small>{{ tarea.descripcion[:50] }}{% if tarea.descripcion|length > 50 %}...{% endif %}</small></span>
+                                                <td><strong>{{ rep.codigo }}</strong></span>
+                                                <td>{{ rep.nombre }}</span>
+                                                <td class="text-center">{{ rep.cantidad_requerida }}</span>
+                                                <td class="text-center">
+                                                    {% if rep.stock_actual < rep.cantidad_requerida %}
+                                                        <span class="badge bg-danger">⚠️ {{ rep.stock_actual }}</span>
+                                                    {% else %}
+                                                        <span class="badge bg-success">✅ {{ rep.stock_actual }}</span>
+                                                    {% endif %}
+                                                </span>
+                                            </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if orden.tipo == 'Correctivo' %}
+            <div class="mb-3">
+                <label class="fw-bold">Falla Reportada:</label>
+                <div class="border p-2 bg-light">{{ orden.falla_reportada or 'No especificada' }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- SECCIÓN 3: INFORMACIÓN ADICIONAL -->
+    <div class="card shadow mb-4 print-card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>3. INFORMACIÓN ADICIONAL</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4"><small>Fecha estimada:</small><br><strong>{{ orden.fecha_estimada.strftime('%d/%m/%Y') if orden.fecha_estimada else '___/___/______' }}</strong></div>
+                <div class="col-md-4"><small>Tiempo estimado:</small><br><strong>{{ orden.tiempo_estimado or '_____' }} horas</strong></div>
+                <div class="col-md-4"><small>Asignado a:</small><br><strong>{{ orden.asignado_a or 'No asignado' }}</strong></div>
+            </div>
+            {% if orden.fecha_inicio %}
+            <hr>
+            <div><small>Iniciado:</small><br><strong>{{ orden.fecha_inicio.strftime('%d/%m/%Y %H:%M') }}</strong></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ========== SECCIÓN DE COMENTARIOS CON ADJUNTOS Y PREVISUALIZACIÓN ========== -->
+<div class="card shadow mt-4">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-comments me-2"></i>
+            Seguimiento y Comentarios
+            <span class="badge bg-light text-dark ms-2" id="total-comentarios">0</span>
+        </h6>
+    </div>
+    <div class="card-body">
+        <div id="comentarios-lista" style="max-height: 500px; overflow-y: auto; margin-bottom: 20px;">
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                <p>Cargando comentarios...</p>
+            </div>
+        </div>
+        
+        <div class="border-top pt-3 mt-3">
+            <div class="mb-2">
+                <label class="form-label small text-muted">
+                    <i class="fas fa-edit me-1"></i>Agregar comentario:
+                </label>
+                <textarea class="form-control" id="comentario-contenido" rows="3" 
+                          placeholder="Escribe tu comentario... Usa @ para mencionar a otro usuario"></textarea>
+            </div>
+            
+            <div id="preview-adjuntos" class="mb-2" style="display: none;">
+                <div class="alert alert-info py-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-paperclip me-2"></i>
+                        <strong>Archivo seleccionado:</strong>
+                        <span id="nombre-archivo"></span>
+                    </div>
+                    <button type="button" class="btn-close" onclick="limpiarAdjunto()"></button>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-adjuntar">
+                        <i class="fas fa-paperclip me-1"></i>Seleccionar archivo
+                    </button>
+                    <span id="estado-archivo" class="text-muted ms-2 small"></span>
+                    <input type="file" id="archivo-adjunto" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    <small class="text-muted ms-2">
+                        <i class="fas fa-info-circle"></i> PDF, imágenes, Word, Excel hasta 10MB
+                    </small>
+                </div>
+                <button type="button" class="btn btn-primary btn-sm" id="btn-enviar-comentario">
+                    <i class="fas fa-paper-plane me-1"></i>Enviar comentario
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALES MEJORADOS -->
+<!-- Modal Asignar -->
+<div class="modal fade" id="asignarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-check me-2"></i>Asignar e Iniciar Orden
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('ordenes.iniciar_orden', orden_id=orden.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Seleccionar técnico *</label>
+                        <select class="form-select" name="asignado_a" required>
+                            <option value="">-- Seleccione un técnico --</option>
+                            {% for usuario in usuarios_mantenimiento %}
+                            <option value="{{ usuario.nombre_completo or usuario.username }}">
+                                {{ usuario.nombre_completo or usuario.username }}
+                                {% if usuario.nivel_jerarquico == 'jefe' %}
+                                (Jefe)
+                                {% elif usuario.nivel_jerarquico == 'supervisor' %}
+                                (Supervisor)
+                                {% else %}
+                                (Técnico)
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">El técnico recibirá una notificación</small>
+                    </div>
+                    {% if not usuarios_mantenimiento %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No hay técnicos de mantenimiento disponibles. 
+                        <a href="{{ url_for('usuarios.nuevo_usuario') }}">Crear usuario técnico</a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" {% if not usuarios_mantenimiento %}disabled{% endif %}>
+                        <i class="fas fa-play me-1"></i>Asignar e Iniciar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Aprobar -->
+<div class="modal fade" id="aprobarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i>Aprobar Solicitud</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('ordenes.aprobar_orden', orden_id=orden.id) }}">
+                <div class="modal-body">
+                    <p>¿Confirma la aprobación de esta solicitud?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Aprobar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cancelar -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-times-circle me-2"></i>Cancelar Orden</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('ordenes.cancelar_orden', orden_id=orden.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de cancelación *</label>
+                        <textarea class="form-control" name="motivo" rows="3" required placeholder="Explique el motivo..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Cancelar Orden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div class="modal fade" id="eliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-trash me-2"></i>Eliminar Orden</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ¿Está seguro que desea eliminar la orden <strong>{{ orden.numero_ot }}</strong>?
+                </div>
+                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('ordenes.eliminar_orden', orden_id=orden.id) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let archivoAdjunto = null;
+    
+    function regenerarQR(ordenId) {
+        Swal.fire({
+            title: '¿Regenerar QR?',
+            text: 'El QR se actualizará con los datos actuales',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Generando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                fetch(`/ordenes/${ordenId}/regenerar_qr`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: 'QR regenerado', timer: 1500, showConfirmButton: false });
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Error', text: data.message });
+                        }
+                    });
+            }
+        });
+    }
+    
+    // ========== CÓDIGO DE COMENTARIOS CON ADJUNTOS ==========
+    const entidad_tipo = 'orden';
+    const entidad_id = {{ orden.id }};
+    
+    function getElement(id) {
+        const element = document.getElementById(id);
+        if (!element) {
+            console.warn(`Elemento no encontrado: ${id}`);
+        }
+        return element;
+    }
+    
+    function cargarComentarios() {
+        const container = getElement('comentarios-lista');
+        if (!container) return;
+        
+        fetch(`/api/comentarios/${entidad_tipo}/${entidad_id}`)
+            .then(response => response.json())
+            .then(data => {
+                const totalSpan = getElement('total-comentarios');
+                if (totalSpan) totalSpan.textContent = data.length;
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-comment-dots fa-3x mb-3 opacity-50"></i>
+                            <p>No hay comentarios aún. Sé el primero en comentar.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                data.forEach(c => {
+                    const esAutor = c.usuario_id == {{ session.user_id }};
+                    html += `
+                        <div class="card mb-3 ${esAutor ? 'border-primary bg-light' : 'border-light'}">
+                            <div class="card-body py-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="${esAutor ? 'text-primary' : ''}">
+                                            <i class="fas fa-user-circle me-1"></i>
+                                            ${escapeHtml(c.usuario_nombre)}
+                                        </strong>
+                                        ${c.usuario_area ? `<span class="badge bg-secondary ms-2">${escapeHtml(c.usuario_area)}</span>` : ''}
+                                    </div>
+                                    <small class="text-muted">${c.created_at_formateado}</small>
+                                </div>
+                                <div class="mt-2 ps-3">
+                                    ${formatearMenciones(escapeHtml(c.contenido))}
+                                </div>
+                                ${c.adjuntos && c.adjuntos.length > 0 ? `
+                                    <div class="mt-2 ps-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-paperclip me-1"></i>Adjuntos:
+                                            ${c.adjuntos.map(a => `<a href="${a.url}" target="_blank" class="ms-2">📎 ${escapeHtml(a.nombre)}</a>`).join('')}
+                                        </small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (container) {
+                    container.innerHTML = `<div class="alert alert-danger">Error al cargar comentarios</div>`;
+                }
+            });
+    }
+    
+    function formatearMenciones(texto) {
+        return texto.replace(/@(\w+)/g, '<span class="badge bg-info text-dark">@$1</span>');
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function limpiarAdjunto() {
+        archivoAdjunto = null;
+        const archivoInput = getElement('archivo-adjunto');
+        const preview = getElement('preview-adjuntos');
+        const nombreArchivo = getElement('nombre-archivo');
+        const estadoArchivo = getElement('estado-archivo');
+        
+        if (archivoInput) archivoInput.value = '';
+        if (preview) preview.style.display = 'none';
+        if (nombreArchivo) nombreArchivo.innerHTML = '';
+        if (estadoArchivo) estadoArchivo.innerHTML = '';
+    }
+    
+    // Botón seleccionar archivo
+    const btnAdjuntar = getElement('btn-adjuntar');
+    if (btnAdjuntar) {
+        btnAdjuntar.addEventListener('click', function() {
+            const archivoInput = getElement('archivo-adjunto');
+            if (archivoInput) archivoInput.click();
+        });
+    }
+    
+    // Mostrar archivo seleccionado
+    const archivoInput = getElement('archivo-adjunto');
+    if (archivoInput) {
+        archivoInput.addEventListener('change', function(e) {
+            const archivo = e.target.files[0];
+            if (!archivo) return;
+            
+            const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 
+                                      'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+            
+            if (!tiposPermitidos.includes(archivo.type)) {
+                Swal.fire('Error', 'Tipo de archivo no permitido. Solo PDF, imágenes, Word y Excel', 'error');
+                this.value = '';
+                return;
+            }
+            
+            if (archivo.size > 10 * 1024 * 1024) {
+                Swal.fire('Error', 'El archivo no puede superar los 10MB', 'error');
+                this.value = '';
+                return;
+            }
+            
+            archivoAdjunto = archivo;
+            const preview = getElement('preview-adjuntos');
+            const nombreArchivo = getElement('nombre-archivo');
+            const estadoArchivo = getElement('estado-archivo');
+            
+            if (preview) preview.style.display = 'block';
+            if (nombreArchivo) nombreArchivo.innerHTML = `<i class="fas fa-file me-1"></i> ${archivo.name} (${(archivo.size / 1024).toFixed(1)} KB)`;
+            if (estadoArchivo) estadoArchivo.innerHTML = '<span class="text-success">✓ Archivo listo para adjuntar</span>';
+        });
+    }
+    
+    // Enviar comentario con adjunto
+    const btnEnviar = getElement('btn-enviar-comentario');
+    if (btnEnviar) {
+        btnEnviar.addEventListener('click', function() {
+            const contenidoTextarea = getElement('comentario-contenido');
+            const contenido = contenidoTextarea ? contenidoTextarea.value.trim() : '';
+            
+            if (!contenido && !archivoAdjunto) {
+                Swal.fire('Info', 'Escribe un comentario o adjunta un archivo', 'info');
+                return;
+            }
+            
+            const menciones = [];
+            const regex = /@(\w+)/g;
+            let match;
+            while ((match = regex.exec(contenido)) !== null) {
+                menciones.push(match[1]);
+            }
+            
+            Swal.fire({ title: 'Enviando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            fetch(`/api/comentarios/${entidad_tipo}/${entidad_id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contenido: contenido || '(Sin texto)', menciones: menciones })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && archivoAdjunto) {
+                    const formData = new FormData();
+                    formData.append('archivo', archivoAdjunto);
+                    return fetch(`/api/comentarios/${data.comentario_id}/adjuntar`, {
+                        method: 'POST',
+                        body: formData
+                    }).then(() => data);
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.success) {
+                    if (contenidoTextarea) contenidoTextarea.value = '';
+                    limpiarAdjunto();
+                    cargarComentarios();
+                    Swal.fire('Éxito', 'Comentario enviado', 'success');
+                } else {
+                    Swal.fire('Error', data.error || 'No se pudo enviar', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Error al enviar comentario', 'error');
+            });
+        });
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarComentarios();
+    });
+</script>
+
+<style>
+    @media print {
+        .navbar, .sidebar, .btn, .modal, footer, .breadcrumb, .d-print-none { display: none !important; }
+        body, .main-content { margin: 0 !important; padding: 0 !important; }
+        .card { break-inside: avoid; border: 1px solid #ddd !important; }
+        .badge { border: 1px solid #000; background: none !important; color: #000 !important; }
+    }
+    .gmp-title { font-size: 24px; font-weight: bold; }
+    .gmp-subtitle { color: #6c757d; }
+    .gmp-hr { border-top: 2px solid #2c3e50; }
+</style>
+{% endblock %}

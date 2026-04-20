@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva CAPA - GMP{% endblock %}
+{% block page_title %}Nueva CAPA - Acción Correctiva/Preventiva{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>Nueva CAPA - Formulario GMP
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formNuevaCapa">
+                    
+                    <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Información Básica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label for="titulo" class="form-label gmp-required">Título *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required
+                                   placeholder="Ej: Desviación en temperatura de autoclave">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="fecha_deteccion" class="form-label gmp-required">Fecha de detección *</label>
+                            <input type="date" class="form-control" id="fecha_deteccion" name="fecha_deteccion" 
+                                   value="{{ now.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="origen" class="form-label">Origen</label>
+                            <select class="form-select" id="origen" name="origen">
+                                <option value="">Seleccionar origen...</option>
+                                <option value="Auditoría">Auditoría</option>
+                                <option value="Desviación">Desviación</option>
+                                <option value="Reclamo">Reclamo</option>
+                                <option value="No Conformidad">No Conformidad</option>
+                                <option value="OT">Orden de Trabajo</option>
+                                <option value="Calibración">Calibración</option>
+                                <option value="Cambio">Control de Cambios</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="detectado_por" class="form-label">Detectado por</label>
+                            <input type="text" class="form-control" id="detectado_por" name="detectado_por"
+                                   placeholder="Nombre de quien detectó">
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <label for="descripcion_problema" class="form-label gmp-required">Descripción del problema *</label>
+                            <textarea class="form-control" id="descripcion_problema" name="descripcion_problema" rows="4" required
+                                      placeholder="Describa detalladamente el problema, desviación o no conformidad..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: CLASIFICACIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-tags me-2"></i>
+                                Clasificación
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="tipo" class="form-label gmp-required">Tipo *</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Correctiva">Correctiva (ACC)</option>
+                                <option value="Preventiva">Preventiva (APP)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="severidad" class="form-label gmp-required">Severidad *</label>
+                            <select class="form-select" id="severidad" name="severidad" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Media">Media</option>
+                                <option value="Baja">Baja</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="prioridad" class="form-label gmp-required">Prioridad *</label>
+                            <select class="form-select" id="prioridad" name="prioridad" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Media">Media</option>
+                                <option value="Baja">Baja</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="clasificacion" class="form-label">Clasificación</label>
+                            <select class="form-select" id="clasificacion" name="clasificacion">
+                                <option value="">Seleccionar...</option>
+                                <option value="Calidad">Calidad</option>
+                                <option value="Seguridad">Seguridad</option>
+                                <option value="Proceso">Proceso</option>
+                                <option value="Documentación">Documentación</option>
+                                <option value="Equipo">Equipo</option>
+                                <option value="Materia Prima">Materia Prima</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: ORIGEN ESPECÍFICO (OPCIONAL) -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-link me-2"></i>
+                                Origen Específico (Opcional)
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="origen_id" class="form-label">ID de origen</label>
+                            <input type="number" class="form-control" id="origen_id" name="origen_id"
+                                   placeholder="ID del registro">
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label for="origen_descripcion" class="form-label">Descripción del origen</label>
+                            <input type="text" class="form-control" id="origen_descripcion" name="origen_descripcion"
+                                   placeholder="Ej: OT-202502-001, Calibración #123">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: FIRMA GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-signature me-2"></i>Certificación GMP
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="gmp_compliance" name="gmp_compliance" required>
+                                        <label class="form-check-label" for="gmp_compliance">
+                                            <i class="fas fa-check-double me-1"></i>
+                                            Certifico que la información proporcionada es correcta y se gestionará según normas GMP *
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('capa.gestion_capa') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Crear CAPA
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('formNuevaCapa').addEventListener('submit', function(e) {
+        const titulo = document.getElementById('titulo').value;
+        const fecha = document.getElementById('fecha_deteccion').value;
+        const descripcion = document.getElementById('descripcion_problema').value;
+        const tipo = document.getElementById('tipo').value;
+        const severidad = document.getElementById('severidad').value;
+        const prioridad = document.getElementById('prioridad').value;
+        const compliance = document.getElementById('gmp_compliance').checked;
+        
+        let errores = [];
+        if (!titulo) errores.push('Título');
+        if (!fecha) errores.push('Fecha de detección');
+        if (!descripcion) errores.push('Descripción del problema');
+        if (!tipo) errores.push('Tipo');
+        if (!severidad) errores.push('Severidad');
+        if (!prioridad) errores.push('Prioridad');
+        if (!compliance) errores.push('Certificación GMP');
+        
+        if (errores.length > 0) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos requeridos',
+                html: `Faltan: <strong>${errores.join(', ')}</strong>`
+            });
+        }
+    });
+</script>
+
+<style>
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: 20px;
+}
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

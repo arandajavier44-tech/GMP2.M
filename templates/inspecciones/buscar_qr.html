@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar por QR{% endblock %}
+{% block page_title %}Escaneo de Código QR{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow text-center">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>Escanear Código QR
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <i class="fas fa-camera fa-4x text-muted mb-3"></i>
+                    <p>Use la cámara de su dispositivo para escanear el QR<br>
+                    o ingrese manualmente el código de inspección:</p>
+                </div>
+                
+                <div class="input-group mb-4">
+                    <input type="text" class="form-control form-control-lg" 
+                           id="codigoBuscar" 
+                           placeholder="Ej: INSP-2025-0001">
+                    <button class="btn btn-primary" onclick="buscarPorCodigo()">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                </div>
+                
+                <hr>
+                
+                <div id="resultadoBusqueda" style="display: none;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        Buscando...
+                    </div>
+                </div>
+                
+                <div class="alert alert-secondary mt-3">
+                    <strong>📱 Para escanear con móvil:</strong><br>
+                    Abra la cámara de su celular y enfoque el código QR.<br>
+                    <small class="text-muted">Los códigos QR contienen la URL directa a la inspección</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function buscarPorCodigo() {
+    const codigo = document.getElementById('codigoBuscar').value.trim();
+    if (!codigo) {
+        Swal.fire('Error', 'Ingrese un código de inspección', 'warning');
+        return;
+    }
+    
+    window.location.href = '/inspecciones/buscar?codigo=' + encodeURIComponent(codigo);
+}
+
+// Detectar si hay parámetro en URL
+const urlParams = new URLSearchParams(window.location.search);
+const codigoParam = urlParams.get('codigo');
+if (codigoParam) {
+    document.getElementById('codigoBuscar').value = codigoParam;
+    buscarPorCodigo();
+}
+</script>
+{% endblock %}

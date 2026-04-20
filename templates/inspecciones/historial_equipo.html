@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Historial de Inspecciones - {{ equipo.code }}{% endblock %}
+{% block page_title %}Historial de Inspecciones: {{ equipo.code }} - {{ equipo.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.historial') }}">Historial de Inspecciones</a></li>
+                <li class="breadcrumb-item active">{{ equipo.code }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Tarjeta de información del equipo -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información del Equipo
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Código:</th>
+                        <td>{{ equipo.code }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nombre:</th>
+                        <td>{{ equipo.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Clasificación GMP:</th>
+                        <td><span class="badge bg-info">{{ equipo.gmp_classification }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Ubicación:</th>
+                        <td>{{ equipo.location or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            <span class="semaforo semaforo-{{ equipo.get_status_color() }} me-2"></span>
+                            {{ equipo.current_status }}
+                        </td>
+                    </tr>
+                </table>
+                <a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                    <i class="fas fa-eye me-2"></i>Ver Detalle del Equipo
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow h-100">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Resumen de Inspecciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="p-3 border rounded">
+                            <h2 class="text-primary">{{ inspecciones|length }}</h2>
+                            <span class="text-muted">Total Inspecciones</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="p-3 border rounded">
+                            <h2 class="text-success">{{ inspecciones|selectattr('conforme', 'equalto', true)|list|length }}</h2>
+                            <span class="text-muted">Conformes</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="p-3 border rounded">
+                            <h2 class="text-danger">{{ inspecciones|rejectattr('conforme', 'equalto', true)|list|length }}</h2>
+                            <span class="text-muted">No Conformes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                {% set conformes = inspecciones|selectattr('conforme', 'equalto', true)|list|length %}
+                {% set total = inspecciones|length %}
+                {% if total > 0 %}
+                {% set porcentaje = (conformes / total * 100)|round %}
+                <div class="mt-3">
+                    <label class="fw-bold">Cumplimiento General:</label>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ porcentaje }}%;" 
+                             aria-valuenow="{{ porcentaje }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ porcentaje }}%
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de inspecciones -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Historial de Inspecciones Realizadas
+                </h5>
+                <span class="badge bg-light text-dark">{{ inspecciones|length }} registros</span>
+            </div>
+            <div class="card-body">
+                {% if inspecciones %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="historialTable">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Plantilla</th>
+                                    <th>Inspector</th>
+                                    <th>Resultado</th>
+                                    <th>Observaciones</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ins in inspecciones %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ ins.fecha.strftime('%d/%m/%Y') }}</strong>
+                                        <br><small class="text-muted">{{ ins.fecha.strftime('%H:%M') if ins.fecha else '' }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ ins.plantilla.nombre }}</span>
+                                        <br><small class="text-muted">{{ ins.plantilla.frecuencia|capitalize }}</small>
+                                    </td>
+                                    <td>{{ ins.realizada_por or 'N/A' }}</td>
+                                    <td>
+                                        {% if ins.conforme %}
+                                            <span class="badge bg-success">Conforme</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">No Conforme</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if ins.observaciones %}
+                                            <small>{{ ins.observaciones|truncate(50) }}</small>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('inspecciones.ver_inspeccion', inspeccion_id=ins.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-check fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay inspecciones registradas para este equipo</h5>
+                        <p class="mb-3">Comience realizando una nueva inspección</p>
+                        <a href="{{ url_for('inspecciones.seleccionar_plantilla') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Nueva Inspección
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de tendencia (últimas 10 inspecciones) -->
+{% if inspecciones|length > 1 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Tendencia de Cumplimiento
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tendenciaChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let tendenciaChart;
+
+    $(document).ready(function() {
+        $('#historialTable').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            },
+            pageLength: 25,
+            order: [[0, 'desc']]
+        });
+
+        {% if inspecciones|length > 1 %}
+        cargarTendencia();
+        {% endif %}
+    });
+
+    function cargarTendencia() {
+        const fechas = [
+            {% for ins in inspecciones[:10] %}
+                "{{ ins.fecha.strftime('%d/%m') }}",
+            {% endfor %}
+        ].reverse();
+        
+        const valores = [
+            {% for ins in inspecciones[:10] %}
+                {{ 1 if ins.conforme else 0 }},
+            {% endfor %}
+        ].reverse();
+
+        const ctx = document.getElementById('tendenciaChart').getContext('2d');
+        tendenciaChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: fechas,
+                datasets: [{
+                    label: 'Inspección Conforme',
+                    data: valores,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 1,
+                        ticks: {
+                            stepSize: 1,
+                            callback: function(value) {
+                                return value === 1 ? 'Conforme' : 'No Conforme';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<style>
+.semaforo {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.semaforo-green { background-color: #28a745; }
+.semaforo-yellow { background-color: #ffc107; }
+.semaforo-red { background-color: #dc3545; }
+</style>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Servicios Generales{% endblock %}
+{% block page_title %}Panel de Control - Servicios Generales{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Panel de Control</li>
+{% endblock %}
+
+{% block content %}
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Pendientes de Aprobación
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_pendientes }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('servicios_generales.gestion_ordenes', estado='Pendiente') }}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            En Progreso
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_progreso }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-play-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('servicios_generales.gestion_ordenes', estado='En Progreso') }}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Completadas Hoy
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ completadas_hoy }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Instalaciones Fuera de Servicio
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ instalaciones_fuera }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+                <a href="{{ url_for('servicios_generales.gestion_instalaciones', estado='Fuera de Servicio') }}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Segunda fila de estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Preventivas Programadas (Esta Semana)</h6>
+            </div>
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ preventivas_semana }}</h1>
+                <p class="text-muted">órdenes preventivas para los próximos 7 días</p>
+                <a href="{{ url_for('servicios_generales.nueva_preventiva') }}" class="btn btn-outline-info btn-sm">
+                    <i class="fas fa-plus me-1"></i>Programar Preventiva
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>Acciones Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('servicios_generales.gestion_ordenes') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Gestionar Órdenes
+                    </a>
+                    <a href="{{ url_for('servicios_generales.nueva_preventiva') }}" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-plus me-2"></i>Nueva Orden Preventiva
+                    </a>
+                    <a href="{{ url_for('servicios_generales.gestion_instalaciones') }}" class="btn btn-outline-info">
+                        <i class="fas fa-building me-2"></i>Gestionar Instalaciones
+                    </a>
+                    <a href="{{ url_for('servicios_generales.solicitar_servicio') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-ticket-alt me-2"></i>Solicitar Servicio (como usuario)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Solicitudes pendientes de aprobación -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-clock me-2"></i>Solicitudes Pendientes de Aprobación
+                    </h6>
+                    <a href="{{ url_for('servicios_generales.gestion_ordenes', estado='Pendiente') }}" class="btn btn-sm btn-light">
+                        Ver todas <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if solicitudes_pendientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>N° OT</th>
+                                <th>Fecha</th>
+                                <th>Solicitante</th>
+                                <th>Sector</th>
+                                <th>Título</th>
+                                <th>Prioridad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in solicitudes_pendientes %}
+                            <tr>
+                                <td><strong>{{ s.numero_ot }}</strong></td>
+                                <td>{{ s.fecha_creacion.strftime('%d/%m %H:%M') }}</td>
+                                <td>{{ s.solicitante_nombre }}</td>
+                                <td>{{ s.solicitante_sector }}</td>
+                                <td>{{ s.titulo[:40] }}{% if s.titulo|length > 40 %}...{% endif %}</td>
+                                <td>
+                                    <span class="badge bg-{{ s.get_prioridad_color() }}">{{ s.prioridad }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('servicios_generales.detalle_orden', orden_id=s.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye me-1"></i>Revisar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                    <p class="text-muted mb-0">No hay solicitudes pendientes de aprobación</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Órdenes en progreso -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-play-circle me-2"></i>Órdenes en Progreso
+                    </h6>
+                    <a href="{{ url_for('servicios_generales.gestion_ordenes', estado='En Progreso') }}" class="btn btn-sm btn-light">
+                        Ver todas <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if ordenes_progreso %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>N° OT</th>
+                                <th>Tipo</th>
+                                <th>Título</th>
+                                <th>Técnico Asignado</th>
+                                <th>Inicio</th>
+                                <th>Prioridad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in ordenes_progreso %}
+                            <tr>
+                                <td><strong>{{ o.numero_ot }}</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        <i class="fas {{ o.get_tipo_icon() }} me-1"></i>{{ o.tipo }}
+                                    </span>
+                                </td>
+                                <td>{{ o.titulo[:40] }}{% if o.titulo|length > 40 %}...{% endif %}</td>
+                                <td>
+                                    {% if o.asignado_a %}
+                                    <i class="fas fa-user me-1"></i>{{ o.asignado_a }}
+                                    {% else %}
+                                    <span class="text-warning">Sin asignar</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ o.fecha_inicio.strftime('%d/%m %H:%M') if o.fecha_inicio else '—' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ o.get_prioridad_color() }}">{{ o.prioridad }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('servicios_generales.detalle_orden', orden_id=o.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye me-1"></i>Ver
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-info-circle text-info fa-2x mb-2"></i>
+                    <p class="text-muted mb-0">No hay órdenes en progreso</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Actualizar estadísticas cada 60 segundos
+setInterval(function() {
+    location.reload();
+}, 60000);
+</script>
+{% endblock %}

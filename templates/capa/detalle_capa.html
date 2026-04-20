@@ -1,0 +1,615 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de CAPA{% endblock %}
+{% block page_title %}CAPA: {{ capa.numero_capa }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('capa.gestion_capa') }}">CAPAs</a></li>
+                <li class="breadcrumb-item active">{{ capa.numero_capa }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Cabecera con estado -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h4 class="mb-1">{{ capa.titulo }}</h4>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar me-2"></i>Detectado: {{ capa.fecha_deteccion.strftime('%d/%m/%Y') }}
+                            {% if capa.detectado_por %}
+                            | <i class="fas fa-user me-2"></i>{{ capa.detectado_por }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="mt-2 mt-md-0">
+                        <span class="badge bg-{{ capa.get_estado_color() }} p-2 me-2">{{ capa.estado }}</span>
+                        <span class="badge bg-{{ 'primary' if capa.tipo == 'Preventiva' else 'warning' }} p-2 me-2">{{ capa.tipo }}</span>
+                        <span class="badge bg-{{ capa.get_prioridad_color() }} p-2">{{ capa.prioridad }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Descripción del problema -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-danger text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Descripción del Problema
+                </h6>
+            </div>
+            <div class="card-body">
+                <p>{{ capa.descripcion_problema }}</p>
+                
+                {% if capa.origen or capa.origen_descripcion %}
+                <hr>
+                <p class="mb-0">
+                    <strong>Origen:</strong> {{ capa.origen or 'No especificado' }}
+                    {% if capa.origen_descripcion %}
+                    <br><small class="text-muted">{{ capa.origen_descripcion }}</small>
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Análisis de causa raíz -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-search me-2"></i>Análisis de Causa Raíz
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if capa.analisis_causa %}
+                    <p><strong>Metodología:</strong> {{ capa.metodologia_analisis or 'No especificada' }}</p>
+                    <p><strong>Análisis:</strong> {{ capa.analisis_causa }}</p>
+                    <p><strong>Causa Raíz:</strong> {{ capa.causa_raiz }}</p>
+                {% else %}
+                    <p class="text-center text-muted py-3 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Análisis de causa raíz pendiente
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-tasks me-2"></i>Acciones Correctivas y Preventivas
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if capa.acciones_correctivas %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Acciones Correctivas</h6>
+                        <p>{{ capa.acciones_correctivas }}</p>
+                    </div>
+                {% endif %}
+                
+                {% if capa.acciones_preventivas %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Acciones Preventivas</h6>
+                        <p>{{ capa.acciones_preventivas }}</p>
+                    </div>
+                {% endif %}
+                
+                {% if capa.plan_implementacion %}
+                    <div class="mb-4">
+                        <h6 class="fw-bold">Plan de Implementación</h6>
+                        <p>{{ capa.plan_implementacion }}</p>
+                    </div>
+                {% endif %}
+                
+                {% if not capa.acciones_correctivas and not capa.acciones_preventivas %}
+                    <p class="text-center text-muted py-3 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Acciones pendientes de definir
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Verificación de eficacia -->
+        {% if capa.estado in ['En Verificación', 'Cerrado'] %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-clipboard-check me-2"></i>Verificación de Eficacia
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Fecha verificación:</strong> {{ capa.fecha_verificacion.strftime('%d/%m/%Y') if capa.fecha_verificacion else 'Pendiente' }}</p>
+                <p><strong>Verificador:</strong> {{ capa.verificador or 'Pendiente' }}</p>
+                <p><strong>Resultado:</strong> 
+                    <span class="badge bg-{{ 'success' if capa.resultado_verificacion == 'Eficaz' else 'warning' if capa.resultado_verificacion == 'Parcial' else 'danger' }}">
+                        {{ capa.resultado_verificacion or 'Pendiente' }}
+                    </span>
+                </p>
+                <p><strong>Verificación:</strong> {{ capa.verificacion_eficacia }}</p>
+                
+                {% if capa.lecciones_aprendidas %}
+                <hr>
+                <h6 class="fw-bold">Lecciones Aprendidas</h6>
+                <p>{{ capa.lecciones_aprendidas }}</p>
+                {% endif %}
+                
+                {% if capa.requiere_capacitacion %}
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    <strong>Requiere capacitación:</strong> {{ capa.plan_capacitacion }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Seguimiento -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-history me-2"></i>Seguimiento
+                </h6>
+                {% if capa.estado != 'Cerrado' %}
+                <button class="btn btn-sm btn-light" onclick="agregarSeguimiento()">
+                    <i class="fas fa-plus-circle me-1"></i>Agregar
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if capa.seguimiento %}
+                    <div class="timeline">
+                        {% for s in capa.seguimiento|sort(attribute='fecha', reverse=true) %}
+                        <div class="timeline-item">
+                            <div class="timeline-date">{{ s.fecha.strftime('%d/%m/%Y %H:%M') }}</div>
+                            <div class="timeline-content">
+                                <span class="badge bg-info mb-2">{{ s.tipo }}</span>
+                                <p class="mb-1"><strong>{{ s.usuario }}</strong></p>
+                                <p class="mb-2">{{ s.descripcion }}</p>
+                                {% if s.porcentaje_avance %}
+                                <div class="progress mb-2" style="height: 5px;">
+                                    <div class="progress-bar bg-success" style="width: {{ s.porcentaje_avance }}%"></div>
+                                </div>
+                                <small>Avance: {{ s.porcentaje_avance }}%</small>
+                                {% endif %}
+                                {% if s.proximos_pasos %}
+                                <p class="small text-muted mt-2 mb-0">
+                                    <i class="fas fa-arrow-right me-1"></i>{{ s.proximos_pasos }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-3 mb-0">No hay seguimiento registrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Información de responsables -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-dark text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-users me-2"></i>Responsables
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Responsable:</strong> {{ capa.responsable or 'No asignado' }}</p>
+                <p><strong>Equipo de trabajo:</strong> {{ capa.equipo_trabajo or 'No definido' }}</p>
+                <p><strong>Creado por:</strong> {{ capa.created_by or 'Sistema' }}</p>
+                <p><strong>Fecha creación:</strong> {{ capa.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+        </div>
+
+        <!-- Fechas y plazos -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-clock me-2"></i>Plazos
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Fecha detección:</strong> {{ capa.fecha_deteccion.strftime('%d/%m/%Y') }}</p>
+                {% if capa.fecha_estimada_cierre %}
+                <p>
+                    <strong>Fecha estimada cierre:</strong> {{ capa.fecha_estimada_cierre.strftime('%d/%m/%Y') }}
+                    {% if capa.fecha_estimada_cierre < now.date() and capa.estado != 'Cerrado' %}
+                    <span class="badge bg-danger ms-2">Vencida</span>
+                    {% endif %}
+                </p>
+                {% endif %}
+                <p><strong>Días abierto:</strong> <span class="badge bg-info">{{ capa.dias_abierto() }} días</span></p>
+                {% if capa.fecha_cierre %}
+                <p><strong>Fecha cierre:</strong> {{ capa.fecha_cierre.strftime('%d/%m/%Y') }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Costos -->
+        {% if capa.costo_estimado or capa.costo_real %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-dollar-sign me-2"></i>Costos
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if capa.costo_estimado %}
+                <p><strong>Estimado:</strong> ${{ "%.2f"|format(capa.costo_estimado) }}</p>
+                {% endif %}
+                {% if capa.costo_real %}
+                <p><strong>Real:</strong> ${{ "%.2f"|format(capa.costo_real) }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Acciones según estado -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-tasks me-2"></i>Acciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if capa.estado == 'Abierto' %}
+                        <button class="btn btn-warning" onclick="mostrarAnalisis()">
+                            <i class="fas fa-search me-2"></i>Registrar Análisis
+                        </button>
+                        
+                    {% elif capa.estado == 'En Análisis' %}
+                        <button class="btn btn-success" onclick="mostrarAcciones()">
+                            <i class="fas fa-tasks me-2"></i>Definir Acciones
+                        </button>
+                        
+                    {% elif capa.estado == 'En Implementación' %}
+                        <button class="btn btn-info" onclick="mostrarVerificacion()">
+                            <i class="fas fa-clipboard-check me-2"></i>Registrar Verificación
+                        </button>
+                        
+                    {% elif capa.estado == 'En Verificación' and session.role == 'Admin' %}
+                        <button class="btn btn-success" onclick="cerrarCapa({{ capa.id }})">
+                            <i class="fas fa-check-circle me-2"></i>Cerrar CAPA
+                        </button>
+                    {% endif %}
+                    
+                    {% if capa.estado != 'Cerrado' %}
+                        <button class="btn btn-secondary" onclick="agregarSeguimiento()">
+                            <i class="fas fa-history me-2"></i>Agregar Seguimiento
+                        </button>
+                    {% endif %}
+                    
+                    <button class="btn btn-info" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentación -->
+        {% if capa.documentos_asociados or capa.evidencia_objetiva %}
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-file-alt me-2"></i>Documentación
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if capa.documentos_asociados %}
+                <p><strong>Documentos:</strong><br>{{ capa.documentos_asociados }}</p>
+                {% endif %}
+                {% if capa.evidencia_objetiva %}
+                <p><strong>Evidencia objetiva:</strong><br>{{ capa.evidencia_objetiva }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modales para acciones -->
+
+<!-- Modal para análisis de causa raíz -->
+<div class="modal fade" id="analisisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-search me-2"></i>Análisis de Causa Raíz
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('capa.registrar_analisis', capa_id=capa.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="metodologia_analisis" class="form-label">Metodología</label>
+                        <select class="form-select" id="metodologia_analisis" name="metodologia_analisis">
+                            <option value="">Seleccionar...</option>
+                            <option value="5 Porqués">5 Porqués</option>
+                            <option value="Ishikawa">Ishikawa (Espina de pescado)</option>
+                            <option value="FMEA">FMEA</option>
+                            <option value="Árbol de fallas">Árbol de fallas</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="analisis_causa" class="form-label">Análisis detallado</label>
+                        <textarea class="form-control" id="analisis_causa" name="analisis_causa" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="causa_raiz" class="form-label">Causa Raíz identificada</label>
+                        <textarea class="form-control" id="causa_raiz" name="causa_raiz" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Guardar Análisis</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para definir acciones -->
+<div class="modal fade" id="accionesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-tasks me-2"></i>Definir Acciones
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('capa.registrar_acciones', capa_id=capa.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="acciones_correctivas" class="form-label">Acciones Correctivas</label>
+                        <textarea class="form-control" id="acciones_correctivas" name="acciones_correctivas" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="acciones_preventivas" class="form-label">Acciones Preventivas</label>
+                        <textarea class="form-control" id="acciones_preventivas" name="acciones_preventivas" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="plan_implementacion" class="form-label">Plan de Implementación</label>
+                        <textarea class="form-control" id="plan_implementacion" name="plan_implementacion" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="responsable" class="form-label">Responsable</label>
+                            <input type="text" class="form-control" id="responsable" name="responsable">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="equipo_trabajo" class="form-label">Equipo de trabajo</label>
+                            <input type="text" class="form-control" id="equipo_trabajo" name="equipo_trabajo">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_estimada_cierre" class="form-label">Fecha estimada de cierre</label>
+                            <input type="date" class="form-control" id="fecha_estimada_cierre" name="fecha_estimada_cierre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="costo_estimado" class="form-label">Costo estimado ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="costo_estimado" name="costo_estimado">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar Acciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para verificación -->
+<div class="modal fade" id="verificacionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-check me-2"></i>Verificación de Eficacia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('capa.registrar_verificacion', capa_id=capa.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="verificacion_eficacia" class="form-label">Verificación de eficacia</label>
+                        <textarea class="form-control" id="verificacion_eficacia" name="verificacion_eficacia" rows="4" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fecha_verificacion" class="form-label">Fecha de verificación</label>
+                            <input type="date" class="form-control" id="fecha_verificacion" name="fecha_verificacion" 
+                                   value="{{ now.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="verificador" class="form-label">Verificador</label>
+                            <input type="text" class="form-control" id="verificador" name="verificador" 
+                                   value="{{ session.nombre_completo or session.username }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resultado_verificacion" class="form-label">Resultado</label>
+                        <select class="form-select" id="resultado_verificacion" name="resultado_verificacion" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Eficaz">Eficaz</option>
+                            <option value="Parcial">Parcialmente Eficaz</option>
+                            <option value="No Eficaz">No Eficaz</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lecciones_aprendidas" class="form-label">Lecciones aprendidas</label>
+                        <textarea class="form-control" id="lecciones_aprendidas" name="lecciones_aprendidas" rows="3"></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="requiere_capacitacion" name="requiere_capacitacion">
+                        <label class="form-check-label" for="requiere_capacitacion">
+                            Requiere capacitación
+                        </label>
+                    </div>
+                    <div id="plan_capacitacion_container" style="display: none;">
+                        <label for="plan_capacitacion" class="form-label">Plan de capacitación</label>
+                        <textarea class="form-control" id="plan_capacitacion" name="plan_capacitacion" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info">Registrar Verificación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seguimiento -->
+<div class="modal fade" id="seguimientoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-history me-2"></i>Agregar Seguimiento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('capa.agregar_seguimiento', capa_id=capa.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="tipo_seguimiento" class="form-label">Tipo</label>
+                        <select class="form-select" id="tipo_seguimiento" name="tipo" required>
+                            <option value="Avance">Avance</option>
+                            <option value="Problema">Problema</option>
+                            <option value="Hito">Hito alcanzado</option>
+                            <option value="Cambio">Cambio en el plan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion_seguimiento" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcion_seguimiento" name="descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="porcentaje_avance" class="form-label">% de avance</label>
+                        <input type="number" class="form-control" id="porcentaje_avance" name="porcentaje_avance" min="0" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="proximos_pasos" class="form-label">Próximos pasos</label>
+                        <textarea class="form-control" id="proximos_pasos" name="proximos_pasos" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function mostrarAnalisis() {
+        new bootstrap.Modal(document.getElementById('analisisModal')).show();
+    }
+
+    function mostrarAcciones() {
+        new bootstrap.Modal(document.getElementById('accionesModal')).show();
+    }
+
+    function mostrarVerificacion() {
+        new bootstrap.Modal(document.getElementById('verificacionModal')).show();
+    }
+
+    function agregarSeguimiento() {
+        new bootstrap.Modal(document.getElementById('seguimientoModal')).show();
+    }
+
+    function cerrarCapa(id) {
+        Swal.fire({
+            title: '¿Cerrar CAPA?',
+            text: 'Confirme que todas las acciones han sido implementadas y verificadas',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cerrar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/capa/${id}/cerrar`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    // Mostrar campo de plan de capacitación si se requiere
+    document.getElementById('requiere_capacitacion')?.addEventListener('change', function() {
+        document.getElementById('plan_capacitacion_container').style.display = this.checked ? 'block' : 'none';
+    });
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e3e6f0;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4e73df;
+    border: 2px solid white;
+}
+.timeline-date {
+    font-size: 0.8rem;
+    color: #858796;
+    margin-bottom: 5px;
+}
+.timeline-content {
+    background: #f8f9fc;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}
+

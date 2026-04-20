@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema GMP Maintenance - Gestión integral de mantenimiento para industria farmacéutica">
+    <title>GMP Maintenance - {% block title %}{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>GM</text></svg>">
+    
+    <style>
+        :root {
+            --primary-color: #1a2a3a;
+            --secondary-color: #2c3e50;
+            --accent-color: #3498db;
+            --accent-secondary: #2ecc71;
+            --danger-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --gold-color: #d4af37;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+        }
+        
+        /* Fondo con patrón sutil para el main content */
+        .main-content {
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.03"><path fill="%232c3e50" d="M20,20 L80,20 L80,80 L20,80 Z"/><circle cx="50" cy="50" r="15"/></svg>') repeat;
+            margin-left: 280px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+        
+        /* Efecto de gradiente en el sidebar */
+        .sidebar {
+            min-height: 100vh;
+            max-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            z-index: 1000;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--primary-color);
+        }
+        
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        
+        .sidebar.collapsed .nav-link span:not(.notification-badge),
+        .sidebar.collapsed .logo-container h4,
+        .sidebar.collapsed .logo-container small,
+        .sidebar.collapsed .user-section p,
+        .sidebar.collapsed .user-section small,
+        .sidebar.collapsed .sidebar-footer,
+        .sidebar.collapsed .dropdown-toggle::after {
+            display: none !important;
+        }
+        
+        .sidebar.collapsed .logo-container {
+            padding: 15px 0;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            text-align: center;
+            padding: 12px 10px;
+            justify-content: center;
+        }
+        
+        .sidebar.collapsed .nav-link i {
+            margin-right: 0;
+            font-size: 1.3rem;
+        }
+        
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 10px 20px;
+            border-bottom: 1px solid #3a506b;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: var(--accent-color);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-left: 4px solid var(--gold-color);
+        }
+        
+        .sidebar .nav-link i {
+            width: 22px;
+            text-align: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: var(--primary-color);
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-color);
+        }
+        
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+        
+        /* ========== LOGO GM² ========== */
+        .logo-container {
+            padding: 20px 0;
+            border-bottom: 2px solid var(--gold-color);
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.2) 100%);
+        }
+        
+        .logo-container a {
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .logo-container a:hover {
+            transform: translateY(-3px);
+        }
+        
+        .logo-container a:hover .logo-circle {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .logo-circle {
+            width: 65px;
+            height: 65px;
+            margin: 0 auto 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .logo-gm {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+        
+        .logo-superscript {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--gold-color);
+            position: relative;
+            top: -8px;
+            left: 2px;
+        }
+        
+        .logo-registered {
+            font-size: 0.55rem;
+            color: var(--gold-color);
+            position: absolute;
+            bottom: 5px;
+            right: 10px;
+            font-weight: normal;
+        }
+        
+        .logo-container h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            color: white;
+        }
+        
+        .logo-container small {
+            font-size: 0.7rem;
+            color: #bdc3c7;
+            display: block;
+        }
+        
+        /* Resto de estilos */
+        .user-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin: 15px 10px;
+        }
+        
+        .sidebar-footer {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(2px);
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .status-operativo { background-color: #d4edda; color: #155724; }
+        .status-en_mantenimiento { background-color: #fff3cd; color: #856404; }
+        .status-fuera_servicio { background-color: #f8d7da; color: #721c24; }
+        
+        .semaforo {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .semaforo-green { background-color: #28a745; }
+        .semaforo-yellow { background-color: #ffc107; }
+        .semaforo-red { background-color: #dc3545; }
+        .semaforo-gray { background-color: #6c757d; }
+        
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 15px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7em;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notification-badge.has-notifications {
+            display: flex;
+            animation: pulse 2s infinite;
+        }
+        
+        .alerta-badge {
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            right: 0;
+            transform: translate(25%, -25%);
+        }
+        
+        .dropdown-alertas {
+            min-width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .alerta-item {
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        
+        .alerta-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .alerta-item.vencido {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alerta-item.urgente {
+            border-left: 4px solid #ffc107;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .border-left-primary { border-left: 4px solid #4e73df !important; }
+        .border-left-warning { border-left: 4px solid #f6c23e !important; }
+        .border-left-info { border-left: 4px solid #36b9cc !important; }
+        .border-left-danger { border-left: 4px solid #e74a3b !important; }
+        .text-gray-300 { color: #dddfeb !important; }
+        .text-gray-800 { color: #5a5c69 !important; }
+        
+        .gmp-required::after {
+            content: " *";
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .gmp-field:required {
+            border-left: 3px solid #007bff;
+        }
+        
+        .alert-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 320px;
+            animation: slideInRight 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0 !important;
+            }
+            .mobile-menu-btn {
+                display: block !important;
+            }
+            .alert-toast {
+                left: 20px;
+                right: 20px;
+                min-width: auto;
+            }
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+        }
+        
+        .chart-pie {
+            position: relative;
+            height: 200px;
+        }
+        
+        .nav-submenu {
+            padding-left: 15px;
+            background: rgba(0,0,0,0.15);
+        }
+        
+        .nav-submenu .nav-link {
+            padding: 8px 20px 8px 45px;
+            font-size: 0.9em;
+            border-bottom: 1px solid #3a506b;
+        }
+        
+        .nav-submenu .nav-link i {
+            font-size: 0.9em;
+            width: 18px;
+        }
+        
+        .sidebar .nav-link.dropdown-toggle::after {
+            margin-left: auto;
+            font-size: 0.7rem;
+        }
+        
+        .sidebar.collapsed .nav-submenu {
+            display: none !important;
+        }
+        
+        .inspeccion-badge {
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+        }
+        
+        /* Badge dorado para GM² */
+        .gm-badge {
+            background: linear-gradient(135deg, var(--gold-color), #f1c40f);
+            color: var(--primary-color);
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <nav class="sidebar" id="sidebar">
+                <div class="position-sticky">
+                    <!-- Logo GM² con marca registrada - VERSIÓN CORREGIDA -->
+                    <div class="logo-container">
+                        <a href="{{ url_for('dashboard.dashboard') }}" class="text-decoration-none">
+                            <div class="logo-circle">
+                                {% if logo_exists %}
+                                <img src="{{ url_for('static', filename='logo.png') }}" alt="GMP Maintenance²" 
+                                     style="width: 55px; height: auto;">
+                                {% else %}
+                                <div class="text-center">
+                                    <span class="logo-gm">GM</span>
+                                    <span class="logo-superscript">²</span>
+                                </div>
+                                {% endif %}
+                                <span class="logo-registered">®</span>
+                            </div>
+                            <h4 class="text-white mb-1">GMP Maintenance</h4>
+                            <small class="text-muted">Gestión Integral de Calidad</small>
+                            <div class="mt-1">
+                                <span class="gm-badge">Cumplimiento GMP</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Toggle Sidebar Button -->
+                    <div class="text-center mb-2">
+                        <button class="btn btn-sm btn-outline-light" id="toggleSidebar">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- ========== MENÚ REORGANIZADO ========== -->
+                    <ul class="nav flex-column">
+                        <!-- Dashboard -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'dashboard.dashboard' %}active{% endif %}" 
+                               href="{{ url_for('dashboard.dashboard') }}">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+
+                        <!-- Asistente IA -->
+                        <li class="nav-item">
+                           <a class="nav-link {% if request.endpoint and request.endpoint.startswith('ia.') %}active{% endif %}"
+                               href="{{ url_for('dashboard.dashboard') }}">
+                                <i class="fas fa-robot"></i>
+                                <span>Asistente IA</span>
+                            </a>
+                        </li>
+                        
+                        <!-- ========== MÓDULO: EQUIPOS ========== -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if request.endpoint and (request.endpoint.startswith('equipos.') or request.endpoint == 'calendario.panel' or request.endpoint.startswith('calibraciones.')) %}active{% endif %}" 
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#equiposMenu"
+                               aria-expanded="{% if request.endpoint and (request.endpoint.startswith('equipos.') or request.endpoint == 'calendario.panel' or request.endpoint.startswith('calibraciones.')) %}true{% else %}false{% endif %}">
+                                <i class="fas fa-industry"></i>
+                                <span>Equipos</span>
+                            </a>
+                            <div class="collapse {% if request.endpoint and (request.endpoint.startswith('equipos.') or request.endpoint == 'calendario.panel' or request.endpoint.startswith('calibraciones.')) %}show{% endif %}" id="equiposMenu">
+                                <ul class="nav flex-column nav-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'equipos.gestion_equipos' %}active{% endif %}" 
+                                           href="{{ url_for('equipos.gestion_equipos') }}">
+                                            <i class="fas fa-list"></i>Gestión de Equipos
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'calendario.panel' %}active{% endif %}" 
+                                           href="{{ url_for('calendario.panel') }}">
+                                            <i class="fas fa-calendar-check"></i>Mant. Preventivo
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'calibraciones.gestion_calibraciones' %}active{% endif %}"
+                                           href="{{ url_for('calibraciones.gestion_calibraciones') }}">
+                                            <i class="fas fa-ruler-combined"></i>Calibraciones
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- ========== MÓDULO: ÓRDENES DE TRABAJO ========== -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if request.endpoint and (request.endpoint.startswith('ordenes.') or request.endpoint.startswith('servicios_generales.')) %}active{% endif %}" 
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#ordenesMenu"
+                               aria-expanded="{% if request.endpoint and (request.endpoint.startswith('ordenes.') or request.endpoint.startswith('servicios_generales.')) %}true{% else %}false{% endif %}">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Órdenes de Trabajo</span>
+                            </a>
+                            <div class="collapse {% if request.endpoint and (request.endpoint.startswith('ordenes.') or request.endpoint.startswith('servicios_generales.')) %}show{% endif %}" id="ordenesMenu">
+                                <ul class="nav flex-column nav-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'ordenes.gestion_ordenes' %}active{% endif %}" 
+                                           href="{{ url_for('ordenes.gestion_ordenes') }}">
+                                            <i class="fas fa-microchip"></i>Órdenes de Equipos
+                                        </a>
+                                    </li>
+                                    
+                                    <!-- Servicios Generales -->
+                                    {% if session.area == 'mantenimiento' or session.role in ['jefe', 'supervisor'] %}
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" role="button" 
+                                           data-bs-toggle="collapse" data-bs-target="#serviciosGeneralesSubmenu">
+                                            <i class="fas fa-building"></i>Servicios Generales
+                                        </a>
+                                        <div class="collapse" id="serviciosGeneralesSubmenu">
+                                            <ul class="nav flex-column nav-submenu" style="padding-left: 20px;">
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url_for('servicios_generales.panel_mantenimiento') }}">
+                                                        <i class="fas fa-tachometer-alt"></i>Panel de Control
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url_for('servicios_generales.gestion_ordenes') }}">
+                                                        <i class="fas fa-list"></i>Gestión de Órdenes
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url_for('servicios_generales.nueva_preventiva') }}">
+                                                        <i class="fas fa-calendar-plus"></i>Nueva Preventiva
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" href="{{ url_for('servicios_generales.gestion_instalaciones') }}">
+                                                        <i class="fas fa-cog"></i>Instalaciones
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                    {% else %}
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ url_for('servicios_generales.solicitar_servicio') }}">
+                                            <i class="fas fa-ticket-alt"></i>Solicitar Servicio
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'servicios_generales.mis_solicitudes' %}active{% endif %}" 
+                                           href="{{ url_for('servicios_generales.mis_solicitudes') }}">
+                                            <i class="fas fa-clipboard-check"></i>Mis Solicitudes
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- ========== MÓDULO: INVENTARIO ========== -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if request.endpoint and (request.endpoint.startswith('inventario.') or request.endpoint.startswith('proveedores.')) %}active{% endif %}" 
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#inventarioMenu"
+                               aria-expanded="{% if request.endpoint and (request.endpoint.startswith('inventario.') or request.endpoint.startswith('proveedores.')) %}true{% else %}false{% endif %}">
+                                <i class="fas fa-boxes"></i>
+                                <span>Inventario</span>
+                            </a>
+                            <div class="collapse {% if request.endpoint and (request.endpoint.startswith('inventario.') or request.endpoint.startswith('proveedores.')) %}show{% endif %}" id="inventarioMenu">
+                                <ul class="nav flex-column nav-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inventario.gestion_inventario' %}active{% endif %}" 
+                                           href="{{ url_for('inventario.gestion_inventario') }}">
+                                            <i class="fas fa-warehouse"></i>Gestión de Stock
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('proveedores.') %}active{% endif %}"
+                                           href="{{ url_for('proveedores.gestion_proveedores') }}">
+                                            <i class="fas fa-truck"></i>Proveedores
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- ========== MÓDULO: CALIDAD GMP ========== -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if request.endpoint and (request.endpoint.startswith('cambios.') or request.endpoint.startswith('capa.') or request.endpoint.startswith('documentacion.') or request.endpoint.startswith('riesgos.')) %}active{% endif %}" 
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#calidadMenu"
+                               aria-expanded="{% if request.endpoint and (request.endpoint.startswith('cambios.') or request.endpoint.startswith('capa.') or request.endpoint.startswith('documentacion.') or request.endpoint.startswith('riesgos.')) %}true{% else %}false{% endif %}">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Calidad GMP</span>
+                            </a>
+                            <div class="collapse {% if request.endpoint and (request.endpoint.startswith('cambios.') or request.endpoint.startswith('capa.') or request.endpoint.startswith('documentacion.') or request.endpoint.startswith('riesgos.')) %}show{% endif %}" id="calidadMenu">
+                                <ul class="nav flex-column nav-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('cambios.') %}active{% endif %}" 
+                                           href="{{ url_for('cambios.gestion_cambios') }}">
+                                            <i class="fas fa-exchange-alt"></i>Control de Cambios
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('capa.') %}active{% endif %}" 
+                                           href="{{ url_for('capa.gestion_capa') }}">
+                                            <i class="fas fa-clipboard-check"></i>Sistema CAPA
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('riesgos.') %}active{% endif %}" 
+                                           href="{{ url_for('riesgos.index') }}">
+                                            <i class="fas fa-exclamation-triangle"></i>Matriz de Riesgos
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('documentacion.') %}active{% endif %}" 
+                                           href="{{ url_for('documentacion.index') }}">
+                                            <i class="fas fa-file-alt"></i>Documentación GMP
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- ========== MÓDULO: INSPECCIONES GMP ========== -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if request.endpoint and request.endpoint.startswith('inspecciones.') %}active{% endif %}" 
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#inspeccionesMenu"
+                               aria-expanded="{% if request.endpoint and request.endpoint.startswith('inspecciones.') %}true{% else %}false{% endif %}">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Inspecciones GMP</span>
+                            </a>
+                            <div class="collapse {% if request.endpoint and request.endpoint.startswith('inspecciones.') %}show{% endif %}" id="inspeccionesMenu">
+                                <ul class="nav flex-column nav-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inspecciones.index' %}active{% endif %}" 
+                                           href="{{ url_for('inspecciones.index') }}">
+                                            <i class="fas fa-home"></i>Panel Principal
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inspecciones.listar_plantillas' %}active{% endif %}" 
+                                           href="{{ url_for('inspecciones.listar_plantillas') }}">
+                                            <i class="fas fa-list-alt"></i>Plantillas
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inspecciones.seleccionar_plantilla' %}active{% endif %}" 
+                                           href="{{ url_for('inspecciones.seleccionar_plantilla') }}">
+                                            <i class="fas fa-play-circle"></i>Realizar Inspección
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inspecciones.historial' %}active{% endif %}" 
+                                           href="{{ url_for('inspecciones.historial') }}">
+                                            <i class="fas fa-history"></i>Historial
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inspecciones.dashboard_inspecciones' %}active{% endif %}" 
+                                           href="{{ url_for('inspecciones.dashboard_inspecciones') }}">
+                                            <i class="fas fa-chart-line"></i>Dashboard GMP
+                                        </a>
+                                    </li>
+                                    {% if session.role == 'admin' %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint == 'inspecciones.nueva_plantilla' %}active{% endif %}" 
+                                           href="{{ url_for('inspecciones.nueva_plantilla') }}">
+                                            <i class="fas fa-plus-circle"></i>Nueva Plantilla
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Reportes GMP -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reportes.') %}active{% endif %}" 
+                               href="{{ url_for('reportes.index') }}">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Reportes GMP</span>
+                            </a>
+                        </li>
+
+                        <!-- Notificaciones -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('notificaciones.') %}active{% endif %}" 
+                               href="{{ url_for('notificaciones.panel') }}">
+                                <i class="fas fa-bell"></i>
+                                <span>Notificaciones</span>
+                                <span class="notification-badge" id="notificaciones-badge"></span>
+                            </a>
+                        </li>
+
+                        <!-- ========== MÓDULO: ADMINISTRACIÓN ========== -->
+                        {% if session.area == 'administracion' or session.role == 'jefe' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if request.endpoint and request.endpoint.startswith('usuarios.') %}active{% endif %}" 
+                               href="#" role="button" data-bs-toggle="collapse" data-bs-target="#adminMenu"
+                               aria-expanded="{% if request.endpoint and request.endpoint.startswith('usuarios.') %}true{% else %}false{% endif %}">
+                                <i class="fas fa-cogs"></i>
+                                <span>Administración</span>
+                            </a>
+                            <div class="collapse {% if request.endpoint and request.endpoint.startswith('usuarios.') %}show{% endif %}" id="adminMenu">
+                                <ul class="nav flex-column nav-submenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('usuarios.') %}active{% endif %}" 
+                                           href="{{ url_for('usuarios.gestion_usuarios') }}">
+                                            <i class="fas fa-users-cog"></i>Gestión de Usuarios
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    <!-- Sección de Usuario -->
+                    <div class="user-section">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <i class="fas fa-user-circle fa-2x text-white"></i>
+                            </div>
+                            <p class="text-white mb-1 fw-bold">{{ session.nombre_completo or session.username or 'Usuario' }}</p>
+                            <small class="text-muted">{{ session.role or 'Rol' }} - {{ session.area or 'Área' }}</small>
+                            <div class="mt-2">
+                                <span class="badge bg-success">
+                                    <i class="fas fa-circle me-1"></i>Conectado
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer del Sidebar -->
+                    <div class="sidebar-footer">
+                        <div class="text-center">
+                            <small class="text-muted d-block">GMP Maintenance v2.3</small>
+                            <small class="text-muted">© 2026 GM² | Todos los derechos reservados</small>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content" id="mainContent">
+                <!-- Navbar Superior -->
+                <nav class="navbar navbar-expand-lg navbar-light bg-white mb-4 shadow-sm rounded p-3">
+                    <div class="container-fluid">
+                        <button class="btn btn-outline-secondary mobile-menu-btn me-2" id="mobileMenuBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
+                        <span class="navbar-brand fw-bold">
+                            <i class="fas fa-tools me-2"></i> 
+                            {% block page_title %}GMP Maintenance System{% endblock %}
+                        </span>
+                        
+                        <div class="navbar-nav ms-auto">
+                            <div class="d-flex align-items-center">
+                                <div class="search-container me-3 d-none d-md-block">
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" placeholder="Buscar..." id="globalSearch">
+                                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <a href="{{ url_for('servicios_generales.solicitar_servicio') }}" 
+                                   class="btn btn-outline-primary btn-sm me-3" title="Solicitar Servicio">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span class="d-none d-md-inline ms-1">Solicitar</span>
+                                </a>
+
+                                <div class="dropdown me-3">
+                                    <button class="btn btn-outline-secondary btn-sm position-relative" type="button" 
+                                            id="alertasDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span class="alerta-badge" id="alertaNavBadge" style="display: none;">0</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end dropdown-alertas" id="alertasDropdownMenu">
+                                        <li><h6 class="dropdown-header"><i class="fas fa-bell me-2"></i>Alertas de Mantenimiento</h6></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li id="sinAlertasMsg" class="text-center text-muted py-3">No hay alertas activas</li>
+                                    </ul>
+                                </div>
+
+                                <div class="dropdown me-3">
+                                    <button class="btn btn-outline-secondary btn-sm position-relative" type="button" 
+                                            onclick="window.location.href='{{ url_for('notificaciones.panel') }}'">
+                                        <i class="fas fa-bell"></i>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                              id="navbar-notification-badge" style="font-size: 0.6rem; display: none;">0</span>
+                                    </button>
+                                </div>
+
+                                <span class="navbar-text me-3 d-none d-md-block">
+                                    <i class="fas fa-user me-1"></i> {{ session.nombre_completo or session.username or 'Usuario' }}
+                                    <span class="badge bg-primary ms-1">{{ session.role or 'Rol' }}</span>
+                                </span>
+                                
+                                <a class="btn btn-outline-danger btn-sm" href="{{ url_for('auth.logout') }}">
+                                    <i class="fas fa-sign-out-alt me-1"></i> 
+                                    <span class="d-none d-md-inline">Salir</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="px-4">
+                    <nav aria-label="breadcrumb" class="mb-4">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}" class="text-decoration-none">Dashboard</a></li>
+                            {% block breadcrumb %}
+                            <li class="breadcrumb-item active" aria-current="page">{% block page_title_breadcrumb %}{% endblock %}</li>
+                            {% endblock %}
+                        </ol>
+                    </nav>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show shadow-sm mb-4 fade-in" role="alert">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% block content %}{% endblock %}
+
+                    <footer class="mt-5 pt-4 border-top">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">GMP Maintenance System v2.3</h6>
+                                <p class="text-muted small">
+                                    Sistema integral de gestión de mantenimiento para la industria farmacéutica.
+                                    Cumplimiento total con regulaciones GMP.
+                                </p>
+                                <div class="mt-2">
+                                    <span class="badge bg-dark">
+                                        <i class="fas fa-registered me-1"></i>GM²
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <small class="text-muted">
+                                    <i class="fas fa-shield-alt me-1"></i> Sistema Seguro |
+                                    <i class="fas fa-clock me-1 ms-2"></i> {{ now.strftime('%d/%m/%Y %H:%M') if now else 'Sistema activo' }}
+                                </small>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-circle me-1"></i>Conectado
+                                    </span>
+                                    <span class="badge bg-info ms-1">
+                                        <i class="fas fa-user me-1"></i>{{ session.role or 'Usuario' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        let alertasActivasGlobal = [];
+        
+        // Toggle Sidebar
+        document.getElementById('toggleSidebar')?.addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const icon = this.querySelector('i');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                icon.className = 'fas fa-chevron-right';
+                localStorage.setItem('sidebarCollapsed', 'true');
+            } else {
+                icon.className = 'fas fa-chevron-left';
+                localStorage.setItem('sidebarCollapsed', 'false');
+            }
+        });
+
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        });
+
+        function loadPreferences() {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                document.getElementById('sidebar')?.classList.add('collapsed');
+                document.getElementById('mainContent')?.classList.add('expanded');
+                document.getElementById('toggleSidebar')?.querySelector('i')?.classList.remove('fa-chevron-left');
+                document.getElementById('toggleSidebar')?.querySelector('i')?.classList.add('fa-chevron-right');
+            }
+        }
+
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                new bootstrap.Alert(alert).close();
+            });
+        }, 5000);
+
+        document.getElementById('searchButton')?.addEventListener('click', function() {
+            const query = document.getElementById('globalSearch').value.trim();
+            if (query.length > 0) {
+                Swal.fire({ icon: 'info', title: 'Búsqueda', text: `Buscando: "${query}"`, timer: 2000, showConfirmButton: false });
+            }
+        });
+
+        document.getElementById('globalSearch')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('searchButton')?.click();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('globalSearch')?.focus();
+            }
+        });
+
+        function actualizarContadorNotificaciones() {
+            fetch('/notificaciones/api/contar-no-leidas')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notificaciones-badge');
+                    const navbarBadge = document.getElementById('navbar-notification-badge');
+                    if (data.cantidad > 0) {
+                        badge.textContent = data.cantidad;
+                        badge.style.display = 'flex';
+                        if (navbarBadge) { navbarBadge.textContent = data.cantidad; navbarBadge.style.display = 'inline'; }
+                    } else {
+                        badge.style.display = 'none';
+                        if (navbarBadge) navbarBadge.style.display = 'none';
+                    }
+                });
+        }
+
+        function verificarAlertasActivas() {
+            fetch('/calendario/api/todos-cronogramas')
+                .then(response => response.json())
+                .then(data => {
+                    const equipos = data.equipos || [];
+                    const alertas = [];
+                    equipos.forEach(equipo => {
+                        if (equipo.tareas) {
+                            equipo.tareas.forEach(tarea => {
+                                if (tarea.dias_restantes < 0) {
+                                    alertas.push({ tipo: 'vencido', equipo: equipo.codigo, equipoNombre: equipo.nombre, tarea: tarea.descripcion, dias: Math.abs(tarea.dias_restantes), fecha: tarea.fecha_formateada, sistema: tarea.sistema_nombre });
+                                } else if (tarea.dias_restantes <= 3 && tarea.dias_restantes >= 0) {
+                                    alertas.push({ tipo: 'urgente', equipo: equipo.codigo, equipoNombre: equipo.nombre, tarea: tarea.descripcion, dias: tarea.dias_restantes, fecha: tarea.fecha_formateada, sistema: tarea.sistema_nombre });
+                                }
+                            });
+                        }
+                    });
+                    alertasActivasGlobal = alertas;
+                    actualizarDropdownAlertas(alertas);
+                    if (alertas.length > 0) mostrarAlertaFlotante(alertas);
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        
+        function actualizarDropdownAlertas(alertas) {
+            const dropdownMenu = document.getElementById('alertasDropdownMenu');
+            const badge = document.getElementById('alertaNavBadge');
+            const sinAlertasMsg = document.getElementById('sinAlertasMsg');
+            if (!dropdownMenu) return;
+            
+            const vencidos = alertas.filter(a => a.tipo === 'vencido').length;
+            const urgentes = alertas.filter(a => a.tipo === 'urgente').length;
+            
+            if (alertas.length > 0) {
+                badge.textContent = alertas.length;
+                badge.style.display = 'flex';
+                badge.classList.add('pulse');
+                
+                dropdownMenu.querySelectorAll('.alerta-item, .alertas-footer').forEach(i => i.remove());
+                
+                dropdownMenu.insertAdjacentHTML('beforeend', `
+                    <li class="dropdown-header bg-light">
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-skull-crosswalk text-danger me-1"></i> Vencidas: ${vencidos}</span>
+                            <span><i class="fas fa-hourglass-half text-warning me-1"></i> Urgentes: ${urgentes}</span>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                `);
+                
+                alertas.slice(0, 5).forEach(alerta => {
+                    dropdownMenu.insertAdjacentHTML('beforeend', `
+                        <li class="dropdown-item alerta-item ${alerta.tipo}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <span class="badge ${alerta.tipo === 'vencido' ? 'bg-danger' : 'bg-warning'} me-2">${alerta.tipo === 'vencido' ? 'VENCIDO' : 'URGENTE'}</span>
+                                    <strong>${escapeHtml(alerta.equipo)}</strong>
+                                </div>
+                                <small class="text-muted">${alerta.fecha}</small>
+                            </div>
+                            <div class="small mt-1"><span class="text-muted">📋 ${escapeHtml(alerta.sistema)}</span></div>
+                            <div class="small text-muted mt-1">${alerta.tipo === 'vencido' ? `Vencido hace ${alerta.dias} días` : `Vence en ${alerta.dias} días`}</div>
+                        </li>
+                    `);
+                });
+                
+                if (alertas.length > 5) {
+                    dropdownMenu.insertAdjacentHTML('beforeend', `<li><hr class="dropdown-divider"></li><li class="dropdown-item text-center text-muted small">+${alertas.length - 5} alerta(s) más</li>`);
+                }
+                
+                dropdownMenu.insertAdjacentHTML('beforeend', `
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item text-center alertas-footer">
+                        <button class="btn btn-sm btn-outline-danger w-100" onclick="window.location.href='/calendario/panel'">
+                            <i class="fas fa-eye me-1"></i>Ver todas las alertas
+                        </button>
+                    </li>
+                `);
+                
+                if (sinAlertasMsg) sinAlertasMsg.style.display = 'none';
+            } else {
+                badge.style.display = 'none';
+                if (sinAlertasMsg) sinAlertasMsg.style.display = 'block';
+            }
+        }
+        
+        function mostrarAlertaFlotante(alertas) {
+            const ultimaAlerta = localStorage.getItem('ultimaAlertaMostrada');
+            const ahora = Date.now();
+            if (ultimaAlerta && (ahora - parseInt(ultimaAlerta)) < 60000) return;
+            localStorage.setItem('ultimaAlertaMostrada', ahora);
+            
+            const vencidos = alertas.filter(a => a.tipo === 'vencido').length;
+            const urgentes = alertas.filter(a => a.tipo === 'urgente').length;
+            
+            const alertaHtml = `
+                <div class="alert-toast shadow-lg" id="alertaFlotante">
+                    <div class="card border-${vencidos > 0 ? 'danger' : 'warning'}">
+                        <div class="card-header bg-${vencidos > 0 ? 'danger' : 'warning'} text-white d-flex justify-content-between align-items-center">
+                            <strong><i class="fas fa-bell me-2"></i>Alertas de Mantenimiento</strong>
+                            <button type="button" class="btn-close btn-close-white" onclick="cerrarAlertaFlotante()"></button>
+                        </div>
+                        <div class="card-body">
+                            ${vencidos > 0 ? `<div class="alert alert-danger mb-2 py-2"><i class="fas fa-skull-crosswalk me-2"></i><strong>${vencidos}</strong> tarea(s) VENCIDA(S)</div>` : ''}
+                            ${urgentes > 0 ? `<div class="alert alert-warning mb-2 py-2"><i class="fas fa-hourglass-half me-2"></i><strong>${urgentes}</strong> tarea(s) URGENTE(S) (3 días o menos)</div>` : ''}
+                            <button class="btn btn-sm btn-${vencidos > 0 ? 'danger' : 'warning'} w-100 mt-2" onclick="window.location.href='/calendario/panel'">
+                                <i class="fas fa-eye me-1"></i>Ir al Panel de Mantenimiento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const existingAlert = document.getElementById('alertaFlotante');
+            if (existingAlert) existingAlert.remove();
+            document.body.insertAdjacentHTML('beforeend', alertaHtml);
+            setTimeout(() => cerrarAlertaFlotante(), 10000);
+        }
+        
+        function cerrarAlertaFlotante() {
+            document.getElementById('alertaFlotante')?.remove();
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPreferences();
+            actualizarContadorNotificaciones();
+            verificarAlertasActivas();
+            setInterval(actualizarContadorNotificaciones, 30000);
+            setInterval(verificarAlertasActivas, 30000);
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

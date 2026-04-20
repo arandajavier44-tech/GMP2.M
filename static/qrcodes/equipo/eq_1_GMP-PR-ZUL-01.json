@@ -1,0 +1,16 @@
+{
+  "code": "GMP-PR-ZUL-01",
+  "name": "ZULIANA ",
+  "gmp_classification": "Crítico GMP",
+  "current_status": "Operativo",
+  "ubicacion": "Área de Tabletas - Línea A",
+  "manufacturer": "ZULIANA",
+  "model": "BLI-ZUL-001",
+  "metadata": {
+    "tipo": "equipo",
+    "fecha_generacion": "2026-04-09T01:27:04.907062",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/equipos/1"
+}

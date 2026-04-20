@@ -1,0 +1,1014 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Notificaciones{% endblock %}
+{% block page_title %}Centro de Notificaciones{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Notificaciones</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total</h6>
+                        <h3 class="mb-0" id="total-count">0</h3>
+                    </div>
+                    <i class="fas fa-bell fa-2x text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">No leídas</h6>
+                        <h3 class="mb-0" id="no-leidas-count">0</h3>
+                    </div>
+                    <i class="fas fa-envelope fa-2x text-warning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Alta prioridad</h6>
+                        <h3 class="mb-0" id="alta-count">0</h3>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-left-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Vencimientos</h6>
+                        <h3 class="mb-0" id="vencimientos-count">0</h3>
+                    </div>
+                    <i class="fas fa-calendar-times fa-2x text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de acciones -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3 mb-2 mb-md-0">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="searchInput" placeholder="Buscar notificaciones...">
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-2 mb-md-0">
+                        <select class="form-select" id="tipoFilter">
+                            <option value="todos">Todos los tipos</option>
+                            <option value="orden">Órdenes de Trabajo</option>
+                            <option value="calibracion">Calibraciones</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="capa">CAPA</option>
+                            <option value="documento">Documentos</option>
+                            <option value="recordatorio">Recordatorios</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-2 mb-md-0">
+                        <select class="form-select" id="prioridadFilter">
+                            <option value="todas">Todas las prioridades</option>
+                            <option value="Alta">Alta prioridad</option>
+                            <option value="Media">Media prioridad</option>
+                            <option value="Baja">Baja prioridad</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-success flex-grow-1" onclick="marcarTodasLeidas()">
+                                <i class="fas fa-check-double me-2"></i>Marcar todas
+                            </button>
+                            <button class="btn btn-primary" onclick="recargarNotificaciones()" id="btnActualizar">
+                                <i class="fas fa-sync-alt me-2"></i>
+                            </button>
+                            <button class="btn btn-outline-info" onclick="generarNotificacionesReales()" title="Generar desde datos reales">
+                                <i class="fas fa-database me-1"></i>Generar reales
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="abrirConfiguracion()" title="Configuración">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros rápidos -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="btn-group flex-wrap" role="group">
+            <button type="button" class="btn btn-outline-primary active" onclick="filtrarPorEstado('todas')" id="filtro-todas">
+                <i class="fas fa-list me-1"></i>Todas
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="filtrarPorEstado('no-leidas')" id="filtro-no-leidas">
+                <i class="fas fa-envelope me-1"></i>No leídas
+            </button>
+            <button type="button" class="btn btn-outline-danger" onclick="filtrarPorEstado('alta')" id="filtro-alta">
+                <i class="fas fa-exclamation-triangle me-1"></i>Alta prioridad
+            </button>
+            <button type="button" class="btn btn-outline-warning" onclick="filtrarPorEstado('vencidas')" id="filtro-vencidas">
+                <i class="fas fa-clock me-1"></i>Vencidas
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="exportarNotificaciones()" id="btnExportar">
+                <i class="fas fa-download me-1"></i>Exportar
+            </button>
+            <button type="button" class="btn btn-outline-danger" onclick="limpiarTodasNotificaciones()" id="btnLimpiar">
+                <i class="fas fa-trash me-1"></i>Limpiar todo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de notificaciones -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-bell me-2"></i>Notificaciones</span>
+                    <span id="resultados-info" class="text-muted small"></span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="notificaciones-container">
+                    <div class="text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Cargando notificaciones...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white" id="paginacion-container" style="display: none;">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0" id="paginacion"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalle -->
+<div class="modal fade" id="detalleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="detalleTitulo">Detalle de Notificación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detalleContenido"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="detalleAccion">Ver detalle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de configuración de notificaciones -->
+<div class="modal fade" id="configModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-cog me-2"></i>Preferencias de Notificaciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <h6 class="fw-bold">Tipos de notificaciones</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notif-ordenes" value="orden" checked>
+                        <label class="form-check-label">Órdenes de Trabajo</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notif-calibraciones" value="calibracion" checked>
+                        <label class="form-check-label">Calibraciones</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notif-capas" value="capa" checked>
+                        <label class="form-check-label">CAPAs</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notif-mantenimiento" value="mantenimiento" checked>
+                        <label class="form-check-label">Mantenimiento</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notif-documentos" value="documento" checked>
+                        <label class="form-check-label">Documentos</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notif-recordatorios" value="recordatorio" checked>
+                        <label class="form-check-label">Recordatorios</label>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="fw-bold">Notificaciones en tiempo real</h6>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="sonido-notificaciones">
+                        <label class="form-check-label">Reproducir sonido en nuevas notificaciones</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="toast-notificaciones" checked>
+                        <label class="form-check-label">Mostrar notificaciones emergentes</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="fw-bold">Resumen por email</h6>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="email-digest">
+                        <label class="form-check-label">Recibir resumen diario por email</label>
+                    </div>
+                    <small class="text-muted">Recibirás un resumen cada mañana a las 8:00 AM</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarPreferencias()">Guardar preferencias</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para grupo de fechas -->
+<template id="grupo-template">
+    <div class="grupo-notificaciones mb-4">
+        <h6 class="bg-light p-2 rounded mb-3" id="grupo-titulo"></h6>
+        <div id="grupo-contenido"></div>
+    </div>
+</template>
+
+<!-- Template para cada notificación -->
+<template id="notificacion-template">
+    <div class="card mb-2 notificacion-item" data-id="" data-prioridad="" data-leida="" data-url="" data-tipo="">
+        <div class="card-body py-3">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="notificacion-icon">
+                        <i class="fas fa-bell fa-2x"></i>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap">
+                        <div class="flex-grow-1 me-3">
+                            <h6 class="mb-1 notificacion-titulo"></h6>
+                            <p class="mb-1 notificacion-mensaje text-muted small"></p>
+                            <div class="d-flex flex-wrap gap-3 mt-1">
+                                <small class="notificacion-fecha text-muted"></small>
+                                <span class="badge notificacion-prioridad"></span>
+                                <span class="badge bg-secondary notificacion-tipo"></span>
+                            </div>
+                        </div>
+                        <div class="mt-2 mt-sm-0">
+                            <button class="btn btn-sm btn-outline-success me-1 marcar-leida-btn" onclick="marcarLeida(this)" title="Marcar como leída">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="verDetalle(this)" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Contenedor para toasts -->
+<div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ============================================
+    // VARIABLES GLOBALES
+    // ============================================
+    let notificaciones = [];
+    let notificacionesFiltradas = [];
+    let filtroEstado = 'todas';
+    let filtroTexto = '';
+    let filtroTipo = 'todos';
+    let filtroPrioridad = 'todas';
+    let paginaActual = 1;
+    let itemsPorPagina = 20;
+    let preferencias = {};
+
+    // ============================================
+    // INICIALIZACIÓN
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔔 Panel de notificaciones cargado');
+        cargarPreferencias();
+        cargarNotificaciones();
+        
+        // Actualizar cada 30 segundos
+        setInterval(cargarNotificaciones, 30000);
+        
+        // Eventos de filtro
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            filtroTexto = e.target.value.toLowerCase();
+            paginaActual = 1;
+            aplicarFiltros();
+        });
+        
+        document.getElementById('tipoFilter').addEventListener('change', function(e) {
+            filtroTipo = e.target.value;
+            paginaActual = 1;
+            aplicarFiltros();
+        });
+        
+        document.getElementById('prioridadFilter').addEventListener('change', function(e) {
+            filtroPrioridad = e.target.value;
+            paginaActual = 1;
+            aplicarFiltros();
+        });
+    });
+
+    // ============================================
+    // PREFERENCIAS DEL USUARIO
+    // ============================================
+    function cargarPreferencias() {
+        fetch('/notificaciones/api/preferencias')
+            .then(response => response.json())
+            .then(data => {
+                preferencias = data;
+                
+                if (preferencias.tipos) {
+                    document.querySelectorAll('#configModal input[type="checkbox"][value]').forEach(cb => {
+                        cb.checked = preferencias.tipos.includes(cb.value);
+                    });
+                }
+                
+                document.getElementById('sonido-notificaciones').checked = preferencias.sonido || false;
+                document.getElementById('toast-notificaciones').checked = preferencias.toast !== false;
+                document.getElementById('email-digest').checked = preferencias.emailDigest || false;
+            })
+            .catch(error => console.error('Error cargando preferencias:', error));
+    }
+
+    function guardarPreferencias() {
+        const tipos = [];
+        document.querySelectorAll('#configModal input[type="checkbox"][value]:checked').forEach(cb => {
+            tipos.push(cb.value);
+        });
+        
+        const nuevasPreferencias = {
+            tipos: tipos,
+            sonido: document.getElementById('sonido-notificaciones').checked,
+            toast: document.getElementById('toast-notificaciones').checked,
+            emailDigest: document.getElementById('email-digest').checked
+        };
+        
+        fetch('/notificaciones/api/preferencias', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevasPreferencias)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                preferencias = nuevasPreferencias;
+                bootstrap.Modal.getInstance(document.getElementById('configModal')).hide();
+                Swal.fire('Éxito', 'Preferencias guardadas correctamente', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Error guardando preferencias:', error);
+            Swal.fire('Error', 'No se pudieron guardar las preferencias', 'error');
+        });
+    }
+
+    function abrirConfiguracion() {
+        new bootstrap.Modal(document.getElementById('configModal')).show();
+    }
+
+    // ============================================
+    // CARGA DE NOTIFICACIONES
+    // ============================================
+    function cargarNotificaciones() {
+        console.log('📡 Cargando notificaciones...');
+        fetch('/notificaciones/api/listar')
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Notificaciones recibidas:', data.length);
+                notificaciones = data;
+                actualizarEstadisticas();
+                aplicarFiltros();
+            })
+            .catch(error => {
+                console.error('❌ Error cargando notificaciones:', error);
+                document.getElementById('notificaciones-container').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                        <p class="text-muted">Error al cargar notificaciones: ${error.message}</p>
+                        <button class="btn btn-primary" onclick="recargarNotificaciones()">Reintentar</button>
+                    </div>
+                `;
+            });
+    }
+
+    function actualizarEstadisticas() {
+        const total = notificaciones.length;
+        const noLeidas = notificaciones.filter(n => !n.leida).length;
+        const alta = notificaciones.filter(n => n.prioridad === 'Alta').length;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const vencidas = notificaciones.filter(n => n.vencida === true || (n.fecha_vencimiento && new Date(n.fecha_vencimiento) < hoy)).length;
+        
+        document.getElementById('total-count').textContent = total;
+        document.getElementById('no-leidas-count').textContent = noLeidas;
+        document.getElementById('alta-count').textContent = alta;
+        document.getElementById('vencimientos-count').textContent = vencidas;
+        
+        console.log(`📊 Estadísticas: Total=${total}, No leídas=${noLeidas}, Alta=${alta}`);
+        
+        const badge = document.getElementById('notificaciones-badge');
+        if (badge) {
+            if (noLeidas > 0) {
+                badge.textContent = noLeidas;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        
+        if (noLeidas > 0 && document.hidden) {
+            document.title = `(${noLeidas}) GMP Maintenance - Notificaciones`;
+        } else {
+            document.title = `GMP Maintenance - Notificaciones`;
+        }
+    }
+
+    // ============================================
+    // FILTRADO Y PAGINACIÓN
+    // ============================================
+    function aplicarFiltros() {
+        let filtradas = [...notificaciones];
+        
+        if (filtroEstado === 'no-leidas') {
+            filtradas = filtradas.filter(n => !n.leida);
+        } else if (filtroEstado === 'alta') {
+            filtradas = filtradas.filter(n => n.prioridad === 'Alta');
+        } else if (filtroEstado === 'vencidas') {
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            filtradas = filtradas.filter(n => n.vencida === true || (n.fecha_vencimiento && new Date(n.fecha_vencimiento) < hoy));
+        }
+        
+        if (filtroTipo !== 'todos') {
+            filtradas = filtradas.filter(n => n.tipo === filtroTipo);
+        }
+        
+        if (filtroPrioridad !== 'todas') {
+            filtradas = filtradas.filter(n => n.prioridad === filtroPrioridad);
+        }
+        
+        if (filtroTexto) {
+            filtradas = filtradas.filter(n => 
+                (n.titulo || '').toLowerCase().includes(filtroTexto) ||
+                (n.mensaje || '').toLowerCase().includes(filtroTexto)
+            );
+        }
+        
+        notificacionesFiltradas = filtradas;
+        console.log(`🔍 Filtros aplicados: resultado=${filtradas.length} notificaciones`);
+        actualizarInfoResultados();
+        mostrarNotificacionesAgrupadas();
+    }
+
+    function actualizarInfoResultados() {
+        const total = notificacionesFiltradas.length;
+        const inicio = (paginaActual - 1) * itemsPorPagina + 1;
+        const fin = Math.min(paginaActual * itemsPorPagina, total);
+        
+        const infoElement = document.getElementById('resultados-info');
+        if (infoElement) {
+            if (total > 0) {
+                infoElement.textContent = `Mostrando ${inicio}-${fin} de ${total} notificaciones`;
+            } else {
+                infoElement.textContent = `0 notificaciones`;
+            }
+        }
+        
+        const totalPaginas = Math.ceil(total / itemsPorPagina);
+        const paginacionContainer = document.getElementById('paginacion-container');
+        const paginacionLista = document.getElementById('paginacion');
+        
+        if (totalPaginas > 1 && paginacionLista) {
+            paginacionContainer.style.display = 'block';
+            paginacionLista.innerHTML = '';
+            
+            paginacionLista.appendChild(crearItemPaginacion('«', paginaActual > 1 ? paginaActual - 1 : null, paginaActual > 1));
+            
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === 1 || i === totalPaginas || (i >= paginaActual - 2 && i <= paginaActual + 2)) {
+                    paginacionLista.appendChild(crearItemPaginacion(i, i, i !== paginaActual));
+                } else if (i === paginaActual - 3 || i === paginaActual + 3) {
+                    const li = document.createElement('li');
+                    li.className = 'page-item disabled';
+                    li.innerHTML = '<span class="page-link">...</span>';
+                    paginacionLista.appendChild(li);
+                }
+            }
+            
+            paginacionLista.appendChild(crearItemPaginacion('»', paginaActual < totalPaginas ? paginaActual + 1 : null, paginaActual < totalPaginas));
+        } else {
+            paginacionContainer.style.display = 'none';
+        }
+    }
+
+    function crearItemPaginacion(texto, pagina, habilitado) {
+        const li = document.createElement('li');
+        li.className = `page-item ${!habilitado ? 'disabled' : ''}`;
+        const a = document.createElement('a');
+        a.className = 'page-link';
+        a.href = '#';
+        a.textContent = texto;
+        if (habilitado && pagina) {
+            a.onclick = (e) => {
+                e.preventDefault();
+                paginaActual = pagina;
+                mostrarNotificacionesAgrupadas();
+            };
+        }
+        li.appendChild(a);
+        return li;
+    }
+
+    // ============================================
+    // VISUALIZACIÓN DE NOTIFICACIONES
+    // ============================================
+    function mostrarNotificacionesAgrupadas() {
+        const container = document.getElementById('notificaciones-container');
+        
+        const inicio = (paginaActual - 1) * itemsPorPagina;
+        const fin = inicio + itemsPorPagina;
+        const paginaNotificaciones = notificacionesFiltradas.slice(inicio, fin);
+        
+        if (paginaNotificaciones.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay notificaciones</h5>
+                    <p class="mb-0">No hay notificaciones para mostrar con los filtros actuales</p>
+                    <div class="mt-3">
+                        <button class="btn btn-outline-primary" onclick="limpiarFiltros()">Limpiar filtros</button>
+                        <button class="btn btn-outline-success ms-2" onclick="generarNotificacionesReales()">Generar desde datos reales</button>
+                        <button class="btn btn-outline-secondary ms-2" onclick="generarNotificacionesPrueba()">Crear pruebas</button>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        const grupos = { 'Hoy': [], 'Ayer': [], 'Esta semana': [], 'Este mes': [], 'Anteriores': [] };
+        const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        const ayer = new Date(hoy); ayer.setDate(ayer.getDate() - 1);
+        const hace7Dias = new Date(hoy); hace7Dias.setDate(hace7Dias.getDate() - 7);
+        const hace30Dias = new Date(hoy); hace30Dias.setDate(hace30Dias.getDate() - 30);
+        
+        paginaNotificaciones.forEach(n => {
+            const fecha = new Date(n.fecha_creacion || n.fecha);
+            fecha.setHours(0, 0, 0, 0);
+            if (fecha.getTime() === hoy.getTime()) grupos['Hoy'].push(n);
+            else if (fecha.getTime() === ayer.getTime()) grupos['Ayer'].push(n);
+            else if (fecha >= hace7Dias) grupos['Esta semana'].push(n);
+            else if (fecha >= hace30Dias) grupos['Este mes'].push(n);
+            else grupos['Anteriores'].push(n);
+        });
+        
+        container.innerHTML = '';
+        const grupoTemplate = document.getElementById('grupo-template');
+        const notifTemplate = document.getElementById('notificacion-template');
+        
+        const iconos = {
+            'orden': { clase: 'fas fa-clipboard-list fa-2x text-primary', nombre: 'OT' },
+            'calibracion': { clase: 'fas fa-ruler-combined fa-2x text-warning', nombre: 'Calibración' },
+            'mantenimiento': { clase: 'fas fa-tools fa-2x text-info', nombre: 'Mantenimiento' },
+            'capa': { clase: 'fas fa-exclamation-triangle fa-2x text-danger', nombre: 'CAPA' },
+            'documento': { clase: 'fas fa-file-alt fa-2x text-success', nombre: 'Documento' },
+            'recordatorio': { clase: 'fas fa-bell fa-2x text-secondary', nombre: 'Recordatorio' }
+        };
+        
+        for (const [nombreGrupo, notificacionesGrupo] of Object.entries(grupos)) {
+            if (notificacionesGrupo.length === 0) continue;
+            
+            const grupoClone = grupoTemplate.content.cloneNode(true);
+            grupoClone.querySelector('#grupo-titulo').innerHTML = `${nombreGrupo} <span class="badge bg-secondary">${notificacionesGrupo.length}</span>`;
+            const grupoContenido = grupoClone.querySelector('#grupo-contenido');
+            
+            notificacionesGrupo.forEach(n => {
+                const clone = notifTemplate.content.cloneNode(true);
+                const card = clone.querySelector('.notificacion-item');
+                
+                card.dataset.id = n.id;
+                card.dataset.prioridad = n.prioridad;
+                card.dataset.leida = n.leida;
+                card.dataset.url = n.url || '#';
+                card.dataset.tipo = n.tipo;
+                
+                if (!n.leida) {
+                    card.classList.add('border-start', 'border-primary', 'bg-light');
+                }
+                
+                const tipoInfo = iconos[n.tipo] || { clase: 'fas fa-bell fa-2x text-secondary', nombre: n.tipo || 'General' };
+                const iconoElement = card.querySelector('.notificacion-icon i');
+                if (iconoElement) iconoElement.className = tipoInfo.clase;
+                
+                const tituloEl = card.querySelector('.notificacion-titulo');
+                if (tituloEl) tituloEl.innerHTML = escapeHtml(n.titulo || 'Notificación');
+                
+                const mensajeEl = card.querySelector('.notificacion-mensaje');
+                if (mensajeEl) mensajeEl.innerHTML = escapeHtml(n.mensaje || '').replace(/\n/g, '<br>');
+                
+                const fecha = new Date(n.fecha_creacion || n.fecha);
+                const fechaEl = card.querySelector('.notificacion-fecha');
+                if (fechaEl) {
+                    fechaEl.textContent = fecha.toLocaleString('es-AR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                }
+                
+                const badgePrioridad = card.querySelector('.notificacion-prioridad');
+                if (badgePrioridad) {
+                    badgePrioridad.textContent = n.prioridad || 'Media';
+                    badgePrioridad.classList.remove('bg-danger', 'bg-warning', 'bg-success', 'text-dark');
+                    if (n.prioridad === 'Alta') badgePrioridad.classList.add('bg-danger');
+                    else if (n.prioridad === 'Media') badgePrioridad.classList.add('bg-warning', 'text-dark');
+                    else badgePrioridad.classList.add('bg-success');
+                }
+                
+                const tipoBadge = card.querySelector('.notificacion-tipo');
+                if (tipoBadge) tipoBadge.textContent = tipoInfo.nombre;
+                
+                const btn = card.querySelector('.marcar-leida-btn');
+                if (btn && n.leida) {
+                    btn.disabled = true;
+                    btn.classList.add('disabled', 'opacity-50');
+                }
+                
+                grupoContenido.appendChild(clone);
+            });
+            container.appendChild(grupoClone);
+        }
+        
+        console.log('✅ Notificaciones renderizadas correctamente');
+    }
+
+    // ============================================
+    // ACCIONES DE NOTIFICACIONES
+    // ============================================
+    function marcarLeida(btn) {
+        const card = btn.closest('.notificacion-item');
+        const id = card.dataset.id;
+        
+        fetch(`/notificaciones/api/marcar-leida/${id}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    card.dataset.leida = 'true';
+                    card.classList.remove('border-start', 'border-primary', 'bg-light');
+                    btn.disabled = true;
+                    btn.classList.add('disabled', 'opacity-50');
+                    
+                    const notif = notificaciones.find(n => n.id == id);
+                    if (notif) notif.leida = true;
+                    actualizarEstadisticas();
+                    aplicarFiltros();
+                }
+            });
+    }
+
+    function marcarTodasLeidas() {
+        const noLeidas = notificaciones.filter(n => !n.leida);
+        if (noLeidas.length === 0) {
+            Swal.fire('Info', 'No hay notificaciones sin leer', 'info');
+            return;
+        }
+        
+        Swal.fire({
+            title: '¿Marcar todas como leídas?',
+            text: `Se marcarán ${noLeidas.length} notificaciones como leídas`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, marcar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/notificaciones/api/marcar-todas-leidas', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            notificaciones.forEach(n => n.leida = true);
+                            actualizarEstadisticas();
+                            aplicarFiltros();
+                            Swal.fire('Éxito', `${data.cantidad} notificaciones marcadas como leídas`, 'success');
+                        }
+                    });
+            }
+        });
+    }
+
+    function filtrarPorEstado(estado) {
+        filtroEstado = estado;
+        paginaActual = 1;
+        
+        ['todas', 'no-leidas', 'alta', 'vencidas'].forEach(btnId => {
+            const btn = document.getElementById(`filtro-${btnId}`);
+            if (btn) btn.classList.remove('active');
+        });
+        document.getElementById(`filtro-${estado}`).classList.add('active');
+        aplicarFiltros();
+    }
+
+    function limpiarFiltros() {
+        filtroEstado = 'todas';
+        filtroTexto = '';
+        filtroTipo = 'todos';
+        filtroPrioridad = 'todas';
+        paginaActual = 1;
+        
+        document.getElementById('searchInput').value = '';
+        document.getElementById('tipoFilter').value = 'todos';
+        document.getElementById('prioridadFilter').value = 'todas';
+        
+        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('filtro-todas').classList.add('active');
+        
+        aplicarFiltros();
+    }
+
+    function recargarNotificaciones() {
+        cargarNotificaciones();
+        Swal.fire({ icon: 'success', title: 'Actualizando...', timer: 1000, showConfirmButton: false });
+    }
+
+    function verDetalle(btn) {
+        const card = btn.closest('.notificacion-item');
+        const id = card.dataset.id;
+        const notif = notificaciones.find(n => n.id == id);
+        
+        if (notif) {
+            document.getElementById('detalleTitulo').innerHTML = notif.titulo || 'Detalle';
+            document.getElementById('detalleContenido').innerHTML = `
+                <div class="mb-3">
+                    <strong><i class="fas fa-comment me-2"></i>Mensaje:</strong>
+                    <p class="mt-2 p-3 bg-light rounded">${escapeHtml(notif.mensaje || '').replace(/\n/g, '<br>')}</p>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-tag me-2"></i>Tipo:</strong> 
+                        <span class="badge bg-secondary ms-2">${notif.tipo || 'General'}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong><i class="fas fa-flag me-2"></i>Prioridad:</strong>
+                        <span class="badge ${notif.prioridad === 'Alta' ? 'bg-danger' : (notif.prioridad === 'Media' ? 'bg-warning text-dark' : 'bg-success')} ms-2">${notif.prioridad || 'Media'}</span>
+                    </div>
+                    <div class="col-md-6 mt-2">
+                        <strong><i class="fas fa-calendar me-2"></i>Fecha:</strong>
+                        ${new Date(notif.fecha_creacion || notif.fecha).toLocaleString()}
+                    </div>
+                    <div class="col-md-6 mt-2">
+                        <strong><i class="fas fa-envelope-open me-2"></i>Estado:</strong>
+                        ${notif.leida ? '<span class="text-success">✓ Leída</span>' : '<span class="text-warning">⏳ No leída</span>'}
+                    </div>
+                </div>
+                ${notif.url ? `<div class="mt-3 alert alert-info">
+                    <i class="fas fa-link me-2"></i>
+                    <strong>Enlace:</strong> <code class="small">${notif.url}</code>
+                </div>` : ''}
+            `;
+            
+            const accionBtn = document.getElementById('detalleAccion');
+            if (notif.url && notif.url !== '#') {
+                accionBtn.style.display = 'block';
+                accionBtn.onclick = () => window.location.href = notif.url;
+            } else {
+                accionBtn.style.display = 'none';
+            }
+            
+            new bootstrap.Modal(document.getElementById('detalleModal')).show();
+            
+            if (!notif.leida) {
+                fetch(`/notificaciones/api/marcar-leida/${id}`, { method: 'POST' })
+                    .then(() => {
+                        notif.leida = true;
+                        actualizarEstadisticas();
+                        aplicarFiltros();
+                    });
+            }
+        }
+    }
+
+    // ============================================
+    // GENERACIÓN DE NOTIFICACIONES
+    // ============================================
+    function generarNotificacionesPrueba() {
+        Swal.fire({
+            title: 'Crear notificaciones de prueba',
+            text: 'Esto creará 5 notificaciones de prueba para verificar el funcionamiento.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, crear',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Creando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                fetch('/notificaciones/api/crear-prueba')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Éxito', data.mensaje, 'success');
+                            cargarNotificaciones();
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudieron crear', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error', 'No se pudieron crear las notificaciones', 'error');
+                    });
+            }
+        });
+    }
+
+    function generarNotificacionesReales() {
+        Swal.fire({
+            title: 'Generar notificaciones reales',
+            html: `Esto analizará tus datos reales y creará notificaciones automáticas para:<br>
+                   <ul class="text-start mt-2">
+                       <li>📋 Órdenes de trabajo próximas a vencer</li>
+                       <li>🔧 Calibraciones vencidas o por vencer</li>
+                       <li>📊 CAPAs abiertas y por vencer</li>
+                       <li>📦 Repuestos con stock bajo</li>
+                       <li>📄 Documentos por revisar</li>
+                   </ul>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, generar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Generando...', text: 'Analizando datos del sistema...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                fetch('/notificaciones/api/generar-reales')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Notificaciones generadas',
+                                html: `Se generaron <strong>${data.cantidad}</strong> notificaciones a partir de tus datos reales.<br><br>Actualiza la página para verlas.`,
+                                confirmButtonText: 'Actualizar'
+                            }).then(() => {
+                                cargarNotificaciones();
+                            });
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudieron generar', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error', 'No se pudieron generar las notificaciones', 'error');
+                    });
+            }
+        });
+    }
+
+    function limpiarTodasNotificaciones() {
+        Swal.fire({
+            title: '¿Limpiar todas las notificaciones?',
+            text: 'Esta acción eliminará TODAS tus notificaciones. Esta acción no se puede deshacer.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/notificaciones/api/limpiar-todas')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Eliminadas', data.mensaje, 'success');
+                            cargarNotificaciones();
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudieron eliminar', 'error');
+                        }
+                    });
+            }
+        });
+    }
+
+    function exportarNotificaciones() {
+        if (notificacionesFiltradas.length === 0) {
+            Swal.fire('Info', 'No hay notificaciones para exportar', 'info');
+            return;
+        }
+        
+        Swal.fire({
+            title: 'Exportar notificaciones',
+            text: `Se exportarán ${notificacionesFiltradas.length} notificaciones`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Exportar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const params = new URLSearchParams({
+                    estado: filtroEstado,
+                    tipo: filtroTipo,
+                    prioridad: filtroPrioridad,
+                    busqueda: filtroTexto
+                });
+                window.location.href = '/notificaciones/api/exportar?' + params.toString();
+            }
+        });
+    }
+
+    // ============================================
+    // UTILIDADES
+    // ============================================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            const noLeidas = notificaciones.filter(n => !n.leida).length;
+            if (noLeidas === 0) document.title = 'GMP Maintenance - Notificaciones';
+        }
+    });
+</script>
+
+<style>
+.border-left-primary { border-left: 4px solid #4e73df !important; }
+.border-left-warning { border-left: 4px solid #f6c23e !important; }
+.border-left-danger { border-left: 4px solid #e74a3b !important; }
+.border-left-info { border-left: 4px solid #36b9cc !important; }
+
+.notificacion-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.notificacion-item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.notificacion-item.border-start {
+    border-left-width: 4px !important;
+}
+
+.grupo-notificaciones {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-group .btn {
+    margin-right: 5px;
+}
+
+#toast-container .toast {
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes - Servicios Generales{% endblock %}
+{% block page_title %}Reportes de Servicios Generales{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.panel_mantenimiento') }}">Panel</a></li>
+<li class="breadcrumb-item active">Reportes</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <i class="fas fa-chart-bar me-2"></i>
+            <strong>Módulo de Reportes:</strong> Visualice estadísticas y genere reportes de servicios generales.
+        </div>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body">
+                <h6>Total Órdenes (Mes)</h6>
+                <h2 id="totalMes">-</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body">
+                <h6>Completadas (Mes)</h6>
+                <h2 id="completadasMes">-</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning shadow">
+            <div class="card-body">
+                <h6>Tiempo Promedio Respuesta</h6>
+                <h2 id="tiempoPromedio">-</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info shadow">
+            <div class="card-body">
+                <h6>Instalaciones Activas</h6>
+                <h2 id="instalacionesActivas">-</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-pie me-2"></i>Órdenes por Estado</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEstados" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-bar me-2"></i>Órdenes por Tipo</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartTipos" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-line me-2"></i>Tendencia Mensual</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartTendencia" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6><i class="fas fa-tags me-2"></i>Órdenes por Categoría</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="chartCategorias" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exportar -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h6><i class="fas fa-download me-2"></i>Exportar Reportes</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100 mb-2" onclick="exportarPDF()">
+                            <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="exportarExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100 mb-2" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Imprimir
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="periodoReporte">
+                            <option value="mes">Último mes</option>
+                            <option value="trimestre">Último trimestre</option>
+                            <option value="semestre">Último semestre</option>
+                            <option value="anio">Último año</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Cargar estadísticas
+fetch('/servicios-generales/api/estadisticas')
+    .then(response => response.json())
+    .then(data => {
+        // Actualizar tarjetas
+        document.getElementById('totalMes').textContent = data.creadas_30d || 0;
+        document.getElementById('completadasMes').textContent = data.completadas_30d || 0;
+        
+        // Gráfico de estados
+        new Chart(document.getElementById('chartEstados'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(data.por_estado),
+                datasets: [{
+                    data: Object.values(data.por_estado),
+                    backgroundColor: ['#ffc107', '#17a2b8', '#007bff', '#6c757d', '#28a745', '#20c997', '#dc3545']
+                }]
+            }
+        });
+        
+        // Gráfico de tipos
+        new Chart(document.getElementById('chartTipos'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data.por_tipo),
+                datasets: [{
+                    label: 'Cantidad de órdenes',
+                    data: Object.values(data.por_tipo),
+                    backgroundColor: '#0d6efd'
+                }]
+            }
+        });
+        
+        // Gráfico de prioridades
+        new Chart(document.getElementById('chartCategorias'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data.por_prioridad),
+                datasets: [{
+                    label: 'Por prioridad',
+                    data: Object.values(data.por_prioridad),
+                    backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#fd7e14', '#dc3545']
+                }]
+            }
+        });
+    });
+
+function exportarPDF() {
+    alert('Funcionalidad de exportación PDF en desarrollo');
+}
+
+function exportarExcel() {
+    alert('Funcionalidad de exportación Excel en desarrollo');
+}
+</script>
+{% endblock %}

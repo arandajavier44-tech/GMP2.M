@@ -1,0 +1,19 @@
+{
+  "numero_ot": "OT-0001-2026-GMP-ZUL-01",
+  "titulo": "[Mensual] Mantenimiento - GMP-ZUL-01",
+  "estado": "Cancelada",
+  "equipo": "GMP-ZUL-01",
+  "equipo_nombre": "ZULIANA ",
+  "fecha_creacion": "12/04/2026 23:00",
+  "prioridad": "Media",
+  "tipo": "Preventivo",
+  "asignado_a": "tecnico",
+  "fecha_estimada": "12/04/2026",
+  "metadata": {
+    "tipo": "orden",
+    "fecha_generacion": "2026-04-12T22:10:21.252663",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/ordenes/1"
+}

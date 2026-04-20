@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Proveedor - {{ proveedor.nombre }}{% endblock %}
+{% block page_title %}Editar Proveedor{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('proveedores.gestion_proveedores') }}" class="text-decoration-none">Proveedores</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('proveedores.detalle_proveedor', proveedor_id=proveedor.id) }}" class="text-decoration-none">{{ proveedor.nombre }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Editar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>Editando Proveedor: {{ proveedor.codigo }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formEditarProveedor">
+                    
+                    <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Información Básica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label gmp-required">Nombre del Proveedor *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" 
+                                   value="{{ proveedor.nombre }}" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="tipo" class="form-label gmp-required">Tipo *</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="insumos" {% if proveedor.tipo == 'insumos' %}selected{% endif %}>Insumos / Repuestos</option>
+                                <option value="servicios" {% if proveedor.tipo == 'servicios' %}selected{% endif %}>Servicios</option>
+                                <option value="equipos" {% if proveedor.tipo == 'equipos' %}selected{% endif %}>Equipos</option>
+                                <option value="calibraciones" {% if proveedor.tipo == 'calibraciones' %}selected{% endif %}>Calibraciones</option>
+                                <option value="varios" {% if proveedor.tipo == 'varios' %}selected{% endif %}>Varios</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="rubro" class="form-label">Rubro</label>
+                            <input type="text" class="form-control" id="rubro" name="rubro" value="{{ proveedor.rubro or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: CONTACTO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-address-card me-2"></i>
+                                Contacto
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="contacto_nombre" class="form-label">Nombre de contacto</label>
+                            <input type="text" class="form-control" id="contacto_nombre" name="contacto_nombre" 
+                                   value="{{ proveedor.contacto_nombre or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="contacto_cargo" class="form-label">Cargo</label>
+                            <input type="text" class="form-control" id="contacto_cargo" name="contacto_cargo" 
+                                   value="{{ proveedor.contacto_cargo or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="telefono" name="telefono" 
+                                   value="{{ proveedor.telefono or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ proveedor.email or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="sitio_web" class="form-label">Sitio Web</label>
+                            <input type="url" class="form-control" id="sitio_web" name="sitio_web" 
+                                   value="{{ proveedor.sitio_web or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: DIRECCIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Dirección
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" 
+                                   value="{{ proveedor.direccion or '' }}">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="ciudad" class="form-label">Ciudad</label>
+                            <input type="text" class="form-control" id="ciudad" name="ciudad" 
+                                   value="{{ proveedor.ciudad or '' }}">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="provincia" class="form-label">Provincia</label>
+                            <input type="text" class="form-control" id="provincia" name="provincia" 
+                                   value="{{ proveedor.provincia or '' }}">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="pais" class="form-label">País</label>
+                            <input type="text" class="form-control" id="pais" name="pais" 
+                                   value="{{ proveedor.pais or 'Argentina' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: DATOS FISCALES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-file-invoice me-2"></i>
+                                Datos Fiscales
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="cuit" class="form-label">CUIT</label>
+                            <input type="text" class="form-control" id="cuit" name="cuit" 
+                                   value="{{ proveedor.cuit or '' }}" placeholder="20-12345678-9">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="condicion_iva" class="form-label">Condición IVA</label>
+                            <select class="form-select" id="condicion_iva" name="condicion_iva">
+                                <option value="">Seleccionar...</option>
+                                <option value="Responsable Inscripto" {% if proveedor.condicion_iva == 'Responsable Inscripto' %}selected{% endif %}>Responsable Inscripto</option>
+                                <option value="Monotributista" {% if proveedor.condicion_iva == 'Monotributista' %}selected{% endif %}>Monotributista</option>
+                                <option value="Exento" {% if proveedor.condicion_iva == 'Exento' %}selected{% endif %}>Exento</option>
+                                <option value="Consumidor Final" {% if proveedor.condicion_iva == 'Consumidor Final' %}selected{% endif %}>Consumidor Final</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="calificacion" class="form-label">Calificación</label>
+                            <select class="form-select" id="calificacion" name="calificacion">
+                                <option value="0" {% if proveedor.calificacion == 0 %}selected{% endif %}>Sin calificar</option>
+                                <option value="1" {% if proveedor.calificacion == 1 %}selected{% endif %}>⭐</option>
+                                <option value="2" {% if proveedor.calificacion == 2 %}selected{% endif %}>⭐⭐</option>
+                                <option value="3" {% if proveedor.calificacion == 3 %}selected{% endif %}>⭐⭐⭐</option>
+                                <option value="4" {% if proveedor.calificacion == 4 %}selected{% endif %}>⭐⭐⭐⭐</option>
+                                <option value="5" {% if proveedor.calificacion == 5 %}selected{% endif %}>⭐⭐⭐⭐⭐</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: CALIFICACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-certificate me-2"></i>
+                                Calificación GMP
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="es_proveedor_gmp" name="es_proveedor_gmp" 
+                                       {% if proveedor.es_proveedor_gmp %}checked{% endif %}>
+                                <label class="form-check-label" for="es_proveedor_gmp">
+                                    Es proveedor GMP calificado
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3 fecha-gmp" style="display: {% if proveedor.es_proveedor_gmp %}block{% else %}none{% endif %};">
+                            <label for="fecha_calificacion" class="form-label">Fecha de calificación</label>
+                            <input type="date" class="form-control" id="fecha_calificacion" name="fecha_calificacion" 
+                                   value="{{ proveedor.fecha_calificacion.strftime('%Y-%m-%d') if proveedor.fecha_calificacion else '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3 fecha-gmp" style="display: {% if proveedor.es_proveedor_gmp %}block{% else %}none{% endif %};">
+                            <label for="fecha_vencimiento_calificacion" class="form-label">Fecha de vencimiento</label>
+                            <input type="date" class="form-control" id="fecha_vencimiento_calificacion" name="fecha_vencimiento_calificacion" 
+                                   value="{{ proveedor.fecha_vencimiento_calificacion.strftime('%Y-%m-%d') if proveedor.fecha_vencimiento_calificacion else '' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: DATOS BANCARIOS -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-university me-2"></i>
+                                Datos Bancarios
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="banco" class="form-label">Banco</label>
+                            <input type="text" class="form-control" id="banco" name="banco" 
+                                   value="{{ proveedor.banco or '' }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="cbu" class="form-label">CBU</label>
+                            <input type="text" class="form-control" id="cbu" name="cbu" 
+                                   value="{{ proveedor.cbu or '' }}" placeholder="0000000000000000000000">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="alias" class="form-label">Alias</label>
+                            <input type="text" class="form-control" id="alias" name="alias" 
+                                   value="{{ proveedor.alias or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 7: ESTADO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-toggle-on me-2"></i>
+                                Estado
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="activo" name="activo" 
+                                       {% if proveedor.activo %}checked{% endif %} value="true">
+                                <label class="form-check-label" for="activo">Proveedor activo</label>
+                            </div>
+                            <small class="text-muted">Desactivar no elimina el registro, solo lo oculta</small>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 8: OBSERVACIONES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3">{{ proveedor.observaciones or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('proveedores.detalle_proveedor', proveedor_id=proveedor.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-2"></i>Actualizar Proveedor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mostrar/ocultar fechas GMP
+        document.getElementById('es_proveedor_gmp').addEventListener('change', function() {
+            const fechas = document.querySelectorAll('.fecha-gmp');
+            fechas.forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            // Si se desmarca, limpiar fechas
+            if (!this.checked) {
+                document.getElementById('fecha_calificacion').value = '';
+                document.getElementById('fecha_vencimiento_calificacion').value = '';
+            }
+        });
+
+        // Validación antes de enviar
+        document.getElementById('formEditarProveedor').addEventListener('submit', function(e) {
+            const nombre = document.getElementById('nombre').value;
+            const tipo = document.getElementById('tipo').value;
+            
+            if (!nombre || !tipo) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Campos requeridos',
+                    text: 'Complete los campos obligatorios'
+                });
+            }
+        });
+
+        // Si el proveedor es GMP pero no tiene fechas, mostrar advertencia
+        const esGMP = document.getElementById('es_proveedor_gmp').checked;
+        const fechaCal = document.getElementById('fecha_calificacion').value;
+        const fechaVen = document.getElementById('fecha_vencimiento_calificacion').value;
+        
+        if (esGMP && (!fechaCal || !fechaVen)) {
+            Swal.fire({
+                icon: 'info',
+                title: 'Fechas GMP incompletas',
+                text: 'Se recomienda completar las fechas de calificación GMP',
+                timer: 3000,
+                showConfirmButton: true
+            });
+        }
+    });
+</script>
+
+<style>
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ffc107;
+    margin-bottom: 20px;
+}
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

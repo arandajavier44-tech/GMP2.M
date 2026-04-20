@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Plantillas de Inspección{% endblock %}
+{% block page_title %}Plantillas de Inspección GMP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item active">Plantillas</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4><i class="fas fa-list-alt me-2"></i>Plantillas de Inspección</h4>
+        <a href="{{ url_for('inspecciones.nueva_plantilla') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nueva Plantilla
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% for plantilla in plantillas %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-{{ 'primary' if plantilla.frecuencia == 'diaria' else 'success' if plantilla.frecuencia == 'semanal' else 'info' }} text-white d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="fas fa-{{ 'calendar-day' if plantilla.frecuencia == 'diaria' else 'calendar-week' if plantilla.frecuencia == 'semanal' else 'calendar-alt' }} me-2"></i>
+                    {{ plantilla.nombre }}
+                </span>
+                <span class="badge bg-light text-dark">{{ plantilla.frecuencia|capitalize }}</span>
+            </div>
+            <div class="card-body">
+                <p class="card-text small">{{ plantilla.descripcion or 'Sin descripción' }}</p>
+                <hr>
+                <div class="small">
+                    <!-- Categoría GMP -->
+                    <div><strong>Categoría GMP:</strong> 
+                        <span class="badge {% if plantilla.categoria_gmp == 'produccion' or plantilla.categoria_gmp == 'equipo' %}bg-primary{% elif plantilla.categoria_gmp == 'servicios' %}bg-info{% elif plantilla.categoria_gmp == 'edificio' %}bg-secondary{% elif plantilla.categoria_gmp == 'calidad' %}bg-success{% elif plantilla.categoria_gmp == 'ambiental' %}bg-teal{% elif plantilla.categoria_gmp == 'contencion' %}bg-danger{% elif plantilla.categoria_gmp == 'limpieza' %}bg-warning{% else %}bg-dark{% endif %}">
+                            {% if plantilla.categoria_gmp == 'produccion' or plantilla.categoria_gmp == 'equipo' %}
+                                ⚙️ Equipo
+                            {% elif plantilla.categoria_gmp == 'servicios' %}
+                                🔧 Servicios
+                            {% elif plantilla.categoria_gmp == 'ambiental' %}
+                                🌡️ Ambiental
+                            {% elif plantilla.categoria_gmp == 'contencion' %}
+                                🔒 Contención
+                            {% elif plantilla.categoria_gmp == 'limpieza' %}
+                                🧹 Limpieza
+                            {% elif plantilla.categoria_gmp == 'calidad' %}
+                                🔬 Calidad
+                            {% elif plantilla.categoria_gmp == 'documentacion' %}
+                                📋 Documentación
+                            {% else %}
+                                📋 General
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div><strong>Tipo:</strong> {{ plantilla.tipo|capitalize }}</div>
+                    {% if plantilla.equipo %}
+                    <div><strong>Equipo:</strong> {{ plantilla.equipo.code }} - {{ plantilla.equipo.name }}</div>
+                    {% elif plantilla.area %}
+                    <div><strong>Área:</strong> {{ plantilla.area }}</div>
+                    {% else %}
+                    <div><strong>Alcance:</strong> General</div>
+                    {% endif %}
+                    <div><strong>Items:</strong> {{ plantilla.get_items_activos()|length }}</div>
+                    {% if plantilla.gmp_grade %}
+                    <div><strong>Grado GMP:</strong> <span class="badge bg-secondary">{{ plantilla.gmp_grade }}</span></div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent d-flex justify-content-between">
+                <a href="{{ url_for('inspecciones.ver_plantilla', plantilla_id=plantilla.id) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>Ver
+                </a>
+                <a href="{{ url_for('inspecciones.realizar_inspeccion', plantilla_id=plantilla.id) }}" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-play me-1"></i>Inspeccionar
+                </a>
+                <a href="{{ url_for('inspecciones.editar_plantilla', plantilla_id=plantilla.id) }}" class="btn btn-sm btn-outline-warning">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-list-alt fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay plantillas creadas</h5>
+                <p class="mb-3">Comience creando su primera plantilla de inspección</p>
+                <a href="{{ url_for('inspecciones.nueva_plantilla') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Nueva Plantilla
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

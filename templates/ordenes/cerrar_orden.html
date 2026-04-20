@@ -1,0 +1,456 @@
+{% extends "base.html" %}
+
+{% block title %}Cerrar Orden{% endblock %}
+{% block page_title %}Cerrar Orden de Trabajo: {{ orden.numero_ot }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.gestion_ordenes') }}">Órdenes</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.detalle_orden', orden_id=orden.id) }}">{{ orden.numero_ot }}</a></li>
+                <li class="breadcrumb-item active">Cerrar Orden</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Completar Orden - {{ orden.numero_ot }}
+                </h4>
+            </div>
+            <div class="card-body">
+                
+                <!-- Resumen de la orden -->
+                <div class="alert alert-info mb-4">
+                    <h5><i class="fas fa-info-circle me-2"></i>Información de la Orden</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Equipo:</strong> {{ orden.equipo.code }} - {{ orden.equipo.name }}<br>
+                            <strong>Título:</strong> {{ orden.titulo }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Tipo:</strong> {{ orden.tipo }}<br>
+                            <strong>Prioridad:</strong> {{ orden.prioridad }}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('ordenes.completar_orden', orden_id=orden.id) }}" id="formCerrarOrden">
+                    
+                    <!-- ========== 1. TAREAS PROGRAMADAS ========== -->
+                    {% if orden.tipo == 'Preventivo' and orden.tareas_seleccionadas %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Tareas Programadas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 5%">#</th>
+                                            <th style="width: 35%">Tarea</th>
+                                            <th style="width: 10%">Completada</th>
+                                            <th style="width: 50%">Observaciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for tarea in orden.tareas_seleccionadas %}
+                                        <tr>
+                                            <td class="text-center">{{ loop.index }}</td>
+                                            <td>
+                                                <strong>Sistema:</strong> {{ tarea.sistema_id or 'N/A' }}<br>
+                                                <small>{{ tarea.descripcion }}</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="form-check form-switch d-flex justify-content-center">
+                                                    <input class="form-check-input tarea-check" type="checkbox" 
+                                                           name="tarea_completada_{{ loop.index0 }}" 
+                                                           data-tarea-id="{{ tarea.id }}"
+                                                           style="transform: scale(1.5);"
+                                                           {% if tarea.completada %}checked{% endif %}>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="tarea_obs_{{ loop.index0 }}" 
+                                                       placeholder="Observaciones de la tarea"
+                                                       value="{{ tarea.observaciones_ejecucion or '' }}">
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ========== 2. REPUESTOS CRÍTICOS POR TAREA ========== -->
+                    {% if orden.tipo == 'Preventivo' and repuestos_por_tarea %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Repuestos Críticos por Tarea</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-light small mb-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <strong>Instrucciones:</strong> Para cada repuesto, seleccione la acción realizada:
+                                <ul class="mb-0 mt-2">
+                                    <li><span class="badge bg-success">✅ Inspeccionado - OK</span> = Se revisó y está en buen estado (no consume stock)</li>
+                                    <li><span class="badge bg-warning text-dark">🔄 Reemplazado</span> = Se cambió por uno nuevo (consume stock)</li>
+                                    <li><span class="badge bg-danger">⚠️ Requiere atención</span> = Se detectó desgaste, programar cambio futuro (no consume stock)</li>
+                                    <li><span class="badge bg-secondary">❌ No aplica</span> = No se pudo inspeccionar (no consume stock)</li>
+                                </ul>
+                            </div>
+                            <div class="accordion" id="accordionRepuestos">
+                                {% for tarea in orden.tareas_seleccionadas %}
+                                {% set tarea_id = tarea.id %}
+                                {% set repuestos_tarea = repuestos_por_tarea.get(tarea_id|string, []) %}
+                                {% if repuestos_tarea %}
+                                <div class="accordion-item mb-2">
+                                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse{{ loop.index }}">
+                                            <strong>{{ tarea.descripcion[:80] }}</strong>
+                                            <span class="badge bg-success ms-3">{{ repuestos_tarea|length }} repuestos</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                                         data-bs-parent="#accordionRepuestos">
+                                        <div class="accordion-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th style="width: 15%">Código</th>
+                                                            <th style="width: 25%">Nombre</th>
+                                                            <th style="width: 10%">Requerido</th>
+                                                            <th style="width: 10%">Stock</th>
+                                                            <th style="width: 30%">Acción Realizada</th>
+                                                            <th style="width: 10%">Observaciones</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for r in repuestos_tarea %}
+                                                        <tr>
+                                                            <td><strong>{{ r.codigo }}</strong></td>
+                                                            <td>{{ r.nombre }}</td>
+                                                            <td class="text-center">{{ r.cantidad_requerida }}</td>
+                                                            <td>
+                                                                <span class="badge bg-{{ 'danger' if r.stock_actual < r.cantidad_requerida else 'warning' if r.stock_actual <= r.stock_minimo else 'success' }}">
+                                                                    {{ r.stock_actual }}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                <select class="form-select form-select-sm repuesto-accion" 
+                                                                        name="repuesto_accion_{{ tarea_id }}_{{ r.repuesto_id }}"
+                                                                        data-repuesto-id="{{ r.repuesto_id }}"
+                                                                        data-cantidad="{{ r.cantidad_requerida }}"
+                                                                        data-stock="{{ r.stock_actual }}">
+                                                                    <option value="inspeccionado" selected>✅ Inspeccionado - OK (sin consumo)</option>
+                                                                    <option value="reemplazado" {% if r.stock_actual < r.cantidad_requerida %}disabled{% endif %}>🔄 Reemplazado (consumir {{ r.cantidad_requerida }} uds)</option>
+                                                                    <option value="atencion">⚠️ Requiere atención - Programar cambio</option>
+                                                                    <option value="no_aplica">❌ No aplica</option>
+                                                                </select>
+                                                                <input type="hidden" name="repuesto_cantidad_{{ tarea_id }}_{{ r.repuesto_id }}" value="0">
+                                                                <input type="hidden" name="repuesto_id_{{ tarea_id }}_{{ r.repuesto_id }}" value="{{ r.repuesto_id }}">
+                                                                <input type="hidden" name="repuesto_codigo_{{ tarea_id }}_{{ r.repuesto_id }}" value="{{ r.codigo }}">
+                                                            </td>
+                                                            <td>
+                                                                <input type="text" class="form-control form-control-sm" 
+                                                                       name="repuesto_obs_{{ tarea_id }}_{{ r.repuesto_id }}"
+                                                                       placeholder="Observaciones">
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- ========== 3. OTROS REPUESTOS UTILIZADOS (Manual) ========== -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Otros Repuestos Utilizados</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-light small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Agregue aquí repuestos adicionales no planificados en las tareas.
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="repuestosTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Descripción</th>
+                                            <th>Cantidad</th>
+                                            <th>Lote</th>
+                                            <th style="width: 10%">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="repuestosBody">
+                                        <tr id="repuestoRow0">
+                                            <td><input type="text" class="form-control form-control-sm" name="repuesto_codigo_0" placeholder="Código" list="repuestosList"></td>
+                                            <td><input type="text" class="form-control form-control-sm" name="repuesto_desc_0" placeholder="Descripción"></td>
+                                            <td><input type="number" class="form-control form-control-sm" name="repuesto_cant_0" style="width: 80px;" placeholder="Cant." value="1" min="1"></td>
+                                            <td><input type="text" class="form-control form-control-sm" name="repuesto_lote_0" placeholder="Lote"></td>
+                                            <td class="text-center"><button type="button" class="btn btn-sm btn-danger" onclick="eliminarFilaRepuesto(this)"><i class="fas fa-trash"></i></button></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="agregarFilaRepuesto()">
+                                <i class="fas fa-plus me-1"></i>Agregar repuesto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ========== 4. RESULTADOS ========== -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Resultados</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Resultado *</label>
+                                    <select class="form-select" name="resultado" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Solucionado">✅ Solucionado</option>
+                                        <option value="Parcial">⚠️ Parcial</option>
+                                        <option value="No Solucionado">❌ No solucionado</option>
+                                        <option value="Desvío">🔄 Desvío - requiere CAPA</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Tiempo real (horas)</label>
+                                    <input type="number" step="0.5" class="form-control" name="tiempo_real" placeholder="Ej: 2.5">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Diagnóstico final</label>
+                                <textarea class="form-control" name="diagnostico" rows="2" placeholder="Describa el diagnóstico final..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Solución aplicada</label>
+                                <textarea class="form-control" name="solucion_aplicada" rows="2" placeholder="Describa la solución aplicada..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Observaciones *</label>
+                                <textarea class="form-control" name="observaciones" rows="2" required placeholder="Observaciones importantes..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Recomendaciones</label>
+                                <textarea class="form-control" name="recomendaciones" rows="2" placeholder="Recomendaciones para futuro..."></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Trabajo futuro pendiente</label>
+                                    <input type="text" class="form-control" name="trabajo_futuro" placeholder="Describir trabajo pendiente">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Próximo mantenimiento</label>
+                                    <input type="date" class="form-control" name="fecha_prox_mant">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 5. FIRMAS GMP ========== -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0"><i class="fas fa-signature me-2"></i>Firmas GMP</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Firma del técnico *</label>
+                                    <input type="text" class="form-control" name="firma_tecnico" value="{{ session.get('nombre_completo', session.get('username', '')) }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Firma del supervisor</label>
+                                    <input type="text" class="form-control" name="firma_supervisor">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Firma de calidad</label>
+                                    <input type="text" class="form-control" name="firma_calidad">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Matrícula / Legajo</label>
+                                    <input type="text" class="form-control" name="matricula">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 6. CAPA ========== -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>CAPA</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="requiere_capa" name="requiere_capa">
+                                <label class="form-check-label fw-bold text-danger" for="requiere_capa">
+                                    Requiere apertura de CAPA
+                                </label>
+                            </div>
+                            <div id="capa_motivo_container" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo de la CAPA</label>
+                                    <textarea class="form-control" name="motivo_capa" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Acción inmediata</label>
+                                    <textarea class="form-control" name="accion_inmediata" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Impacto en calidad</label>
+                                    <select class="form-select" name="impacto_calidad">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Bajo">Bajo - Sin afectación</option>
+                                        <option value="Medio">Medio - Afecta proceso</option>
+                                        <option value="Alto">Alto - Afecta producto</option>
+                                        <option value="Crítico">Crítico - Riesgo paciente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('ordenes.detalle_orden', orden_id=orden.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success" id="btnCerrar">
+                            <i class="fas fa-check-circle me-2"></i>Completar Orden
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<datalist id="repuestosList">
+    {% for repuesto in repuestos %}
+    <option value="{{ repuesto.codigo }}">{{ repuesto.nombre }}</option>
+    {% endfor %}
+</datalist>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let repuestoCount = 1;
+    
+    function agregarFilaRepuesto() {
+        const tbody = document.getElementById('repuestosBody');
+        const idx = repuestoCount;
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td><input type="text" class="form-control form-control-sm" name="repuesto_codigo_${idx}" placeholder="Código" list="repuestosList"></td>
+            <td><input type="text" class="form-control form-control-sm" name="repuesto_desc_${idx}" placeholder="Descripción"></td>
+            <td><input type="number" class="form-control form-control-sm" name="repuesto_cant_${idx}" style="width: 80px;" placeholder="Cant." value="1" min="1"></td>
+            <td><input type="text" class="form-control form-control-sm" name="repuesto_lote_${idx}" placeholder="Lote"></td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-danger" onclick="eliminarFilaRepuesto(this)"><i class="fas fa-trash"></i></button></td>
+        `;
+        tbody.appendChild(newRow);
+        repuestoCount++;
+    }
+    
+    function eliminarFilaRepuesto(btn) {
+        btn.closest('tr').remove();
+    }
+    
+    // Mostrar advertencia si seleccionan "Reemplazado" pero no hay stock
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('repuesto-accion')) {
+            const select = e.target;
+            const selectedValue = select.value;
+            const stock = parseInt(select.dataset.stock);
+            const cantidad = parseInt(select.dataset.cantidad);
+            
+            if (selectedValue === 'reemplazado' && stock < cantidad) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Stock insuficiente',
+                    text: `No hay suficiente stock para este repuesto. Disponible: ${stock}, Requerido: ${cantidad}`,
+                    confirmButtonText: 'Entendido'
+                });
+                select.value = 'inspeccionado';
+            }
+        }
+    });
+    
+    // Toggle CAPA
+    const requiereCapaCheck = document.getElementById('requiere_capa');
+    if (requiereCapaCheck) {
+        requiereCapaCheck.addEventListener('change', function() {
+            const container = document.getElementById('capa_motivo_container');
+            container.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    
+    // Validación antes de enviar
+    document.getElementById('formCerrarOrden').addEventListener('submit', function(e) {
+        const resultado = document.querySelector('select[name="resultado"]')?.value;
+        const observaciones = document.querySelector('textarea[name="observaciones"]')?.value;
+        const firmaTecnico = document.querySelector('input[name="firma_tecnico"]')?.value;
+        
+        if (!resultado) {
+            e.preventDefault();
+            Swal.fire('Error', 'Debe seleccionar el resultado', 'warning');
+            return;
+        }
+        if (!observaciones || observaciones.trim() === '') {
+            e.preventDefault();
+            Swal.fire('Error', 'Debe ingresar observaciones', 'warning');
+            return;
+        }
+        if (!firmaTecnico || firmaTecnico.trim() === '') {
+            e.preventDefault();
+            Swal.fire('Error', 'Debe ingresar la firma del técnico', 'warning');
+            return;
+        }
+        
+        // Verificar que al menos una tarea esté completada
+        const tareasCompletadas = document.querySelectorAll('input[name^="tarea_completada_"]:checked');
+        if (tareasCompletadas.length === 0 && document.querySelectorAll('.tarea-check').length > 0) {
+            e.preventDefault();
+            Swal.fire('Error', 'Debe marcar al menos una tarea como completada', 'warning');
+            return;
+        }
+        
+        Swal.fire({
+            title: '¿Completar orden?',
+            text: 'Una vez completada, no podrá modificarse',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, completar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

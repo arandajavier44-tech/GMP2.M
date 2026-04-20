@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden {{ orden.numero_ot }} - Impresión</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; }
+            .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+            .badge { border: 1px solid #000 !important; }
+            .container { max-width: 100% !important; }
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .orden-print {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .header-logo h2 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .orden-titulo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        
+        .orden-titulo h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .info-section {
+            margin-bottom: 25px;
+        }
+        
+        .info-section h5 {
+            color: #2c3e50;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            width: 150px;
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .firma-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .firma-item {
+            text-align: center;
+            width: 200px;
+        }
+        
+        .firma-linea {
+            border-bottom: 1px solid #000;
+            margin: 40px 0 10px;
+        }
+        
+        .qr-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #dee2e6;
+        }
+        
+        .estado-badge {
+            font-size: 0.9rem;
+            padding: 5px 12px;
+        }
+        
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="orden-print">
+        <!-- Encabezado -->
+        <div class="header-logo">
+            <div>
+                <h2><i class="fas fa-building me-2"></i>GMP Maintenance</h2>
+                <p class="text-muted mb-0">Sistema de Gestión de Mantenimiento</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-{{ orden.get_estado_color() }} estado-badge">
+                    <i class="fas {{ orden.get_estado_icon() }} me-1"></i>{{ orden.estado }}
+                </span>
+                <p class="mb-0 mt-2"><small>Impreso: {{ now.strftime('%d/%m/%Y %H:%M') }}</small></p>
+            </div>
+        </div>
+        
+        <!-- Título de la orden -->
+        <div class="orden-titulo">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3>ORDEN DE SERVICIO GENERAL</h3>
+                    <h4 class="mb-0">{{ orden.numero_ot }}</h4>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge bg-light text-dark">
+                        <i class="fas {{ orden.get_tipo_icon() }} me-1"></i>{{ orden.tipo }}
+                    </span>
+                    <br>
+                    <span class="badge bg-{{ orden.get_prioridad_color() }} mt-2">
+                        Prioridad: {{ orden.prioridad }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información general -->
+        <div class="info-section">
+            <h5><i class="fas fa-info-circle me-2"></i>Información General</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-row">
+                        <div class="info-label">Título:</div>
+                        <div class="info-value"><strong>{{ orden.titulo }}</strong></div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Fecha Creación:</div>
+                        <div class="info-value">{{ orden.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Creado por:</div>
+                        <div class="info-value">{{ orden.creado_por }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Asignado a:</div>
+                        <div class="info-value">{{ orden.asignado_a or 'Pendiente de asignación' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-row">
+                        <div class="info-label">Categoría:</div>
+                        <div class="info-value">{{ orden.subtipo or 'No especificada' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Fecha Estimada:</div>
+                        <div class="info-value">{{ orden.fecha_estimada.strftime('%d/%m/%Y') if orden.fecha_estimada else 'No especificada' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Tiempo Estimado:</div>
+                        <div class="info-value">{{ orden.tiempo_estimado|round(1) if orden.tiempo_estimado else '—' }} horas</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Tiempo Real:</div>
+                        <div class="info-value">{{ orden.tiempo_real|round(1) if orden.tiempo_real else '—' }} horas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Solicitante y ubicación -->
+        <div class="info-section">
+            <h5><i class="fas fa-user me-2"></i>Solicitante y Ubicación</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-row">
+                        <div class="info-label">Solicitante:</div>
+                        <div class="info-value">{{ orden.solicitante_nombre or 'N/A' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Sector:</div>
+                        <div class="info-value">{{ orden.solicitante_sector or 'N/A' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Contacto:</div>
+                        <div class="info-value">{{ orden.solicitante_contacto or 'N/A' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-row">
+                        <div class="info-label">Ubicación:</div>
+                        <div class="info-value">{{ orden.ubicacion_detallada or 'No especificada' }}</div>
+                    </div>
+                    {% if orden.instalacion %}
+                    <div class="info-row">
+                        <div class="info-label">Instalación:</div>
+                        <div class="info-value">{{ orden.instalacion.codigo }} - {{ orden.instalacion.nombre }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Descripción -->
+        <div class="info-section">
+            <h5><i class="fas fa-align-left me-2"></i>Descripción del Problema/Servicio</h5>
+            <div class="p-3 bg-light rounded">
+                {{ orden.descripcion|replace('\n', '<br>')|safe if orden.descripcion else 'Sin descripción' }}
+            </div>
+        </div>
+        
+        <!-- Diagnóstico y trabajo realizado (si completada) -->
+        {% if orden.estado in ['Completada', 'Verificada'] %}
+        <div class="info-section">
+            <h5><i class="fas fa-stethoscope me-2"></i>Diagnóstico</h5>
+            <div class="p-3 bg-light rounded">
+                {{ orden.diagnostico|replace('\n', '<br>')|safe if orden.diagnostico else 'No especificado' }}
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h5><i class="fas fa-tools me-2"></i>Trabajo Realizado</h5>
+            <div class="p-3 bg-light rounded">
+                {{ orden.trabajo_realizado|replace('\n', '<br>')|safe if orden.trabajo_realizado else 'No especificado' }}
+            </div>
+        </div>
+        
+        <!-- Materiales utilizados -->
+        {% set materiales = orden.get_materiales_utilizados_list() %}
+        {% if materiales %}
+        <div class="info-section">
+            <h5><i class="fas fa-boxes me-2"></i>Materiales Utilizados</h5>
+            <table class="table table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th class="text-center">Cantidad</th>
+                        <th class="text-end">Costo Unit.</th>
+                        <th class="text-end">Costo Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in materiales %}
+                    <tr>
+                        <td>{{ m.codigo }}</td>
+                        <td>{{ m.nombre }}</td>
+                        <td class="text-center">{{ m.cantidad }} {{ m.unidad }}</td>
+                        <td class="text-end">${{ "%.2f"|format(m.costo_unitario) }}</td>
+                        <td class="text-end">${{ "%.2f"|format(m.costo_total) }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if orden.costo_total_materiales %}
+                    <tr class="table-secondary">
+                        <td colspan="4" class="text-end"><strong>Total Materiales:</strong></td>
+                        <td class="text-end"><strong>${{ "%.2f"|format(orden.costo_total_materiales) }}</strong></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% endif %}
+        
+        <!-- Observaciones y recomendaciones -->
+        {% if orden.observaciones or orden.recomendaciones %}
+        <div class="info-section">
+            {% if orden.observaciones %}
+            <h5><i class="fas fa-clipboard me-2"></i>Observaciones</h5>
+            <div class="p-3 bg-light rounded mb-3">
+                {{ orden.observaciones|replace('\n', '<br>')|safe }}
+            </div>
+            {% endif %}
+            
+            {% if orden.recomendaciones %}
+            <h5><i class="fas fa-lightbulb me-2"></i>Recomendaciones</h5>
+            <div class="p-3 bg-light rounded">
+                {{ orden.recomendaciones|replace('\n', '<br>')|safe }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Firmas -->
+        <div class="firma-section">
+            <div class="firma-item">
+                <div class="firma-linea"></div>
+                <p class="mb-1"><strong>Técnico Ejecutor</strong></p>
+                <p class="text-muted">{{ orden.firma_tecnico or '_____________________' }}</p>
+                <small>{{ orden.fecha_fin.strftime('%d/%m/%Y') if orden.fecha_fin else '' }}</small>
+            </div>
+            <div class="firma-item">
+                <div class="firma-linea"></div>
+                <p class="mb-1"><strong>Supervisor</strong></p>
+                <p class="text-muted">{{ orden.firma_supervisor or '_____________________' }}</p>
+                <small>{{ orden.fecha_verificacion.strftime('%d/%m/%Y') if orden.fecha_verificacion else '' }}</small>
+            </div>
+            <div class="firma-item">
+                <div class="firma-linea"></div>
+                <p class="mb-1"><strong>Solicitante</strong></p>
+                <p class="text-muted">{{ orden.solicitante_nombre or '_____________________' }}</p>
+                <small></small>
+            </div>
+        </div>
+        
+        <!-- QR y pie de página -->
+        <div class="qr-section">
+            {% if qr_base64 %}
+            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code" style="max-width: 100px;">
+            {% endif %}
+            <p class="text-muted mt-2 mb-0">
+                <small>Documento generado por GMP Maintenance System</small>
+            </p>
+            <p class="text-muted">
+                <small>Orden N° {{ orden.numero_ot }} | {{ now.strftime('%d/%m/%Y %H:%M') }}</small>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Botón de impresión -->
+    <div class="print-btn no-print">
+        <button class="btn btn-primary btn-lg shadow" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Imprimir Orden
+        </button>
+    </div>
+    
+    <script>
+        // Auto-imprimir al cargar (opcional)
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Chat IA - GMP{% endblock %}
+{% block page_title %}Asistente Virtual GMP/ANMAT{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ia.index') }}">Asistente IA</a></li>
+                <li class="breadcrumb-item active">Chat</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Área de chat -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-comment-dots me-2"></i>Consulta sobre Normativas GMP/ANMAT
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="chat-messages" class="chat-container mb-3" style="height: 400px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-robot fa-3x mb-3"></i>
+                        <p>Hola, soy tu asistente virtual especializado en normativas GMP y ANMAT.</p>
+                        <p>¿En qué puedo ayudarte hoy?</p>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="pregunta-input" class="form-control" placeholder="Escribe tu pregunta sobre normativas..." 
+                           onkeypress="if(event.key === 'Enter') enviarPregunta()">
+                    <button class="btn btn-primary" onclick="enviarPregunta()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Ejemplos: "¿Qué dice la normativa sobre calibración de equipos?", "Requisitos para validación de limpieza", "Normas ANMAT para CAPAs"
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Normativas encontradas -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-book me-2"></i>Normativas Consultadas
+                </h5>
+            </div>
+            <div class="card-body" id="normativas-panel" style="height: 300px; overflow-y: auto;">
+                <p class="text-muted text-center py-4">
+                    Las normativas relevantes aparecerán aquí durante la consulta
+                </p>
+            </div>
+        </div>
+        
+        <!-- Historial de consultas -->
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Consultas Recientes
+                </h5>
+            </div>
+            <div class="card-body" style="height: 200px; overflow-y: auto;">
+                <div id="historial-consultas">
+                    <p class="text-muted text-center py-3">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Cargando...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para mensajes -->
+<template id="mensaje-usuario-template">
+    <div class="d-flex justify-content-end mb-3">
+        <div class="bg-primary text-white p-3 rounded" style="max-width: 80%;">
+            <div class="mensaje-contenido"></div>
+            <small class="text-white-50 hora"></small>
+        </div>
+    </div>
+</template>
+
+<template id="mensaje-ia-template">
+    <div class="d-flex mb-3">
+        <div class="bg-light p-3 rounded" style="max-width: 80%;">
+            <div class="mensaje-contenido"></div>
+            <div class="normativas-ref small text-muted mt-2"></div>
+            <small class="text-muted hora"></small>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let consultaActualId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarHistorial();
+    });
+
+    function enviarPregunta() {
+        const input = document.getElementById('pregunta-input');
+        const pregunta = input.value.trim();
+        
+        if (!pregunta) return;
+        
+        // Agregar mensaje del usuario al chat
+        agregarMensajeUsuario(pregunta);
+        
+        // Limpiar input
+        input.value = '';
+        
+        // Mostrar indicador de escritura
+        mostrarEscribiendo();
+        
+        // Enviar a la API
+        fetch('/ia/api/consultar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pregunta: pregunta })
+        })
+        .then(response => response.json())
+        .then(data => {
+            quitarEscribiendo();
+            agregarMensajeIA(data.respuesta, data.normativas);
+            cargarHistorial();
+        })
+        .catch(error => {
+            quitarEscribiendo();
+            agregarMensajeIA('Lo siento, hubo un error al procesar tu consulta. Por favor intenta nuevamente.', []);
+        });
+    }
+
+    function agregarMensajeUsuario(texto) {
+        const container = document.getElementById('chat-messages');
+        const template = document.getElementById('mensaje-usuario-template');
+        const clone = template.content.cloneNode(true);
+        
+        clone.querySelector('.mensaje-contenido').textContent = texto;
+        clone.querySelector('.hora').textContent = new Date().toLocaleTimeString();
+        
+        container.appendChild(clone);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function agregarMensajeIA(texto, normativas) {
+        const container = document.getElementById('chat-messages');
+        const template = document.getElementById('mensaje-ia-template');
+        const clone = template.content.cloneNode(true);
+        
+        // Formatear texto con markdown simple
+        let html = texto.replace(/\n/g, '<br>');
+        clone.querySelector('.mensaje-contenido').innerHTML = html;
+        
+        // Agregar normativas referenciadas
+        if (normativas && normativas.length > 0) {
+            let normHtml = '<br><strong>Normativas consultadas:</strong><br>';
+            normativas.forEach(n => {
+                normHtml += `<span class="badge bg-info me-1">${n.codigo}</span>`;
+            });
+            clone.querySelector('.normativas-ref').innerHTML = normHtml;
+            
+            // Actualizar panel de normativas
+            actualizarPanelNormativas(normativas);
+        }
+        
+        clone.querySelector('.hora').textContent = new Date().toLocaleTimeString();
+        
+        // Quitar mensaje de bienvenida si existe
+        const bienvenida = container.querySelector('.text-center.py-5');
+        if (bienvenida) bienvenida.remove();
+        
+        container.appendChild(clone);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function mostrarEscribiendo() {
+        const container = document.getElementById('chat-messages');
+        const div = document.createElement('div');
+        div.id = 'escribiendo';
+        div.className = 'd-flex mb-3';
+        div.innerHTML = `
+            <div class="bg-light p-3 rounded">
+                <i class="fas fa-ellipsis-h"></i> Escribiendo...
+            </div>
+        `;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function quitarEscribiendo() {
+        const escribiendo = document.getElementById('escribiendo');
+        if (escribiendo) escribiendo.remove();
+    }
+
+    function actualizarPanelNormativas(normativas) {
+        const panel = document.getElementById('normativas-panel');
+        let html = '';
+        
+        normativas.forEach(n => {
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body p-2">
+                        <h6 class="card-title mb-1">${n.codigo}</h6>
+                        <p class="card-text small">${n.titulo}</p>
+                        <span class="badge bg-${n.tipo === 'GMP' ? 'primary' : 'warning'}">${n.tipo}</span>
+                        <span class="badge bg-info">${n.categoria}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        if (normativas.length === 0) {
+            html = '<p class="text-muted text-center py-4">No se encontraron normativas específicas</p>';
+        }
+        
+        panel.innerHTML = html;
+    }
+
+    function cargarHistorial() {
+        fetch('/ia/api/historial')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('historial-consultas');
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p class="text-muted text-center py-3">No hay consultas previas</p>';
+                    return;
+                }
+                
+                let html = '';
+                data.slice(0, 10).forEach(c => {
+                    let estrellas = '';
+                    for (let i = 0; i < 5; i++) {
+                        if (i < (c.feedback || 0)) {
+                            estrellas += '<i class="fas fa-star text-warning"></i>';
+                        } else {
+                            estrellas += '<i class="far fa-star text-warning"></i>';
+                        }
+                    }
+                    
+                    html += `
+                        <div class="mb-2 p-2 border-bottom">
+                            <div class="small fw-bold">${c.pregunta.substring(0, 50)}${c.pregunta.length > 50 ? '...' : ''}</div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">${c.fecha}</small>
+                                <span>${estrellas}</span>
+                            </div>
+                            <div class="mt-1">
+                                <button class="btn btn-sm btn-outline-primary py-0" onclick="cargarConsultaHistorial(${c.id}, '${c.pregunta.replace(/'/g, "\\'")}', '${c.respuesta.replace(/'/g, "\\'").replace(/\n/g, '\\n')}')">
+                                    <i class="fas fa-redo-alt"></i> Repetir
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning py-0 ms-1" onclick="darFeedback(${c.id})">
+                                    <i class="fas fa-star"></i> Calificar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            });
+    }
+
+    function cargarConsultaHistorial(id, pregunta, respuesta) {
+        agregarMensajeUsuario(pregunta);
+        agregarMensajeIA(respuesta, []);
+    }
+
+    function darFeedback(consultaId) {
+        Swal.fire({
+            title: 'Califica la respuesta',
+            html: `
+                <div class="rating">
+                    <div class="d-flex justify-content-center mb-3">
+                        <span class="fa-star-rating" onclick="seleccionarRating(1)">⭐</span>
+                        <span class="fa-star-rating" onclick="seleccionarRating(2)">⭐</span>
+                        <span class="fa-star-rating" onclick="seleccionarRating(3)">⭐</span>
+                        <span class="fa-star-rating" onclick="seleccionarRating(4)">⭐</span>
+                        <span class="fa-star-rating" onclick="seleccionarRating(5)">⭐</span>
+                    </div>
+                    <input type="hidden" id="rating-value" value="0">
+                </div>
+                <textarea id="feedback-comentario" class="form-control mt-3" placeholder="Comentario adicional (opcional)" rows="2"></textarea>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Enviar calificación',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const rating = document.getElementById('rating-value').value;
+                const comentario = document.getElementById('feedback-comentario').value;
+                
+                if (rating === '0') {
+                    Swal.showValidationMessage('Por favor selecciona una calificación');
+                    return false;
+                }
+                
+                return fetch(`/ia/api/feedback/${consultaId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ puntuacion: parseInt(rating), comentario: comentario })
+                }).then(response => response.json());
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Gracias!',
+                    text: 'Tu calificación nos ayuda a mejorar',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+
+    function seleccionarRating(rating) {
+        document.getElementById('rating-value').value = rating;
+        const stars = document.querySelectorAll('.fa-star-rating');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.style.opacity = '1';
+                star.style.fontSize = '2rem';
+            } else {
+                star.style.opacity = '0.3';
+                star.style.fontSize = '1.5rem';
+            }
+        });
+    }
+</script>
+
+<style>
+    .fa-star-rating {
+        font-size: 1.5rem;
+        cursor: pointer;
+        margin: 0 5px;
+        transition: all 0.2s;
+    }
+    .fa-star-rating:hover {
+        transform: scale(1.2);
+    }
+    .chat-container {
+        scroll-behavior: smooth;
+    }
+</style>
+{% endblock %}

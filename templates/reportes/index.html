@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes GMP{% endblock %}
+{% block page_title %}Reportes y Análisis GMP{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-chart-bar me-2"></i>
+            <strong>Reportes GMP:</strong> Análisis de cumplimiento, inventario e indicadores de mantenimiento.
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tarjeta: Cumplimiento de Mantenimientos -->
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Cumplimiento de Mantenimientos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Órdenes vs Completadas</div>
+                        <p class="mt-2 mb-0 text-muted small">
+                            Análisis de cumplimiento por período, tipo de orden y equipo.
+                        </p>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-check fa-3x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('reportes.cumplimiento') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-chart-line me-1"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta: Reporte de Inventario -->
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Reporte de Inventario
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Stock y Consumos</div>
+                        <p class="mt-2 mb-0 text-muted small">
+                            Análisis de stock crítico, valor del inventario y consumo por período.
+                        </p>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-3x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('reportes.inventario') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-chart-bar me-1"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta: Indicadores GMP -->
+    <div class="col-xl-4 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Indicadores GMP
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">KPIs y Métricas</div>
+                        <p class="mt-2 mb-0 text-muted small">
+                            MTBF, MTTR, disponibilidad de equipos y rotación de inventario.
+                        </p>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-pie fa-3x text-gray-300"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('reportes.indicadores') }}" class="btn btn-info btn-sm">
+                        <i class="fas fa-chart-simple me-1"></i> Ver Indicadores
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exportación rápida -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-download me-2"></i>Exportación Rápida
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary mb-2" onclick="exportarReporte('cumplimiento', 'pdf')">
+                                <i class="fas fa-file-pdf me-2"></i>Reporte Cumplimiento PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-success mb-2" onclick="exportarReporte('inventario', 'pdf')">
+                                <i class="fas fa-file-pdf me-2"></i>Reporte Inventario PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info mb-2" onclick="exportarReporte('indicadores', 'pdf')">
+                                <i class="fas fa-file-pdf me-2"></i>Indicadores GMP PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary mb-2" onclick="exportarReporte('cumplimiento', 'excel')">
+                                <i class="fas fa-file-excel me-2"></i>Reporte Cumplimiento Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-success mb-2" onclick="exportarReporte('inventario', 'excel')">
+                                <i class="fas fa-file-excel me-2"></i>Reporte Inventario Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info mb-2" onclick="exportarReporte('indicadores', 'excel')">
+                                <i class="fas fa-file-excel me-2"></i>Indicadores GMP Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function exportarReporte(tipo, formato) {
+        window.location.href = `/reportes/exportar/${formato}/${tipo}`;
+    }
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 4px solid #36b9cc !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+</style>
+{% endblock %}

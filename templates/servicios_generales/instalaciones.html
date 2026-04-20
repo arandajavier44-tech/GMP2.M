@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Instalaciones{% endblock %}
+{% block page_title %}Gestión de Instalaciones - Servicios Generales{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.panel_mantenimiento') }}">Panel</a></li>
+<li class="breadcrumb-item active">Instalaciones</li>
+{% endblock %}
+
+{% block content %}
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Operativas</h6>
+                        <h2 class="mb-0">{{ total_operativas }}</h2>
+                    </div>
+                    <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-dark-50">En Mantenimiento</h6>
+                        <h2 class="mb-0">{{ total_mantenimiento }}</h2>
+                    </div>
+                    <i class="fas fa-tools fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Fuera de Servicio</h6>
+                        <h2 class="mb-0">{{ total_fuera }}</h2>
+                    </div>
+                    <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50">Total Instalaciones</h6>
+                        <h2 class="mb-0">{{ instalaciones|length }}</h2>
+                    </div>
+                    <i class="fas fa-building fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Categoría</label>
+                        <select name="categoria" class="form-select">
+                            <option value="">Todas las categorías</option>
+                            {% for cat in categorias %}
+                            <option value="{{ cat }}" {% if filtro_categoria == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Estado</label>
+                        <select name="estado" class="form-select">
+                            <option value="">Todos los estados</option>
+                            <option value="Operativo" {% if filtro_estado == 'Operativo' %}selected{% endif %}>Operativo</option>
+                            <option value="En Mantenimiento" {% if filtro_estado == 'En Mantenimiento' %}selected{% endif %}>En Mantenimiento</option>
+                            <option value="Fuera de Servicio" {% if filtro_estado == 'Fuera de Servicio' %}selected{% endif %}>Fuera de Servicio</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-filter me-1"></i>Filtrar
+                        </button>
+                        <a href="{{ url_for('servicios_generales.gestion_instalaciones') }}" class="btn btn-secondary me-2">
+                            <i class="fas fa-eraser me-1"></i>Limpiar
+                        </a>
+                        <a href="{{ url_for('servicios_generales.nueva_instalacion') }}" class="btn btn-success ms-auto">
+                            <i class="fas fa-plus me-1"></i>Nueva Instalación
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de instalaciones -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                {% if instalaciones %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="instalacionesTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Ubicación</th>
+                                <th>Sector</th>
+                                <th>Mantenimiento</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inst in instalaciones %}
+                            <tr>
+                                <td>
+                                    <strong>{{ inst.codigo }}</strong>
+                                </td>
+                                <td>
+                                    {{ inst.nombre }}
+                                    {% if inst.marca %}
+                                    <br><small class="text-muted">{{ inst.marca }} {{ inst.modelo or '' }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ inst.categoria or 'Sin categoría' }}</span>
+                                    {% if inst.subcategoria %}
+                                    <br><small>{{ inst.subcategoria }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if inst.edificio %}
+                                    <i class="fas fa-building me-1"></i>{{ inst.edificio }}
+                                    {% endif %}
+                                    {% if inst.piso %}
+                                    <br><small>Piso: {{ inst.piso }}</small>
+                                    {% endif %}
+                                    <br><small>{{ inst.ubicacion[:30] if inst.ubicacion else '' }}{% if inst.ubicacion and inst.ubicacion|length > 30 %}...{% endif %}</small>
+                                </td>
+                                <td>{{ inst.sector or '—' }}</td>
+                                <td>
+                                    {% if inst.requiere_mantenimiento_periodico %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-calendar-check me-1"></i>Programado
+                                    </span>
+                                    {% if inst.proxima_ejecucion %}
+                                    <br><small>Próximo: {{ inst.proxima_ejecucion.strftime('%d/%m/%Y') }}</small>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="badge bg-secondary">No programado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ inst.get_estado_color() }}">
+                                        <i class="fas {{ inst.get_estado_icon() }} me-1"></i>{{ inst.estado }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('servicios_generales.detalle_instalacion', instalacion_id=inst.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('servicios_generales.editar_instalacion', instalacion_id=inst.id) }}" 
+                                           class="btn btn-sm btn-outline-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if inst.requiere_mantenimiento_periodico %}
+                                        <a href="{{ url_for('servicios_generales.nueva_preventiva') }}?instalacion_id={{ inst.id }}" 
+                                           class="btn btn-sm btn-outline-success" title="Crear preventiva">
+                                            <i class="fas fa-calendar-plus"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-building fa-5x text-muted mb-3"></i>
+                    <h4 class="text-muted">No hay instalaciones registradas</h4>
+                    <p class="mb-4">Comience registrando las instalaciones del edificio</p>
+                    <a href="{{ url_for('servicios_generales.nueva_instalacion') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i>Registrar Primera Instalación
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leyenda de categorías -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-tags me-2"></i>Categorías de Instalaciones</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap">
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-bolt me-1"></i>Eléctrico</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-home me-1"></i>Edilicio</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-wind me-1"></i>Climatización</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-toilet me-1"></i>Sanitario</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-shield-alt me-1"></i>Seguridad</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-lightbulb me-1"></i>Iluminación</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-door-open me-1"></i>Puertas/Accesos</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-network-wired me-1"></i>Redes/Datos</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-chair me-1"></i>Mobiliario</span>
+                    <span class="badge bg-secondary me-2 mb-2 p-2"><i class="fas fa-ellipsis-h me-1"></i>Otros</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#instalacionesTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+        },
+        "pageLength": 25,
+        "order": [[0, 'asc']],
+        "columnDefs": [
+            { "orderable": false, "targets": 7 }
+        ]
+    });
+});
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Ver Inspección{% endblock %}
+{% block page_title %}Detalle de Inspección GMP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.historial') }}">Historial</a></li>
+                <li class="breadcrumb-item active">Inspección #{{ inspeccion.id }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Información general -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-{{ 'success' if inspeccion.conforme else 'danger' }} text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Resultado: {{ 'CONFORME' if inspeccion.conforme else 'NO CONFORME' }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Plantilla:</th>
+                                <td>{{ inspeccion.plantilla.nombre }}</td>
+                            </tr>
+                            <tr>
+                                <th>Fecha:</th>
+                                <td>{{ inspeccion.fecha.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Inspector:</th>
+                                <td>{{ inspeccion.realizada_por }}</td>
+                            </tr>
+                            {% if inspeccion.equipo %}
+                            <tr>
+                                <th>Equipo:</th>
+                                <td>{{ inspeccion.equipo.code }} - {{ inspeccion.equipo.name }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Categoría GMP:</th>
+                                <td>
+                                    <span class="badge bg-secondary">{{ inspeccion.plantilla.categoria_gmp or 'N/A' }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Frecuencia:</th>
+                                <td>{{ inspeccion.plantilla.frecuencia|capitalize }}</td>
+                            </tr>
+                            <tr>
+                                <th>Hora inicio:</th>
+                                <td>{{ inspeccion.hora_inicio.strftime('%H:%M') if inspeccion.hora_inicio else 'N/A' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items inspeccionados -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-double me-2"></i>Items Inspeccionados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Descripción</th>
+                                <th>Respuesta</th>
+                                <th>Conforme</th>
+                                <th>Observación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inspeccion.resultados %}
+                            <tr class="{{ 'table-danger' if not item.conforme and item.es_critico else 'table-warning' if not item.conforme else '' }}">
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    {{ item.descripcion }}
+                                    {% if item.es_critico %}
+                                        <span class="badge bg-danger ms-2">Crítico</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.tipo_respuesta == 'booleano' %}
+                                        <span class="badge bg-{{ 'success' if item.respuesta == 'si' else 'danger' if item.respuesta == 'no' else 'secondary' }}">
+                                            {{ 'Sí' if item.respuesta == 'si' else 'No' if item.respuesta == 'no' else item.respuesta }}
+                                        </span>
+                                    {% else %}
+                                        {{ item.respuesta or '-' }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.conforme %}
+                                        <i class="fas fa-check-circle text-success"></i> Conforme
+                                    {% else %}
+                                        <i class="fas fa-times-circle text-danger"></i> No Conforme
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.observacion or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Observaciones generales -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">
+                    <i class="fas fa-comment me-2"></i>Observaciones Generales
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>{{ inspeccion.observaciones or 'Sin observaciones' }}</p>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>Acciones Tomadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>{{ inspeccion.acciones or 'No se registraron acciones' }}</p>
+                {% if inspeccion.requiere_capa %}
+                    <div class="alert alert-danger mt-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Se requiere CAPA (Acción Correctiva/Preventiva)
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Lotes afectados -->
+        {% if inspeccion.lotes_afectados %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-boxes me-2"></i>Lotes Afectados
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>{{ inspeccion.lotes_afectados }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Botones de acción -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-print me-2"></i>Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button onclick="window.print()" class="btn btn-outline-primary">
+                        <i class="fas fa-print me-2"></i>Imprimir Reporte
+                    </button>
+                    <a href="{{ url_for('inspecciones.imprimir_plantilla', plantilla_id=inspeccion.plantilla_id) }}" 
+                       class="btn btn-outline-success" target="_blank">
+                        <i class="fas fa-file-pdf me-2"></i>Imprimir Plantilla en Blanco
+                    </a>
+                    <a href="{{ url_for('inspecciones.historial') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Historial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos para impresión -->
+<style media="print">
+    .sidebar, .navbar, .breadcrumb, .card-header .btn, .btn, footer, .card-footer, .bg-success, .bg-danger, .bg-primary, .bg-warning, .bg-info {
+        display: none !important;
+    }
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .card {
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+    .table {
+        font-size: 10pt;
+    }
+    body {
+        background: white;
+    }
+    @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+</style>
+{% endblock %}

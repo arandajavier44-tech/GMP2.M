@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Ver Documento{% endblock %}
+{% block page_title %}{{ documento.titulo }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('documentacion.index') }}">Documentación</a></li>
+                <li class="breadcrumb-item">
+                    {% if documento.equipo_id %}
+                        <a href="{{ url_for('documentacion.por_equipo', equipo_id=documento.equipo_id) }}">
+                            {{ documento.equipo.code if documento.equipo else 'Equipo' }}
+                        </a>
+                    {% else %}
+                        <span class="text-muted">Documentos</span>
+                    {% endif %}
+                </li>
+                <li class="breadcrumb-item active">{{ documento.codigo }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>{{ documento.titulo }}
+                </h5>
+                <div>
+                    <span class="badge bg-light text-dark me-2">{{ documento.codigo }}</span>
+                    <span class="badge bg-{{ 'warning' if documento.estado == 'Borrador' else 'success' }} me-2">
+                        {{ documento.estado }}
+                    </span>
+                    <span class="badge bg-info">v{{ documento.version }}</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <iframe srcdoc="{{ documento.contenido|replace('"', '&quot;') }}" 
+                        style="width: 100%; height: 800px; border: none;"></iframe>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-2"></i>Generado: {{ documento.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                            <i class="fas fa-user ms-3 me-2"></i>Creado por: {{ documento.creado_por or 'Sistema' }}
+                        </small>
+                        {% if documento.equipos_asignados %}
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-industry me-2"></i>Equipos asignados:
+                            {% for eq in documento.equipos_asignados %}
+                                <a href="{{ url_for('equipos.detalle_equipo', equipo_id=eq.id) }}" class="text-decoration-none">
+                                    {{ eq.code }}
+                                </a>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </small>
+                        {% elif documento.equipo %}
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-industry me-2"></i>Equipo:
+                            <a href="{{ url_for('equipos.detalle_equipo', equipo_id=documento.equipo.id) }}" class="text-decoration-none">
+                                {{ documento.equipo.code }} - {{ documento.equipo.name }}
+                            </a>
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class="mt-2 mt-md-0">
+                        <a href="{{ url_for('documentacion.print_documento', documento_id=documento.id) }}" 
+                           class="btn btn-primary btn-sm" target="_blank">
+                            <i class="fas fa-print me-2"></i>Vista Impresión
+                        </a>
+                        <a href="{{ url_for('documentacion.editar_documento', documento_id=documento.id) }}" 
+                           class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit me-2"></i>Editar
+                        </a>
+                        {% if session.role == 'Admin' or session.area == 'administracion' %}
+                        <button class="btn btn-danger btn-sm" 
+                                onclick="eliminarDocumento({{ documento.id }}, '{{ documento.codigo }}')">
+                            <i class="fas fa-trash me-2"></i>Eliminar
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- QR del documento -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Código QR de Trazabilidad</h5>
+            </div>
+            <div class="card-body text-center">
+                {% if documento.qr_code %}
+                <img src="{{ url_for('static', filename=documento.qr_code) }}" alt="QR Code" style="max-width: 180px;" class="mb-3 img-fluid">
+                <p class="text-muted small">
+                    <i class="fas fa-mobile-alt me-1"></i>
+                    Escanee este código para acceder al documento desde su dispositivo móvil.
+                </p>
+                <a href="{{ url_for('static', filename=documento.qr_code) }}" download class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-download me-1"></i>Descargar QR
+                </a>
+                {% else %}
+                <p class="text-muted">No hay código QR generado para este documento</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Metadatos -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información del Documento</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr><th>Tipo:</th><td>{{ documento.tipo|upper }}</td></tr>
+                    {% if documento.subtipo %}<tr><th>Subtipo:</th><td>{{ documento.subtipo|upper }}</td></tr>{% endif %}
+                    <tr><th>Versión:</th><td>{{ documento.version }}</td></tr>
+                    <tr><th>Estado:</th><td>{{ documento.estado }}</td></tr>
+                    <tr><th>Fecha Creación:</th><td>{{ documento.fecha_creacion.strftime('%d/%m/%Y') }}</td></tr>
+                    <tr><th>Creado por:</th><td>{{ documento.creado_por or 'Sistema' }}</td></tr>
+                    {% if documento.equipo %}
+                    <tr><th>Equipo asociado:</th><td>{{ documento.equipo.code }} - {{ documento.equipo.name }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function eliminarDocumento(docId, codigo) {
+        Swal.fire({
+            title: '¿Eliminar documento?',
+            text: `El documento ${codigo} será eliminado permanentemente`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/documentacion/api/eliminar/${docId}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Eliminado', 'Documento eliminado correctamente', 'success')
+                                .then(() => window.location.href = '/documentacion');
+                        } else {
+                            Swal.fire('Error', data.error, 'error');
+                        }
+                    });
+            }
+        });
+    }
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Cambio{% endblock %}
+{% block page_title %}Control de Cambios: {{ cambio.numero_cambio }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('cambios.gestion_cambios') }}">Cambios</a></li>
+                <li class="breadcrumb-item active">{{ cambio.numero_cambio }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Cabecera con estado -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h4 class="mb-1">{{ cambio.titulo }}</h4>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar me-2"></i>Solicitado: {{ cambio.fecha_solicitud.strftime('%d/%m/%Y %H:%M') }}
+                            {% if cambio.solicitante_nombre %}
+                            | <i class="fas fa-user me-2"></i>{{ cambio.solicitante_nombre }}
+                            {% endif %}
+                            {% if cambio.departamento %}
+                            | <i class="fas fa-building me-2"></i>{{ cambio.departamento }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="mt-2 mt-md-0">
+                        <span class="badge bg-{{ cambio.get_estado_color() }} p-2 me-2">{{ cambio.estado }}</span>
+                        <span class="badge bg-{{ cambio.get_clasificacion_color() }} p-2 me-2">{{ cambio.clasificacion_gmp }}</span>
+                        <span class="badge bg-{{ cambio.get_impacto_color() }} p-2">{{ cambio.impacto_calidad }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Descripción y detalles -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-info-circle me-2"></i>Descripción del Cambio
+                </h6>
+            </div>
+            <div class="card-body">
+                <p>{{ cambio.descripcion }}</p>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Estado Actual</h6>
+                        <p class="text-muted">{{ cambio.estado_actual or 'No especificado' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Cambio Propuesto</h6>
+                        <p class="text-muted">{{ cambio.cambio_propuesto or 'No especificado' }}</p>
+                    </div>
+                </div>
+                
+                {% if cambio.estado_nuevo %}
+                <div class="mt-3">
+                    <h6 class="fw-bold">Estado Después del Cambio</h6>
+                    <p class="text-muted">{{ cambio.estado_nuevo }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Justificación y análisis -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-question-circle me-2"></i>Justificación y Análisis
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <h6 class="fw-bold">Motivo</h6>
+                        <p>{{ cambio.motivo }}</p>
+                    </div>
+                    
+                    {% if cambio.beneficio %}
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold">Beneficio Esperado</h6>
+                        <p>{{ cambio.beneficio }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if cambio.riesgo %}
+                    <div class="col-md-6 mb-3">
+                        <h6 class="fw-bold">Análisis de Riesgo</h6>
+                        <p>{{ cambio.riesgo }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentación afectada -->
+        {% if cambio.documentos_afectados or cambio.nuevos_documentos %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-file-alt me-2"></i>Documentación
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if cambio.documentos_afectados %}
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Documentos Afectados</h6>
+                        <p>{{ cambio.documentos_afectados }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if cambio.nuevos_documentos %}
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Nuevos Documentos</h6>
+                        <p>{{ cambio.nuevos_documentos }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Plan de validación -->
+        {% if cambio.requiere_validacion and cambio.plan_validacion %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-flask me-2"></i>Plan de Validación
+                </h6>
+            </div>
+            <div class="card-body">
+                <p>{{ cambio.plan_validacion }}</p>
+                {% if cambio.resultados_validacion %}
+                <hr>
+                <h6 class="fw-bold">Resultados</h6>
+                <p>{{ cambio.resultados_validacion }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Historial -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-history me-2"></i>Historial de Cambios
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if cambio.historial %}
+                <div class="timeline">
+                    {% for h in cambio.historial|sort(attribute='fecha', reverse=true) %}
+                    <div class="timeline-item">
+                        <div class="timeline-date">{{ h.fecha.strftime('%d/%m/%Y %H:%M') }}</div>
+                        <div class="timeline-content">
+                            <span class="badge bg-info mb-2">{{ h.accion }}</span>
+                            <p class="mb-1"><strong>{{ h.usuario }}</strong></p>
+                            {% if h.campo %}
+                            <p class="small text-muted mb-1">Campo: {{ h.campo }}</p>
+                            {% endif %}
+                            <p class="mb-0">{{ h.valor_nuevo }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center text-muted py-3 mb-0">No hay historial registrado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Información de relaciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-dark text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-link me-2"></i>Relaciones
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if cambio.equipo %}
+                <p>
+                    <strong>Equipo:</strong><br>
+                    <a href="{{ url_for('equipos.detalle_equipo', equipo_id=cambio.equipo.id) }}">
+                        {{ cambio.equipo.code }} - {{ cambio.equipo.name }}
+                    </a>
+                </p>
+                {% endif %}
+                
+                {% if cambio.sistema %}
+                <p>
+                    <strong>Sistema:</strong><br>
+                    {{ cambio.sistema.nombre }}
+                </p>
+                {% endif %}
+                
+                {% if cambio.orden_trabajo %}
+                <p>
+                    <strong>Orden de Trabajo:</strong><br>
+                    <a href="{{ url_for('ordenes.detalle_orden', orden_id=cambio.orden_trabajo.id) }}">
+                        {{ cambio.orden_trabajo.numero_ot }}
+                    </a>
+                </p>
+                {% endif %}
+                
+                {% if not cambio.equipo and not cambio.sistema and not cambio.orden_trabajo %}
+                <p class="text-muted mb-0">Sin relaciones</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Aprobaciones -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-check-circle me-2"></i>Aprobaciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Nivel 1</strong></span>
+                        {% if cambio.aprobador_1_nombre %}
+                        <span class="badge bg-success">Aprobado</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pendiente</span>
+                        {% endif %}
+                    </div>
+                    {% if cambio.aprobador_1_nombre %}
+                    <small class="text-muted">
+                        {{ cambio.aprobador_1_nombre }} - {{ cambio.aprobador_1_fecha.strftime('%d/%m/%Y') }}
+                        {% if cambio.aprobador_1_comentarios %}
+                        <br><i>"{{ cambio.aprobador_1_comentarios }}"</i>
+                        {% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Nivel 2</strong></span>
+                        {% if cambio.aprobador_2_nombre %}
+                        <span class="badge bg-success">Aprobado</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pendiente</span>
+                        {% endif %}
+                    </div>
+                    {% if cambio.aprobador_2_nombre %}
+                    <small class="text-muted">
+                        {{ cambio.aprobador_2_nombre }} - {{ cambio.aprobador_2_fecha.strftime('%d/%m/%Y') }}
+                        {% if cambio.aprobador_2_comentarios %}
+                        <br><i>"{{ cambio.aprobador_2_comentarios }}"</i>
+                        {% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><strong>Calidad</strong></span>
+                        {% if cambio.aprobador_calidad_nombre %}
+                        <span class="badge bg-success">Aprobado</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Pendiente</span>
+                        {% endif %}
+                    </div>
+                    {% if cambio.aprobador_calidad_nombre %}
+                    <small class="text-muted">
+                        {{ cambio.aprobador_calidad_nombre }} - {{ cambio.aprobador_calidad_fecha.strftime('%d/%m/%Y') }}
+                        {% if cambio.aprobador_calidad_comentarios %}
+                        <br><i>"{{ cambio.aprobador_calidad_comentarios }}"</i>
+                        {% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones según estado -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-tasks me-2"></i>Acciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if cambio.estado == 'Borrador' %}
+                        {% if session.role == 'Admin' %}
+                        <a href="{{ url_for('cambios.editar_cambio', cambio_id=cambio.id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit me-2"></i>Editar
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-primary" onclick="enviarRevision({{ cambio.id }})">
+                            <i class="fas fa-paper-plane me-2"></i>Enviar a Revisión
+                        </button>
+                        
+                    {% elif cambio.estado == 'En Revisión' and session.role == 'Admin' %}
+                        {% if not cambio.aprobador_1_nombre %}
+                        <button class="btn btn-success" onclick="aprobarCambio({{ cambio.id }}, '1')">
+                            <i class="fas fa-check-circle me-2"></i>Aprobar Nivel 1
+                        </button>
+                        {% endif %}
+                        
+                        {% if cambio.aprobador_1_nombre and not cambio.aprobador_2_nombre %}
+                        <button class="btn btn-success" onclick="aprobarCambio({{ cambio.id }}, '2')">
+                            <i class="fas fa-check-circle me-2"></i>Aprobar Nivel 2
+                        </button>
+                        {% endif %}
+                        
+                        {% if cambio.aprobador_2_nombre and not cambio.aprobador_calidad_nombre %}
+                        <button class="btn btn-success" onclick="aprobarCambio({{ cambio.id }}, 'calidad')">
+                            <i class="fas fa-check-circle me-2"></i>Aprobar Calidad
+                        </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-danger" onclick="rechazarCambio({{ cambio.id }})">
+                            <i class="fas fa-times-circle me-2"></i>Rechazar
+                        </button>
+                        
+                    {% elif cambio.estado == 'Aprobado' and session.role == 'Admin' %}
+                        <button class="btn btn-primary" onclick="implementarCambio({{ cambio.id }})">
+                            <i class="fas fa-tools me-2"></i>Registrar Implementación
+                        </button>
+                        
+                    {% elif cambio.estado == 'Implementado' and session.role == 'Admin' %}
+                        <button class="btn btn-success" onclick="verificarCambio({{ cambio.id }})">
+                            <i class="fas fa-clipboard-check me-2"></i>Verificar Eficacia
+                        </button>
+                    {% endif %}
+                    
+                    <button class="btn btn-info" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de implementación -->
+        {% if cambio.estado in ['Implementado', 'Cerrado'] %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-dark text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-clipboard-check me-2"></i>Implementación
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Implementado por:</strong> {{ cambio.implementado_por }}</p>
+                <p><strong>Fecha:</strong> {{ cambio.fecha_implementacion_real.strftime('%d/%m/%Y %H:%M') }}</p>
+                {% if cambio.comentarios_implementacion %}
+                <p><strong>Comentarios:</strong><br>{{ cambio.comentarios_implementacion }}</p>
+                {% endif %}
+                
+                {% if cambio.estado == 'Cerrado' %}
+                <hr>
+                <p><strong>Verificado por:</strong> {{ cambio.verificador_nombre }}</p>
+                <p><strong>Fecha verificación:</strong> {{ cambio.fecha_verificacion.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Resultado:</strong> 
+                    <span class="badge bg-{{ 'success' if cambio.resultado_verificacion == 'Eficaz' else 'warning' if cambio.resultado_verificacion == 'Parcial' else 'danger' }}">
+                        {{ cambio.resultado_verificacion }}
+                    </span>
+                </p>
+                {% if cambio.comentarios_verificacion %}
+                <p><strong>Comentarios:</strong><br>{{ cambio.comentarios_verificacion }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modales para acciones -->
+<div class="modal fade" id="aprobarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Aprobar Cambio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" id="formAprobar">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="comentarios_aprobacion" class="form-label">Comentarios (opcional)</label>
+                        <textarea class="form-control" id="comentarios_aprobacion" name="comentarios" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Aprobación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="rechazarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle me-2"></i>Rechazar Cambio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" id="formRechazar">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motivo_rechazo" class="form-label">Motivo del rechazo *</label>
+                        <textarea class="form-control" id="motivo_rechazo" name="motivo" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Rechazar Cambio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="implementarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-tools me-2"></i>Registrar Implementación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" id="formImplementar">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="comentarios_implementacion" class="form-label">Comentarios de implementación</label>
+                        <textarea class="form-control" id="comentarios_implementacion" name="comentarios" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar Implementación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="verificarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-check me-2"></i>Verificar Eficacia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="" id="formVerificar">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="resultado_verificacion" class="form-label">Resultado *</label>
+                        <select class="form-select" id="resultado_verificacion" name="resultado" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Eficaz">Eficaz</option>
+                            <option value="Parcial">Parcialmente Eficaz</option>
+                            <option value="No Eficaz">No Eficaz</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comentarios_verificacion" class="form-label">Comentarios</label>
+                        <textarea class="form-control" id="comentarios_verificacion" name="comentarios" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Confirmar Verificación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let cambioId = {{ cambio.id }};
+    let nivelAprobacion = '';
+
+    function enviarRevision(id) {
+        Swal.fire({
+            title: '¿Enviar a revisión?',
+            text: 'La solicitud pasará a estado "En Revisión"',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, enviar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/cambios/${id}/enviar-revision`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    function aprobarCambio(id, nivel) {
+        nivelAprobacion = nivel;
+        document.getElementById('formAprobar').action = `/cambios/${id}/aprobar`;
+        new bootstrap.Modal(document.getElementById('aprobarModal')).show();
+    }
+
+    document.getElementById('formAprobar').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = this;
+        const comentarios = document.getElementById('comentarios_aprobacion').value;
+        
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `nivel=${nivelAprobacion}&comentarios=${encodeURIComponent(comentarios)}`
+        }).then(() => {
+            window.location.reload();
+        });
+    });
+
+    function rechazarCambio(id) {
+        document.getElementById('formRechazar').action = `/cambios/${id}/rechazar`;
+        new bootstrap.Modal(document.getElementById('rechazarModal')).show();
+    }
+
+    function implementarCambio(id) {
+        document.getElementById('formImplementar').action = `/cambios/${id}/implementar`;
+        new bootstrap.Modal(document.getElementById('implementarModal')).show();
+    }
+
+    function verificarCambio(id) {
+        document.getElementById('formVerificar').action = `/cambios/${id}/verificar`;
+        new bootstrap.Modal(document.getElementById('verificarModal')).show();
+    }
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e3e6f0;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4e73df;
+    border: 2px solid white;
+}
+.timeline-date {
+    font-size: 0.8rem;
+    color: #858796;
+    margin-bottom: 5px;
+}
+.timeline-content {
+    background: #f8f9fc;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+</style>
+{% endblock %}

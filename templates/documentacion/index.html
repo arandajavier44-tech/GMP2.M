@@ -1,0 +1,739 @@
+{% extends "base.html" %}
+
+{% block title %}Documentación GMP{% endblock %}
+{% block page_title %}Documentación GMP - Gestión de Documentos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Documentación GMP</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Botón para ver expedientes por equipo -->
+<div class="row mb-4">
+    <div class="col-12">
+        <a href="{{ url_for('documentacion.documentacion_por_equipos') }}" class="btn btn-primary">
+            <i class="fas fa-folder-tree me-2"></i>Ver expedientes por equipo
+        </a>
+        <hr>
+    </div>
+</div>
+
+<!-- PRIMERA FILA: Documentos Generales -->
+<div class="row mb-2">
+    <div class="col-12">
+        <h5 class="text-primary"><i class="fas fa-file-alt me-2"></i>Documentos GMP</h5>
+        <hr class="mt-1 mb-3">
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- SOP General -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-primary">
+            <div class="card-body text-center">
+                <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                <h6 class="fw-bold">SOP General</h6>
+                <p class="small text-muted">Procedimiento Operativo Estándar</p>
+                <button class="btn btn-sm btn-outline-primary" onclick="mostrarModal('sop', 'SOP General')">
+                    <i class="fas fa-plus me-1"></i>Generar SOP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP Mantenimiento -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-success">
+            <div class="card-body text-center">
+                <i class="fas fa-wrench fa-3x text-success mb-3"></i>
+                <h6 class="fw-bold">SOP Mantenimiento</h6>
+                <p class="small text-muted">Mantenimiento preventivo</p>
+                <button class="btn btn-sm btn-outline-success" onclick="mostrarModal('sop_mantenimiento', 'SOP de Mantenimiento')">
+                    <i class="fas fa-plus me-1"></i>Generar SOP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP Calibración -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-info">
+            <div class="card-body text-center">
+                <i class="fas fa-ruler fa-3x text-info mb-3"></i>
+                <h6 class="fw-bold">SOP Calibración</h6>
+                <p class="small text-muted">Procedimiento de calibración</p>
+                <button class="btn btn-sm btn-outline-info" onclick="mostrarModal('sop_calibracion', 'SOP de Calibración')">
+                    <i class="fas fa-plus me-1"></i>Generar SOP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOP Limpieza -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-warning">
+            <div class="card-body text-center">
+                <i class="fas fa-broom fa-3x text-warning mb-3"></i>
+                <h6 class="fw-bold">SOP Limpieza</h6>
+                <p class="small text-muted">Limpieza y sanitización</p>
+                <button class="btn btn-sm btn-outline-warning" onclick="mostrarModal('sop_limpieza', 'SOP de Limpieza')">
+                    <i class="fas fa-plus me-1"></i>Generar SOP
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEGUNDA FILA: Documentos Técnicos -->
+<div class="row mb-4">
+    <!-- Ficha Técnica -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-secondary">
+            <div class="card-body text-center">
+                <i class="fas fa-industry fa-3x text-secondary mb-3"></i>
+                <h6 class="fw-bold">Ficha Técnica</h6>
+                <p class="small text-muted">Fichas de equipos GMP</p>
+                <button class="btn btn-sm btn-outline-secondary" onclick="mostrarModal('ficha', 'Ficha Técnica')">
+                    <i class="fas fa-plus me-1"></i>Generar Ficha
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Mantenimiento -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-danger">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Reporte Mantenimiento</h6>
+                <p class="small text-muted">Historial de intervenciones</p>
+                <button class="btn btn-sm btn-outline-danger" onclick="mostrarModal('reporte', 'Reporte de Mantenimiento')">
+                    <i class="fas fa-plus me-1"></i>Generar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protocolos de Validación -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-primary">
+            <div class="card-body text-center">
+                <i class="fas fa-flask fa-3x text-primary mb-3"></i>
+                <h6 class="fw-bold">Protocolo Validación</h6>
+                <p class="small text-muted">IQ / OQ / PQ</p>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="mostrarModalProtocolo('iq')">IQ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="mostrarModalProtocolo('oq')">OQ</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="mostrarModalProtocolo('pq')">PQ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificados de Calibración -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-success">
+            <div class="card-body text-center">
+                <i class="fas fa-certificate fa-3x text-success mb-3"></i>
+                <h6 class="fw-bold">Certificado Calibración</h6>
+                <p class="small text-muted">Resultados de calibración</p>
+                <button class="btn btn-sm btn-outline-success" onclick="mostrarModalCertificado()">
+                    <i class="fas fa-plus me-1"></i>Generar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TERCERA FILA: Planes y Matrices -->
+<div class="row mb-4">
+    <!-- Plan de Mantenimiento Anual -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-dark">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-alt fa-3x text-dark mb-3"></i>
+                <h6 class="fw-bold">Plan Anual</h6>
+                <p class="small text-muted">Programación de mantenimientos</p>
+                <a href="{{ url_for('plan_anual.index') }}" class="btn btn-sm btn-outline-dark">
+                    <i class="fas fa-eye me-1"></i>Ver Planes
+                </a>
+                <a href="{{ url_for('plan_anual.nuevo') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-plus me-1"></i>Nuevo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matriz de Riesgos -->
+    <div class="col-md-3 mb-3">
+        <div class="card shadow h-100 border-danger">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Matriz de Riesgos</h6>
+                <p class="small text-muted">Análisis FMEA y gestión de riesgos</p>
+                <a href="{{ url_for('riesgos.index') }}" class="btn btn-sm btn-outline-danger">
+                    <i class="fas fa-chart-line me-1"></i>Gestionar Riesgos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de documentos generados - VERSIÓN COLAPSABLE POR EQUIPO -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>Documentos Generados
+                </h5>
+                <div>
+                    <span class="badge bg-light text-dark me-2">{{ documentos|length }} total</span>
+                    <button class="btn btn-sm btn-light" id="expandirTodos" title="Expandir todos">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light" id="colapsarTodos" title="Colapsar todos">
+                        <i class="fas fa-compress-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Agrupar documentos por equipo -->
+                {% set docs_por_equipo = {} %}
+                {% for doc in documentos %}
+                    {% set equipo_key = doc.equipo_id if doc.equipo_id else 0 %}
+                    {% if equipo_key not in docs_por_equipo %}
+                        {% set _ = docs_por_equipo.update({equipo_key: []}) %}
+                    {% endif %}
+                    {% set _ = docs_por_equipo[equipo_key].append(doc) %}
+                {% endfor %}
+                
+                <!-- Documentos sin equipo -->
+                {% set docs_sin_equipo = docs_por_equipo.pop(0, []) %}
+                
+                <!-- Acordeón por equipo -->
+                <div id="accordionDocumentos" class="accordion">
+                    <!-- Documentos sin equipo específico -->
+                    {% if docs_sin_equipo %}
+                    <div class="accordion-item mb-2 border rounded">
+                        <h2 class="accordion-header" id="headingSinEquipo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapseSinEquipo" aria-expanded="false">
+                                <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                    <div>
+                                        <i class="fas fa-folder-open me-2 text-secondary"></i>
+                                        <strong>Documentos Generales</strong>
+                                        <span class="badge bg-secondary ms-2">{{ docs_sin_equipo|length }}</span>
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapseSinEquipo" class="accordion-collapse collapse" data-bs-parent="#accordionDocumentos">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Código</th>
+                                                <th>Título</th>
+                                                <th>Tipo</th>
+                                                <th>Subtipo</th>
+                                                <th>QR</th>
+                                                <th>Versión</th>
+                                                <th>Fecha</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for doc in docs_sin_equipo %}
+                                            <tr>
+                                                <td><strong>{{ doc.codigo }}</strong></td>
+                                                <td>{{ doc.titulo[:50] }}{% if doc.titulo|length > 50 %}...{% endif %}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'primary' if 'sop' in doc.tipo else 'success' if doc.tipo == 'reporte' else 'info' if doc.tipo == 'certificado' else 'warning' if doc.tipo == 'ficha' else 'danger' if doc.tipo == 'protocolo' else 'secondary' }}">
+                                                        {{ doc.tipo|replace('_', ' ')|upper }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if doc.subtipo %}
+                                                        <span class="badge bg-info">{{ doc.subtipo|upper }}</span>
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if doc.qr_code %}
+                                                    <a href="{{ url_for('static', filename=doc.qr_code) }}" download class="text-info">
+                                                        <i class="fas fa-qrcode fa-lg"></i>
+                                                    </a>
+                                                    {% else %}
+                                                    <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ doc.version }}</td>
+                                                <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">
+                                                        {{ doc.estado }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank">
+                                                            <i class="fas fa-print"></i>
+                                                        </a>
+                                                        <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        {% if session.role == 'Admin' or session.area == 'administracion' %}
+                                                        <button class="btn btn-outline-danger" onclick="eliminarDocumento({{ doc.id }}, '{{ doc.codigo }}')" title="Eliminar">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Documentos por equipo -->
+                    {% for equipo_id, docs_equipo in docs_por_equipo.items() %}
+                        {% set equipo = equipos|selectattr('id', 'equalto', equipo_id)|first %}
+                        {% if equipo %}
+                        <div class="accordion-item mb-2 border rounded">
+                            <h2 class="accordion-header" id="headingEquipo{{ equipo.id }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapseEquipo{{ equipo.id }}" aria-expanded="false">
+                                    <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                        <div>
+                                            <i class="fas fa-microchip me-2 text-primary"></i>
+                                            <strong>{{ equipo.code }}</strong> - {{ equipo.name }}
+                                            <span class="badge bg-{{ 'success' if equipo.current_status == 'Operativo' else 'warning' if equipo.current_status == 'En Mantenimiento' else 'danger' }} ms-2">
+                                                {{ equipo.current_status }}
+                                            </span>
+                                            <span class="badge bg-primary ms-2">{{ docs_equipo|length }} documentos</span>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-chevron-down text-muted"></i>
+                                        </div>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapseEquipo{{ equipo.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionDocumentos">
+                                <div class="accordion-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Código</th>
+                                                    <th>Título</th>
+                                                    <th>Tipo</th>
+                                                    <th>Subtipo</th>
+                                                    <th>QR</th>
+                                                    <th>Versión</th>
+                                                    <th>Fecha</th>
+                                                    <th>Estado</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for doc in docs_equipo %}
+                                                <tr>
+                                                    <td><strong>{{ doc.codigo }}</strong></td>
+                                                    <td>{{ doc.titulo[:50] }}{% if doc.titulo|length > 50 %}...{% endif %}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ 'primary' if 'sop' in doc.tipo else 'success' if doc.tipo == 'reporte' else 'info' if doc.tipo == 'certificado' else 'warning' if doc.tipo == 'ficha' else 'danger' if doc.tipo == 'protocolo' else 'secondary' }}">
+                                                            {{ doc.tipo|replace('_', ' ')|upper }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {% if doc.subtipo %}
+                                                            <span class="badge bg-info">{{ doc.subtipo|upper }}</span>
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if doc.qr_code %}
+                                                        <a href="{{ url_for('static', filename=doc.qr_code) }}" download class="text-info">
+                                                            <i class="fas fa-qrcode fa-lg"></i>
+                                                        </a>
+                                                        {% else %}
+                                                        <span class="text-muted">-</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ doc.version }}</td>
+                                                    <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">
+                                                            {{ doc.estado }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-outline-primary" title="Ver">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-outline-info" title="Imprimir" target="_blank">
+                                                                <i class="fas fa-print"></i>
+                                                            </a>
+                                                            <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-outline-success" title="Editar">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                            {% if session.role == 'Admin' or session.area == 'administracion' %}
+                                                            <button class="btn btn-outline-danger" onclick="eliminarDocumento({{ doc.id }}, '{{ doc.codigo }}')" title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                {% if documentos|length == 0 %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No hay documentos generados</p>
+                    <p class="small text-muted">Utilice los botones superiores para crear documentación GMP</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar equipo -->
+<div class="modal fade" id="seleccionarEquipoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitulo">Seleccionar Equipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <select class="form-select" id="equipoSelector" size="8">
+                    {% for equipo in equipos %}
+                    <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="generarDocumento()">Generar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar calibración -->
+<div class="modal fade" id="seleccionarCalibracionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Seleccionar Calibración</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <select class="form-select" id="calibracionSelector" size="8">
+                    {% for cal in calibraciones %}
+                    <option value="{{ cal.id }}">{{ cal.instrumento }} - {{ cal.fecha_calibracion.strftime('%d/%m/%Y') }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" onclick="generarCertificado()">Generar Certificado</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar protocolo -->
+<div class="modal fade" id="seleccionarProtocoloModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalProtocoloTitulo">Seleccionar Equipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <select class="form-select" id="protocoloEquipoSelector" size="8">
+                    {% for equipo in equipos %}
+                    <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="generarProtocolo()">Generar Protocolo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="confirmarEliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de eliminar el documento <strong id="documentoCodigo"></strong>?</p>
+                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+                <input type="hidden" id="documentoIdEliminar">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">Eliminar Permanentemente</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0c63e4;
+}
+.accordion-button .badge {
+    font-size: 0.75rem;
+}
+.accordion-item {
+    border-radius: 8px;
+    overflow: hidden;
+}
+.table td, .table th {
+    padding: 0.5rem;
+    vertical-align: middle;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let tipoDocumentoActual = '';
+    let subtipoDocumento = '';
+    let documentoIdEliminar = null;
+
+    // Expandir todos los acordeones
+    document.getElementById('expandirTodos')?.addEventListener('click', function() {
+        document.querySelectorAll('#accordionDocumentos .accordion-collapse').forEach(collapse => {
+            const bsCollapse = new bootstrap.Collapse(collapse, { toggle: false });
+            bsCollapse.show();
+        });
+    });
+
+    // Colapsar todos los acordeones
+    document.getElementById('colapsarTodos')?.addEventListener('click', function() {
+        document.querySelectorAll('#accordionDocumentos .accordion-collapse').forEach(collapse => {
+            const bsCollapse = new bootstrap.Collapse(collapse, { toggle: false });
+            bsCollapse.hide();
+        });
+    });
+
+    function mostrarModal(tipo, titulo) {
+        tipoDocumentoActual = tipo;
+        document.getElementById('modalTitulo').textContent = titulo;
+        new bootstrap.Modal(document.getElementById('seleccionarEquipoModal')).show();
+    }
+
+    function mostrarModalProtocolo(tipo) {
+        tipoDocumentoActual = 'protocolo';
+        subtipoDocumento = tipo;
+        document.getElementById('modalProtocoloTitulo').textContent = `Seleccionar Equipo para Protocolo ${tipo.toUpperCase()}`;
+        new bootstrap.Modal(document.getElementById('seleccionarProtocoloModal')).show();
+    }
+
+    function mostrarModalCertificado() {
+        new bootstrap.Modal(document.getElementById('seleccionarCalibracionModal')).show();
+    }
+
+    function generarDocumento() {
+        const equipoId = document.getElementById('equipoSelector').value;
+        if (!equipoId) {
+            Swal.fire({ icon: 'warning', title: 'Seleccione un equipo', text: 'Debe seleccionar un equipo para generar el documento' });
+            return;
+        }
+
+        let url = '';
+        switch(tipoDocumentoActual) {
+            case 'sop':
+                url = `/documentacion/api/generar/sop/${equipoId}`;
+                break;
+            case 'sop_mantenimiento':
+                url = `/documentacion/api/generar/sop-mantenimiento/${equipoId}`;
+                break;
+            case 'sop_calibracion':
+                url = `/documentacion/api/generar/sop-calibracion/${equipoId}`;
+                break;
+            case 'sop_limpieza':
+                url = `/documentacion/api/generar/sop-limpieza/${equipoId}`;
+                break;
+            case 'ficha':
+                url = `/documentacion/api/generar/ficha/${equipoId}`;
+                break;
+            case 'reporte':
+                url = `/documentacion/api/generar/reporte/${equipoId}`;
+                break;
+            default:
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Tipo de documento no válido' });
+                return;
+        }
+
+        Swal.fire({
+            title: 'Generando documento',
+            text: 'El sistema está creando el documento...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                fetch(url, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Documento generado',
+                                html: `Documento <strong>${data.codigo}</strong> creado correctamente`,
+                                timer: 3000
+                            }).then(() => location.reload());
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+                    });
+            }
+        });
+        bootstrap.Modal.getInstance(document.getElementById('seleccionarEquipoModal')).hide();
+    }
+
+    function generarProtocolo() {
+        const equipoId = document.getElementById('protocoloEquipoSelector').value;
+        if (!equipoId) {
+            Swal.fire({ icon: 'warning', title: 'Seleccione un equipo' });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Generando protocolo',
+            text: `Creando protocolo ${subtipoDocumento.toUpperCase()}...`,
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                fetch(`/documentacion/api/generar/protocolo/${equipoId}/${subtipoDocumento}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: 'Protocolo generado', html: `Protocolo <strong>${data.codigo}</strong> creado`, timer: 3000 })
+                                .then(() => location.reload());
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+                    });
+            }
+        });
+        bootstrap.Modal.getInstance(document.getElementById('seleccionarProtocoloModal')).hide();
+    }
+
+    function generarCertificado() {
+        const calibracionId = document.getElementById('calibracionSelector').value;
+        if (!calibracionId) {
+            Swal.fire({ icon: 'warning', title: 'Seleccione una calibración' });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Generando certificado',
+            text: 'Creando certificado de calibración...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+                fetch(`/documentacion/api/generar/certificado/${calibracionId}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.close();
+                        if (data.success) {
+                            Swal.fire({ icon: 'success', title: 'Certificado generado', html: `Certificado <strong>${data.codigo}</strong> creado`, timer: 3000 })
+                                .then(() => location.reload());
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+                    });
+            }
+        });
+        bootstrap.Modal.getInstance(document.getElementById('seleccionarCalibracionModal')).hide();
+    }
+
+    function eliminarDocumento(docId, codigo) {
+        documentoIdEliminar = docId;
+        document.getElementById('documentoCodigo').textContent = codigo;
+        new bootstrap.Modal(document.getElementById('confirmarEliminarModal')).show();
+    }
+
+    document.getElementById('btnConfirmarEliminar')?.addEventListener('click', function() {
+        if (!documentoIdEliminar) return;
+
+        Swal.fire({
+            title: '¿Eliminar documento?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/documentacion/api/eliminar/${documentoIdEliminar}`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Eliminado', 'Documento eliminado correctamente', 'success')
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', data.error, 'error');
+                        }
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}

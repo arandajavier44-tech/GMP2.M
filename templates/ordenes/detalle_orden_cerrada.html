@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Orden Cerrada{% endblock %}
+{% block page_title %}Orden Cerrada: {{ orden.numero_ot }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.gestion_ordenes') }}">Órdenes Activas</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.ordenes_cerradas') }}">Órdenes Cerradas</a></li>
+                <li class="breadcrumb-item active">{{ orden.numero_ot }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Botones -->
+<div class="row mb-3 d-print-none">
+    <div class="col-12 d-flex justify-content-end gap-2">
+        <a href="{{ url_for('ordenes.print_orden_cerrada', orden_id=orden.id) }}" class="btn btn-outline-info" target="_blank">
+            <i class="fas fa-print me-2"></i>Imprimir Orden Cerrada
+        </a>
+        <a href="{{ url_for('ordenes.ordenes_cerradas') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+        {% if session.role == 'Admin' %}
+        <button class="btn btn-outline-danger" onclick="eliminarOrden({{ orden.id }})">
+            <i class="fas fa-trash me-2"></i>Eliminar
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ORDEN COMPLETADA -->
+<div class="orden-trabajo-container">
+    <!-- Encabezado -->
+    <div class="gmp-header mb-4">
+        <div class="row">
+            <div class="col-8">
+                <h1 class="gmp-title">ORDEN DE TRABAJO - CERRADA</h1>
+                <p class="gmp-subtitle">Mantenimiento - Cumplimiento GMP</p>
+            </div>
+            <div class="col-4 text-end">
+                <div class="gmp-logo">
+                    <i class="fas fa-tools fa-3x text-primary"></i>
+                    <div class="small">GMP Maintenance v2.1</div>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-3"><strong>N° ORDEN:</strong><br><span class="h4">{{ orden.numero_ot }}</span></div>
+            <div class="col-md-3"><strong>FECHA EMISIÓN:</strong><br>{{ orden.fecha_creacion.strftime('%d/%m/%Y') if orden.fecha_creacion else '-' }}</div>
+            <div class="col-md-3"><strong>FECHA CIERRE:</strong><br>{{ orden.fecha_cierre.strftime('%d/%m/%Y %H:%M') if orden.fecha_cierre else '-' }}</div>
+            <div class="col-md-3"><strong>RESULTADO:</strong><br>
+                <span class="badge bg-{{ 'success' if orden.resultado == 'Solucionado' else 'warning' if orden.resultado == 'Parcial' else 'danger' }}">{{ orden.resultado or 'N/A' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR -->
+    {% if orden.qr_code %}
+    <div class="card shadow mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Código QR de Trazabilidad</h5>
+        </div>
+        <div class="card-body text-center">
+            <img src="{{ url_for('static', filename=orden.qr_code) }}" alt="QR Code" style="max-width: 150px;">
+            <p class="text-muted small mt-2">Código de trazabilidad GMP</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- DATOS DEL EQUIPO -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-industry me-2"></i>1. DATOS DEL EQUIPO</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered table-sm">
+                        <tr><th>Código:</th><td>{{ orden.equipo.code if orden.equipo else 'N/A' }}</td></tr>
+                        <tr><th>Nombre:</th><td>{{ orden.equipo.name if orden.equipo else 'N/A' }}</td></tr>
+                        <tr><th>Clasificación GMP:</th><td>{{ orden.equipo.gmp_classification if orden.equipo else 'N/A' }}</td></tr>
+                        <tr><th>Ubicación:</th><td>{{ orden.equipo.location if orden.equipo else 'N/A' }}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered table-sm">
+                        <tr><th>Fabricante:</th><td>{{ orden.equipo.manufacturer if orden.equipo else 'N/A' }}</td></tr>
+                        <tr><th>Modelo:</th><td>{{ orden.equipo.model if orden.equipo else 'N/A' }}</td></tr>
+                        <tr><th>N° Serie:</th><td>{{ orden.equipo.serial_number if orden.equipo else 'N/A' }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DESCRIPCIÓN -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">2. DESCRIPCIÓN DE LA ORDEN</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3"><label class="fw-bold">Título:</label><br>{{ orden.titulo }}</div>
+            {% if orden.tareas_seleccionadas %}
+            <div class="mb-3">
+                <label class="fw-bold">Tareas Programadas:</label>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 50%">Tarea</th>
+                                <th style="width: 15%">Estado</th>
+                                <th style="width: 30%">Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tarea in orden.tareas_seleccionadas %}
+                            <tr>
+                                <td class="text-center">{{ loop.index }}</td>
+                                <td>{{ tarea.descripcion }}</td>
+                                <td>
+                                    {% if tarea.completada %}
+                                    <span class="badge bg-success">✅ Completada</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">❌ No completada</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ tarea.observaciones_ejecucion or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">3. RESULTADOS DE LA INTERVENCIÓN</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6"><strong>Resultado:</strong><br>{{ orden.resultado or 'N/A' }}</div>
+                <div class="col-md-6"><strong>Tiempo real:</strong><br>{{ orden.tiempo_real or orden.tiempo_ejecucion or 'N/A' }} horas</div>
+            </div>
+            <div class="mt-3"><strong>Diagnóstico final:</strong><br>{{ orden.diagnostico_final or 'N/A' }}</div>
+            <div class="mt-2"><strong>Solución aplicada:</strong><br>{{ orden.solucion_aplicada or 'N/A' }}</div>
+            <div class="mt-2"><strong>Observaciones:</strong><br>{{ orden.observaciones or 'N/A' }}</div>
+            <div class="mt-2"><strong>Recomendaciones:</strong><br>{{ orden.recomendaciones or 'N/A' }}</div>
+            {% if orden.trabajo_futuro %}
+            <div class="mt-2"><strong>Trabajo futuro pendiente:</strong><br>{{ orden.trabajo_futuro }}</div>
+            {% endif %}
+            {% if orden.fecha_prox_mantenimiento %}
+            <div class="mt-2"><strong>Próximo mantenimiento:</strong><br>{{ orden.fecha_prox_mantenimiento.strftime('%d/%m/%Y') }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- REPUESTOS UTILIZADOS - CORREGIDO -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">4. REPUESTOS UTILIZADOS</h5>
+        </div>
+        <div class="card-body">
+            {% set repuestos_data = [] %}
+            {% if orden.repuestos_utilizados %}
+                {% if orden.repuestos_utilizados is string %}
+                    {% set repuestos_data = orden.repuestos_utilizados|from_json %}
+                {% else %}
+                    {% set repuestos_data = orden.repuestos_utilizados %}
+                {% endif %}
+            {% endif %}
+            
+            {% if repuestos_data and repuestos_data|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 20%">Código</th>
+                            <th style="width: 45%">Descripción</th>
+                            <th style="width: 15%">Cantidad</th>
+                            <th style="width: 20%">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rep in repuestos_data %}
+                        <tr>
+                            <td><strong>{{ rep.codigo }}</strong></td>
+                            <td>{{ rep.nombre or rep.descripcion or '-' }}</td>
+                            <td class="text-center">{{ rep.cantidad }}</td>
+                            <td>
+                                {% if rep.accion == 'reemplazo' %}
+                                <span class="badge bg-info">Reemplazado</span>
+                                {% elif rep.accion == 'manual' %}
+                                <span class="badge bg-warning text-dark">Manual</span>
+                                {% elif rep.accion == 'inspeccion' %}
+                                <span class="badge bg-success">Inspeccionado</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ rep.accion or 'Utilizado' }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-center text-muted py-3 mb-0">
+                <i class="fas fa-box-open me-2"></i>No se registraron repuestos en esta orden
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- FIRMAS -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">5. FIRMAS GMP</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <div class="border-top pt-2"><strong>TÉCNICO</strong></div>
+                    <div>{{ orden.firma_tecnico or '-' }}</div>
+                    <div><small>{{ orden.fecha_firma_tecnico.strftime('%d/%m/%Y %H:%M') if orden.fecha_firma_tecnico else '-' }}</small></div>
+                    <div><small>Matrícula: {{ orden.matricula_tecnico or '-' }}</small></div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="border-top pt-2"><strong>SUPERVISOR</strong></div>
+                    <div>{{ orden.firma_supervisor or '-' }}</div>
+                    <div><small>{{ orden.fecha_firma_supervisor.strftime('%d/%m/%Y %H:%M') if orden.fecha_firma_supervisor else '-' }}</small></div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="border-top pt-2"><strong>CALIDAD</strong></div>
+                    <div>{{ orden.firma_calidad or '-' }}</div>
+                    <div><small>{{ orden.fecha_firma_calidad.strftime('%d/%m/%Y %H:%M') if orden.fecha_firma_calidad else '-' }}</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAPA -->
+    {% if orden.requiere_capa %}
+    <div class="card shadow mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">6. CAPA - ACCIÓN CORRECTIVA</h5>
+        </div>
+        <div class="card-body">
+            <div><strong>Motivo:</strong><br>{{ orden.motivo_capa or 'N/A' }}</div>
+            <div class="mt-2"><strong>Acción inmediata:</strong><br>{{ orden.accion_inmediata_capa or 'N/A' }}</div>
+            <div class="mt-2"><strong>Impacto en calidad:</strong><br>{{ orden.impacto_calidad_capa or 'N/A' }}</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function eliminarOrden(id) {
+        Swal.fire({
+            title: '¿Eliminar orden?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/ordenes/${id}/eliminar`, { method: 'POST' }).then(() => {
+                    window.location.href = "{{ url_for('ordenes.ordenes_cerradas') }}";
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

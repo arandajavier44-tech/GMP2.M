@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}Solicitar Servicio{% endblock %}
+{% block page_title %}Solicitar Servicio General{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.mis_solicitudes') }}">Mis Solicitudes</a></li>
+<li class="breadcrumb-item active">Nueva Solicitud</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-ticket-alt me-2"></i>Nueva Solicitud de Servicio
+                </h5>
+                <small>Complete el formulario para solicitar un servicio al departamento de Mantenimiento</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formSolicitud">
+                    <!-- ========== SECCIÓN 1: DATOS DEL SOLICITANTE ========== -->
+                    <div class="card mb-4 border-info">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-user me-2"></i><strong>Datos del Solicitante</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nombre *</label>
+                                    <input type="text" class="form-control" value="{{ session.nombre_completo or session.username }}" readonly>
+                                    <small class="text-muted">Usuario autenticado</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Departamento *</label>
+                                    <select name="departamento" class="form-select" required>
+                                        <option value="">Seleccione departamento...</option>
+                                        <optgroup label="Dirección y Gerencia">
+                                            <option value="Gerencia General">Gerencia General</option>
+                                            <option value="Gerencia de Planta">Gerencia de Planta</option>
+                                            <option value="Gerencia de Calidad">Gerencia de Calidad</option>
+                                            <option value="Gerencia de Ingeniería">Gerencia de Ingeniería</option>
+                                        </optgroup>
+                                        <optgroup label="Áreas Operativas">
+                                            <option value="Producción">Producción</option>
+                                            <option value="Mantenimiento">Mantenimiento</option>
+                                            <option value="Almacén">Almacén</option>
+                                            <option value="Logística">Logística</option>
+                                            <option value="Aseguramiento de Calidad">Aseguramiento de Calidad</option>
+                                            <option value="Control de Calidad">Control de Calidad</option>
+                                            <option value="Validaciones">Validaciones</option>
+                                            <option value="Ingeniería">Ingeniería</option>
+                                            <option value="Servicios Técnicos">Servicios Técnicos</option>
+                                        </optgroup>
+                                        <optgroup label="Áreas Administrativas">
+                                            <option value="Administración">Administración</option>
+                                            <option value="Contabilidad">Contabilidad</option>
+                                            <option value="Recursos Humanos">Recursos Humanos</option>
+                                            <option value="Compras">Compras</option>
+                                            <option value="Sistemas">Sistemas</option>
+                                            <option value="Legales">Legales</option>
+                                        </optgroup>
+                                        <optgroup label="Servicios Generales">
+                                            <option value="Comedor">Comedor</option>
+                                            <option value="Vestuarios">Vestuarios</option>
+                                            <option value="Sala de Reuniones">Sala de Reuniones</option>
+                                            <option value="Áreas Comunes">Áreas Comunes</option>
+                                            <option value="Estacionamiento">Estacionamiento</option>
+                                            <option value="Seguridad">Seguridad</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Puesto / Cargo</label>
+                                    <input type="text" name="cargo" class="form-control" 
+                                           placeholder="Ej: Jefe de Producción, Analista de Calidad, Operador">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Contacto (teléfono/interno)</label>
+                                    <input type="text" name="contacto" class="form-control" 
+                                           value="{{ session.telefono or '' }}" 
+                                           placeholder="Ej: Interno 1234 / Celular 11-1234-5678">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== SECCIÓN 2: UBICACIÓN COMPLETA ========== -->
+                    <div class="card mb-4 border-success">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-building me-2"></i><strong>Ubicación - Estructura del Edificio</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Edificio / Bloque *</label>
+                                    <select name="edificio" class="form-select" required>
+                                        <option value="">Seleccione edificio...</option>
+                                        <optgroup label="Edificio Principal (Planta)">
+                                            <option value="Planta Principal - Nave A">Planta Principal - Nave A (Producción)</option>
+                                            <option value="Planta Principal - Nave B">Planta Principal - Nave B (Envasado)</option>
+                                            <option value="Planta Principal - Nave C">Planta Principal - Nave C (Almacén MP)</option>
+                                            <option value="Planta Principal - Nave D">Planta Principal - Nave D (Almacén PT)</option>
+                                        </optgroup>
+                                        <optgroup label="Edificio Administrativo">
+                                            <option value="Edificio Administrativo - Torre A">Torre A - Administración</option>
+                                            <option value="Edificio Administrativo - Torre B">Torre B - Calidad y Laboratorios</option>
+                                            <option value="Edificio Administrativo - Torre C">Torre C - Ingeniería y Mantenimiento</option>
+                                        </optgroup>
+                                        <optgroup label="Edificios Anexos">
+                                            <option value="Edificio de Servicios">Edificio de Servicios (Calderas, HVAC)</option>
+                                            <option value="Edificio de Laboratorios">Edificio de Laboratorios QC</option>
+                                            <option value="Edificio de Vestuarios">Edificio de Vestuarios y Comedor</option>
+                                            <option value="Depósito General">Depósito General</option>
+                                            <option value="Garita de Seguridad">Garita de Seguridad</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Piso / Nivel</label>
+                                    <select name="piso" class="form-select">
+                                        <option value="">Seleccione piso...</option>
+                                        <option value="Sótano 2">Sótano 2 (-2)</option>
+                                        <option value="Sótano 1">Sótano 1 (-1)</option>
+                                        <option value="Planta Baja">Planta Baja (PB)</option>
+                                        <option value="Entrepiso">Entrepiso</option>
+                                        <option value="1er Piso">1er Piso</option>
+                                        <option value="2do Piso">2do Piso</option>
+                                        <option value="3er Piso">3er Piso</option>
+                                        <option value="4to Piso">4to Piso</option>
+                                        <option value="5to Piso">5to Piso</option>
+                                        <option value="6to Piso">6to Piso</option>
+                                        <option value="7mo Piso">7mo Piso</option>
+                                        <option value="8vo Piso">8vo Piso</option>
+                                        <option value="9no Piso">9no Piso</option>
+                                        <option value="10mo Piso">10mo Piso</option>
+                                        <option value="11vo Piso">11vo Piso</option>
+                                        <option value="12vo Piso">12vo Piso</option>
+                                        <option value="Terraza">Terraza / Azotea</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-5 mb-3">
+                                    <label class="form-label">Sector / Área dentro del piso</label>
+                                    <select name="sector_piso" class="form-select">
+                                        <option value="">Seleccione sector...</option>
+                                        <optgroup label="Áreas de Oficinas">
+                                            <option value="Gerencia General">Gerencia General</option>
+                                            <option value="Gerencia de Planta">Gerencia de Planta</option>
+                                            <option value="Gerencia de Calidad">Gerencia de Calidad</option>
+                                            <option value="Contabilidad">Contabilidad</option>
+                                            <option value="Recursos Humanos">Recursos Humanos</option>
+                                            <option value="Compras">Compras</option>
+                                            <option value="Administración">Administración</option>
+                                            <option value="Sistemas">Sistemas - IT</option>
+                                            <option value="Legales">Legales</option>
+                                            <option value="Sala de Reuniones">Sala de Reuniones</option>
+                                            <option value="Sala de Espera">Sala de Espera</option>
+                                        </optgroup>
+                                        <optgroup label="Áreas Técnicas">
+                                            <option value="Laboratorio de Control de Calidad">Laboratorio de Control de Calidad</option>
+                                            <option value="Laboratorio de Microbiología">Laboratorio de Microbiología</option>
+                                            <option value="Laboratorio de Desarrollo">Laboratorio de Desarrollo</option>
+                                            <option value="Sala de Instrumentos">Sala de Instrumentos</option>
+                                            <option value="Sala de Estabilidad">Sala de Estabilidad</option>
+                                            <option value="Sala de Muestras">Sala de Muestras</option>
+                                            <option value="Taller de Mantenimiento">Taller de Mantenimiento</option>
+                                            <option value="Sala de Calderas">Sala de Calderas</option>
+                                            <option value="Sala de HVAC">Sala de HVAC</option>
+                                            <option value="Sala de Compresores">Sala de Compresores</option>
+                                            <option value="Sala Eléctrica">Sala Eléctrica</option>
+                                        </optgroup>
+                                        <optgroup label="Servicios">
+                                            <option value="Vestuarios Hombres">Vestuarios Hombres</option>
+                                            <option value="Vestuarios Mujeres">Vestuarios Mujeres</option>
+                                            <option value="Comedor">Comedor</option>
+                                            <option value="Cocina">Cocina</option>
+                                            <option value="Sala de Descanso">Sala de Descanso</option>
+                                            <option value="Depósito de Limpieza">Depósito de Limpieza</option>
+                                            <option value="Cuarto de Basura">Cuarto de Basura</option>
+                                            <option value="Estacionamiento">Estacionamiento</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Número de Oficina / Sala</label>
+                                    <input type="text" name="numero_oficina" class="form-control" 
+                                           placeholder="Ej: Oficina 302, Sala 15, Laboratorio 2">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Instalación específica (opcional)</label>
+                                    <select name="instalacion_id" class="form-select">
+                                        <option value="">Ninguna / No aplica</option>
+                                        {% for inst in instalaciones %}
+                                        <option value="{{ inst.id }}">{{ inst.codigo }} - {{ inst.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Ubicación detallada *</label>
+                                <textarea name="ubicacion" class="form-control" rows="2" required
+                                          placeholder="Describa la ubicación exacta:&#10;Ej: Pasillo principal, al fondo a la derecha, antes de la puerta de emergencia / Oficina 203, detrás del escritorio / Laboratorio QC, segunda campana extractora"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Puntos de referencia</label>
+                                <textarea name="referencias" class="form-control" rows="2" 
+                                          placeholder="Ej: Cerca del ascensor, junto a la máquina de café, al lado del extintor, frente a la sala de reuniones"></textarea>
+                                <small class="text-muted">Información adicional para localizar rápidamente el lugar</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== SECCIÓN 3: DETALLES DEL SERVICIO ========== -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-clipboard-list me-2"></i><strong>Detalles del Servicio</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Título del servicio *</label>
+                                    <input type="text" name="titulo" class="form-control" required 
+                                           placeholder="Ej: Fuga de agua en baño de caballeros, Aire acondicionado no enfría, Lámpara quemada en oficina"
+                                           maxlength="200">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tipo de Servicio *</label>
+                                    <select name="tipo_servicio" class="form-select" required>
+                                        <option value="">Seleccione tipo...</option>
+                                        <option value="Correctivo">🔧 Correctivo - Reparación de avería</option>
+                                        <option value="Preventivo">🛠️ Preventivo - Mantenimiento programado</option>
+                                        <option value="Instalación">📦 Instalación - Montaje de equipo/mobiliario</option>
+                                        <option value="Mejora">📈 Mejora - Modificación/mejora de instalación</option>
+                                        <option value="Emergencia">🚨 Emergencia - Situación crítica</option>
+                                        <option value="Inspección">🔍 Inspección - Revisión técnica</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Categoría</label>
+                                    <select name="categoria" class="form-select">
+                                        <option value="">Seleccione categoría...</option>
+                                        <optgroup label="Instalaciones Eléctricas">
+                                            <option value="Iluminación">Iluminación (lámparas, tubos)</option>
+                                            <option value="Tomacorrientes">Tomacorrientes / Enchufes</option>
+                                            <option value="Tableros Eléctricos">Tableros Eléctricos</option>
+                                            <option value="Circuitos">Circuitos / Disyuntores</option>
+                                            <option value="Generador">Generador eléctrico</option>
+                                        </optgroup>
+                                        <optgroup label="Climatización">
+                                            <option value="Aire Acondicionado">Aire Acondicionado</option>
+                                            <option value="Calefacción">Calefacción</option>
+                                            <option value="Ventilación">Ventilación</option>
+                                            <option value="HVAC">HVAC (Sistema completo)</option>
+                                            <option value="Filtros">Filtros / Mantenimiento HVAC</option>
+                                        </optgroup>
+                                        <optgroup label="Fontanería / Plomería">
+                                            <option value="Agua Corriente">Agua Corriente</option>
+                                            <option value="Desagües">Desagües / Cañerías</option>
+                                            <option value="Inodoros">Inodoros / Sanitarios</option>
+                                            <option value="Grifos">Grifos / Canillas</option>
+                                            <option value="Bombas de Agua">Bombas de Agua</option>
+                                        </optgroup>
+                                        <optgroup label="Estructura / Edificio">
+                                            <option value="Puertas">Puertas / Cerraduras</option>
+                                            <option value="Ventanas">Ventanas / Persianas</option>
+                                            <option value="Paredes">Paredes / Pintura</option>
+                                            <option value="Pisos">Pisos / Pisos técnicos</option>
+                                            <option value="Techos">Techos / Cielorrasos</option>
+                                        </optgroup>
+                                        <optgroup label="Equipamiento">
+                                            <option value="Equipos de Oficina">Equipos de Oficina</option>
+                                            <option value="Equipos de Laboratorio">Equipos de Laboratorio</option>
+                                            <option value="Equipos de Producción">Equipos de Producción</option>
+                                            <option value="Mobiliario">Mobiliario</option>
+                                            <option value="Ascensores">Ascensores / Montacargas</option>
+                                        </optgroup>
+                                        <optgroup label="Seguridad">
+                                            <option value="Extintores">Extintores</option>
+                                            <option value="Iluminación Emergencia">Iluminación de Emergencia</option>
+                                            <option value="Señalización">Señalización</option>
+                                            <option value="Cámaras">Cámaras de Seguridad</option>
+                                            <option value="Control Acceso">Control de Acceso</option>
+                                        </optgroup>
+                                        <optgroup label="Otros">
+                                            <option value="Limpieza">Limpieza especial</option>
+                                            <option value="Fumigación">Fumigación / Control de plagas</option>
+                                            <option value="Jardineria">Jardinería / Áreas verdes</option>
+                                            <option value="Otro">Otro (especificar)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Prioridad *</label>
+                                    <select name="prioridad" class="form-select" required>
+                                        <option value="Baja">🟢 Baja - Puede esperar (72h hábiles)</option>
+                                        <option value="Media" selected>🟡 Media - Atención normal (48h hábiles)</option>
+                                        <option value="Alta">🟠 Alta - Urgente (24h hábiles)</option>
+                                        <option value="Urgente">🔴 Urgente - Crítico (4h)</option>
+                                        <option value="Emergencia">⚫ Emergencia - Producción detenida (Inmediato)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Descripción detallada del problema *</label>
+                                <textarea name="descripcion" class="form-control" rows="6" required
+                                          placeholder="Describa detalladamente el problema o servicio requerido. Incluya:&#10;• ¿Qué está sucediendo?&#10;• ¿Desde cuándo ocurre?&#10;• ¿Con qué frecuencia se presenta?&#10;• ¿Hay algún equipo o sistema afectado?&#10;• ¿Ha ocurrido antes?&#10;• ¿Hay fotos o evidencias disponibles?&#10;• Cualquier otra información relevante para el técnico"></textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Equipos / Sistemas afectados</label>
+                                    <textarea name="equipos_afectados" class="form-control" rows="2" 
+                                              placeholder="Ej: Aire acondicionado marca York, Servidor de red, Impresora de etiquetas"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Observaciones adicionales</label>
+                                    <textarea name="observaciones" class="form-control" rows="2" 
+                                              placeholder="Ej: El problema ocurre principalmente por la tarde, Solo los días de lluvia, etc."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== SECCIÓN 4: TIEMPOS Y DISPONIBILIDAD ========== -->
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-calendar-alt me-2"></i><strong>Disponibilidad y Tiempos</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Mejor momento para atender</label>
+                                    <select name="mejor_horario" class="form-select">
+                                        <option value="">Cualquier horario</option>
+                                        <option value="Mañana (8-12)">Mañana (8:00 - 12:00)</option>
+                                        <option value="Mediodía (12-14)">Mediodía (12:00 - 14:00)</option>
+                                        <option value="Tarde (14-18)">Tarde (14:00 - 18:00)</option>
+                                        <option value="Fuera de horario">Fuera de horario laboral</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tiempo estimado para la reparación</label>
+                                    <div class="input-group">
+                                        <input type="number" name="tiempo_estimado" class="form-control" 
+                                               placeholder="Tiempo estimado" min="0" step="0.5">
+                                        <span class="input-group-text">horas</span>
+                                    </div>
+                                    <small class="text-muted">Su mejor estimación</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">¿Requiere acceso especial?</label>
+                                    <select name="acceso_especial" class="form-select">
+                                        <option value="No">No</option>
+                                        <option value="Llave - Oficina">Llave de oficina</option>
+                                        <option value="Tarjeta magnética">Tarjeta magnética</option>
+                                        <option value="Acompañamiento">Acompañamiento de personal</option>
+                                        <option value="Andamio/Escalera">Andamio / Escalera</option>
+                                        <option value="EPP especial">EPP especial</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== SECCIÓN 5: ADJUNTOS (opcional) ========== -->
+                    <div class="card mb-4 border-secondary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-paperclip me-2"></i><strong>Archivos Adjuntos</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Fotos o documentos de referencia</label>
+                                <input type="file" name="adjuntos" class="form-control" multiple 
+                                       accept="image/*,.pdf,.doc,.docx">
+                                <small class="text-muted">
+                                    Puede adjuntar fotos del problema, diagramas, planos o documentación relevante. 
+                                    Máximo 10MB por archivo.
+                                </small>
+                            </div>
+                            <div id="preview-archivos" class="mt-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('servicios_generales.mis_solicitudes') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>Enviar Solicitud
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-muted">
+                <div class="row">
+                    <div class="col-md-6">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Su solicitud será revisada por el departamento de Mantenimiento.
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <i class="fas fa-clock me-1"></i>
+                        Tiempo estimado de respuesta: 
+                        <strong>2 horas</strong> (Emergencia) a <strong>48 horas</strong> (Media)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('formSolicitud').addEventListener('submit', function(e) {
+    const titulo = this.querySelector('input[name="titulo"]').value.trim();
+    const descripcion = this.querySelector('textarea[name="descripcion"]').value.trim();
+    const ubicacion = this.querySelector('textarea[name="ubicacion"]').value.trim();
+    const edificio = this.querySelector('select[name="edificio"]').value;
+    
+    if (titulo.length < 5) {
+        e.preventDefault();
+        Swal.fire('Validación', 'El título debe tener al menos 5 caracteres', 'warning');
+        return;
+    }
+    
+    if (descripcion.length < 20) {
+        e.preventDefault();
+        Swal.fire('Validación', 'La descripción debe ser más detallada (mínimo 20 caracteres)', 'warning');
+        return;
+    }
+    
+    if (ubicacion.length < 5) {
+        e.preventDefault();
+        Swal.fire('Validación', 'Debe especificar la ubicación detallada', 'warning');
+        return;
+    }
+    
+    if (!edificio) {
+        e.preventDefault();
+        Swal.fire('Validación', 'Debe seleccionar el edificio/bloque', 'warning');
+        return;
+    }
+});
+
+// Previsualización de archivos
+document.querySelector('input[name="adjuntos"]').addEventListener('change', function(e) {
+    const preview = document.getElementById('preview-archivos');
+    preview.innerHTML = '';
+    
+    for (let i = 0; i < this.files.length; i++) {
+        const file = this.files[i];
+        const fileSize = (file.size / 1024).toFixed(1);
+        const icon = file.type.includes('image') ? 'fa-image' : 
+                     file.type.includes('pdf') ? 'fa-file-pdf' : 'fa-file';
+        
+        preview.innerHTML += `
+            <div class="alert alert-info py-1 mb-1">
+                <i class="fas ${icon} me-2"></i>
+                ${file.name} (${fileSize} KB)
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}

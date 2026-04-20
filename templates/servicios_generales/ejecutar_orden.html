@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Completar Orden {{ orden.numero_ot }}{% endblock %}
+{% block page_title %}Completar Orden de Servicio General{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.panel_mantenimiento') }}">Panel</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.gestion_ordenes') }}">Órdenes</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.detalle_orden', orden_id=orden.id) }}">{{ orden.numero_ot }}</a></li>
+<li class="breadcrumb-item active">Completar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-double me-2"></i>Completar Orden {{ orden.numero_ot }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Resumen de la orden -->
+                <div class="alert alert-info mb-4">
+                    <h6><i class="fas fa-info-circle me-2"></i>Resumen de la Orden</h6>
+                    <p class="mb-1"><strong>{{ orden.titulo }}</strong></p>
+                    <p class="mb-1">{{ orden.descripcion[:200] }}{% if orden.descripcion|length > 200 %}...{% endif %}</p>
+                    <p class="mb-0">
+                        <span class="badge bg-{{ orden.get_prioridad_color() }} me-2">{{ orden.prioridad }}</span>
+                        <span class="badge bg-secondary"><i class="fas {{ orden.get_tipo_icon() }} me-1"></i>{{ orden.tipo }}</span>
+                        <span class="ms-2"><i class="fas fa-map-marker-alt me-1"></i>{{ orden.ubicacion_detallada or 'No especificada' }}</span>
+                    </p>
+                </div>
+
+                <form method="POST" action="{{ url_for('servicios_generales.completar_orden', orden_id=orden.id) }}" id="formCompletar">
+                    <!-- Diagnóstico -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-stethoscope me-2"></i>Diagnóstico</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Diagnóstico realizado *</label>
+                                <textarea name="diagnostico" class="form-control" rows="4" required
+                                          placeholder="Describa el diagnóstico técnico realizado..."></textarea>
+                                <small class="text-muted">Describa la causa raíz del problema encontrado</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trabajo realizado -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-tools me-2"></i>Trabajo Realizado</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Descripción del trabajo realizado *</label>
+                                <textarea name="trabajo_realizado" class="form-control" rows="5" required
+                                          placeholder="Describa detalladamente las tareas realizadas..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Materiales utilizados -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0"><i class="fas fa-boxes me-2"></i>Materiales Utilizados</h6>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarMaterial()">
+                                    <i class="fas fa-plus me-1"></i>Agregar Material
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="materialesContainer">
+                                <!-- Los materiales se agregan dinámicamente -->
+                            </div>
+                            <div class="text-center text-muted py-3" id="sinMaterialesMsg">
+                                <i class="fas fa-box-open fa-2x mb-2"></i>
+                                <p>No se han agregado materiales. Haga clic en "Agregar Material" si corresponde.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones y recomendaciones -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-clipboard me-2"></i>Observaciones y Recomendaciones</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Observaciones adicionales</label>
+                                <textarea name="observaciones" class="form-control" rows="3"
+                                          placeholder="Observaciones generales, incidentes, etc."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Recomendaciones para el futuro</label>
+                                <textarea name="recomendaciones" class="form-control" rows="3"
+                                          placeholder="Recomendaciones para prevenir recurrencias, mejoras sugeridas, etc."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tiempo y firmas -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Tiempo y Firmas</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tiempo real utilizado (horas) *</label>
+                                    <input type="number" name="tiempo_real" class="form-control" 
+                                           step="0.5" min="0.5" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Firma del Técnico *</label>
+                                    <input type="text" name="firma_tecnico" class="form-control" 
+                                           value="{{ session.nombre_completo or session.username }}" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Firma del Supervisor</label>
+                                    <input type="text" name="firma_supervisor" class="form-control" 
+                                           placeholder="Opcional">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('servicios_generales.detalle_orden', orden_id=orden.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-double me-1"></i>Completar Orden
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para fila de material -->
+<template id="materialTemplate">
+    <div class="row material-row mb-3 pb-3 border-bottom">
+        <div class="col-md-3">
+            <label class="form-label">Código</label>
+            <input type="text" name="material_codigo_" class="form-control codigo-input" 
+                   placeholder="Ej: REP-001" list="materialesList">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Descripción</label>
+            <input type="text" name="material_desc_" class="form-control" 
+                   placeholder="Descripción del material" readonly>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Cantidad</label>
+            <input type="number" name="material_cantidad_" class="form-control" 
+                   step="0.01" min="0.01" value="1">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Unidad</label>
+            <input type="text" name="material_unidad_" class="form-control" 
+                   value="UN" readonly>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarMaterial(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+<!-- Datalist para búsqueda de materiales -->
+<datalist id="materialesList">
+    {% for m in materiales %}
+    <option value="{{ m.codigo }}" data-nombre="{{ m.nombre }}" data-unidad="{{ m.unidad_medida or 'UN' }}">
+        {{ m.codigo }} - {{ m.nombre }}
+    </option>
+    {% endfor %}
+</datalist>
+
+<script>
+let materialIndex = 0;
+
+function agregarMaterial() {
+    const container = document.getElementById('materialesContainer');
+    const template = document.getElementById('materialTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Actualizar nombres de campos con índice
+    const row = clone.querySelector('.material-row');
+    const codigoInput = clone.querySelector('.codigo-input');
+    const descInput = clone.querySelector('input[name="material_desc_"]');
+    const cantInput = clone.querySelector('input[name="material_cantidad_"]');
+    const unidadInput = clone.querySelector('input[name="material_unidad_"]');
+    
+    codigoInput.name = `material_codigo_${materialIndex}`;
+    descInput.name = `material_desc_${materialIndex}`;
+    cantInput.name = `material_cantidad_${materialIndex}`;
+    unidadInput.name = `material_unidad_${materialIndex}`;
+    
+    // Configurar autocompletado
+    codigoInput.addEventListener('change', function() {
+        const codigo = this.value;
+        const option = document.querySelector(`#materialesList option[value="${codigo}"]`);
+        if (option) {
+            const nombre = option.dataset.nombre;
+            const unidad = option.dataset.unidad;
+            descInput.value = nombre;
+            unidadInput.value = unidad;
+        }
+    });
+    
+    container.appendChild(clone);
+    document.getElementById('sinMaterialesMsg').style.display = 'none';
+    materialIndex++;
+}
+
+function eliminarMaterial(btn) {
+    const row = btn.closest('.material-row');
+    row.remove();
+    
+    if (document.querySelectorAll('.material-row').length === 0) {
+        document.getElementById('sinMaterialesMsg').style.display = 'block';
+    }
+}
+
+// Validación del formulario
+document.getElementById('formCompletar').addEventListener('submit', function(e) {
+    const diagnostico = this.querySelector('textarea[name="diagnostico"]').value.trim();
+    const trabajo = this.querySelector('textarea[name="trabajo_realizado"]').value.trim();
+    const tiempo = this.querySelector('input[name="tiempo_real"]').value;
+    
+    if (diagnostico.length < 10) {
+        e.preventDefault();
+        alert('El diagnóstico debe tener al menos 10 caracteres');
+        return;
+    }
+    
+    if (trabajo.length < 10) {
+        e.preventDefault();
+        alert('La descripción del trabajo realizado debe tener al menos 10 caracteres');
+        return;
+    }
+    
+    if (!tiempo || parseFloat(tiempo) <= 0) {
+        e.preventDefault();
+        alert('Debe especificar un tiempo real válido');
+        return;
+    }
+});
+</script>
+{% endblock %}

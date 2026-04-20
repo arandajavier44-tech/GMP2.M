@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte GMP - {{ inspeccion.codigo_inspeccion }}{% endblock %}
+
+{% block content %}
+<div class="container mt-3" id="reporteImprimible">
+    <!-- Encabezado para impresión -->
+    <div class="text-center mb-4">
+        <h2>INFORME DE INSPECCIÓN GMP</h2>
+        <h5>Sistema de Gestión de Mantenimiento - Industria Farmacéutica</h5>
+        <hr>
+    </div>
+
+    <!-- Datos del documento -->
+    <div class="row mb-4">
+        <div class="col-6">
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width: 40%;">Código Inspección:</th>
+                    <td><strong>{{ inspeccion.codigo_inspeccion }}</strong></td>
+                </tr>
+                <tr>
+                    <th>Fecha:</th>
+                    <td>{{ inspeccion.fecha.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                <tr>
+                    <th>Hora:</th>
+                    <td>{{ now.strftime('%H:%M') if now else '__________' }}</td>
+                </tr>
+                <tr>
+                    <th>Inspector:</th>
+                    <td>{{ inspeccion.realizada_por }}</td>
+                </tr>
+                <tr>
+                    <th>Firma Inspector:</th>
+                    <td>_________________________</td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-6">
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width: 40%;">Plantilla:</th>
+                    <td>{{ inspeccion.plantilla.nombre }}</td>
+                </tr>
+                <tr>
+                    <th>Categoría GMP:</th>
+                    <td>
+                        {% if inspeccion.plantilla.categoria == 'produccion' %}🏭 Producción
+                        {% elif inspeccion.plantilla.categoria == 'servicio' %}🔧 Servicios
+                        {% elif inspeccion.plantilla.categoria == 'edificio' %}🏢 Infraestructura
+                        {% elif inspeccion.plantilla.categoria == 'calidad' %}🔬 Calidad
+                        {% else %}General{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Equipo/Área:</th>
+                    <td>
+                        {% if inspeccion.equipo %}
+                            {{ inspeccion.equipo.code }} - {{ inspeccion.equipo.name }}
+                        {% elif inspeccion.plantilla.area %}
+                            Área: {{ inspeccion.plantilla.area }}
+                        {% else %}
+                            General
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Resultado Final:</th>
+                    <td>
+                        <span class="badge {% if inspeccion.conforme %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                            {{ 'CONFORME' if inspeccion.conforme else 'NO CONFORME' }}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Items inspeccionados -->
+    <h5 class="mt-4">LISTA DE VERIFICACIÓN GMP</h5>
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 45%;">Item de Inspección</th>
+                <th style="width: 15%;">Criterio</th>
+                <th style="width: 15%;">Resultado</th>
+                <th style="width: 20%;">Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for resultado in inspeccion.resultados %}
+            <tr {% if resultado.es_critico and not resultado.conforme %}class="table-danger"{% endif %}>
+                <td>{{ loop.index }}</td>
+                <td>
+                    {{ resultado.descripcion }}
+                    {% if resultado.es_critico %}
+                    <span class="badge bg-danger">Crítico</span>
+                    {% endif %}
+                </td>
+                <td class="small">{{ resultado.criterio or '—' }}</td>
+                <td class="text-center">
+                    {% if resultado.respuesta == 'si' %}
+                        <span class="text-success">✓ CONFORME</span>
+                    {% elif resultado.respuesta == 'no' %}
+                        <span class="text-danger">✗ NO CONFORME</span>
+                    {% else %}
+                        {{ resultado.respuesta }}
+                    {% endif %}
+                </td>
+                <td>{{ resultado.observacion or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Resumen de conformidad -->
+    {% set total = inspeccion.resultados|length %}
+    {% set conformes = inspeccion.resultados|selectattr('conforme')|list|length %}
+    {% set no_conformes = total - conformes %}
+    
+    <div class="row mt-4">
+        <div class="col-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3>{{ total }}</h3>
+                    <p>Total Items</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <h3>{{ conformes }}</h3>
+                    <p>Conformes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="card text-center bg-danger text-white">
+                <div class="card-body">
+                    <h3>{{ no_conformes }}</h3>
+                    <p>No Conformes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Observaciones y acciones -->
+    {% if inspeccion.observaciones %}
+    <div class="mt-4">
+        <h5>OBSERVACIONES GENERALES</h5>
+        <div class="border p-3">
+            {{ inspeccion.observaciones }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if inspeccion.acciones %}
+    <div class="mt-4">
+        <h5>ACCIONES CORRECTIVAS</h5>
+        <div class="border p-3">
+            {{ inspeccion.acciones }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Firmas GMP -->
+    <div class="row mt-5 pt-4">
+        <div class="col-4 text-center">
+            <hr>
+            <p class="small">Firma del Inspector</p>
+            <p class="small">{{ inspeccion.realizada_por }}</p>
+        </div>
+        <div class="col-4 text-center">
+            <hr>
+            <p class="small">Firma Supervisor Calidad</p>
+            <p class="small">_________________________</p>
+        </div>
+        <div class="col-4 text-center">
+            <hr>
+            <p class="small">Fecha y Sello</p>
+            <p class="small">{{ inspeccion.fecha.strftime('%d/%m/%Y') }}</p>
+        </div>
+    </div>
+
+    <!-- Pie de página GMP -->
+    <div class="text-center mt-5 pt-3 small text-muted">
+        <hr>
+        <p>Documento GMP - Sistema de Gestión de Mantenimiento | Este documento es propiedad de la empresa</p>
+        <p>Código: {{ inspeccion.codigo_inspeccion }} | Generado: {{ now.strftime('%d/%m/%Y %H:%M') if now else '' }}</p>
+    </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="row mt-4 mb-4">
+    <div class="col-12 text-center">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print me-2"></i>Imprimir / Guardar PDF
+        </button>
+        <a href="{{ url_for('inspecciones.ver_inspeccion', inspeccion_id=inspeccion.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+</div>
+
+<style media="print">
+    .btn, .navbar, .sidebar, .breadcrumb, footer {
+        display: none !important;
+    }
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        width: 100%;
+        max-width: 100%;
+    }
+    @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+</style>
+{% endblock %}

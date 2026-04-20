@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Orden de Trabajo{% endblock %}
+{% block page_title %}Nueva Orden de Trabajo{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.gestion_ordenes') }}">Órdenes</a></li>
+                <li class="breadcrumb-item active">Nueva Orden</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Seleccione el tipo de orden de trabajo que desea crear
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Orden Preventiva -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <i class="fas fa-calendar-check fa-3x mb-2"></i>
+                <h5 class="mb-0">Mantenimiento Preventivo</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Órdenes programadas basadas en los sistemas y tareas cargados en los equipos.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Selección de sistemas</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Tareas automáticas</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Repuestos críticos opcionales</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Cronograma definido</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent text-center">
+                <a href="{{ url_for('ordenes.nueva_orden_preventiva', equipo_id=0) }}" class="btn btn-primary w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Crear Preventiva
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orden Correctiva -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-warning">
+            <div class="card-header bg-warning text-dark text-center py-3">
+                <i class="fas fa-exclamation-triangle fa-3x mb-2"></i>
+                <h5 class="mb-0">Mantenimiento Correctivo</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Para fallas imprevistas que requieren atención inmediata del equipo.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Registro de falla</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Síntomas y causas</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Prioridad configurable</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Sin sistemas predefinidos</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent text-center">
+                <a href="{{ url_for('ordenes.nueva_orden_correctiva', equipo_id=0) }}" class="btn btn-warning w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Crear Correctiva
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orden de Servicio -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-info">
+            <div class="card-header bg-info text-white text-center py-3">
+                <i class="fas fa-tools fa-3x mb-2"></i>
+                <h5 class="mb-0">Solicitud de Servicio</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Solicitudes de otros sectores que requieren aprobación antes de ejecutarse.
+                </p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Requiere aprobación</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Sector solicitante</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Flujo de autorización</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Prioridad definida</li>
+                </ul>
+            </div>
+            <div class="card-footer bg-transparent text-center">
+                <a href="{{ url_for('ordenes.nueva_orden_servicio', equipo_id=0) }}" class="btn btn-info w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Crear Solicitud
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="fw-bold">Seleccione el equipo primero</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <select class="form-select" id="equipo_selector">
+                            <option value="0">Seleccionar equipo...</option>
+                            {% for equipo in equipos %}
+                            <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="text-muted small mt-2 mt-md-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Seleccione un equipo y luego el tipo de orden
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información adicional GMP -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-clipboard-check text-success me-2 fa-2x"></i>
+                    <small>
+                        <strong>Requisitos GMP:</strong> Todas las órdenes deben cumplir con las Buenas Prácticas de Manufactura, incluyendo registro de firmas, fechas, observaciones y trazabilidad completa.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('equipo_selector').addEventListener('change', function() {
+        const equipoId = this.value;
+        
+        // Actualizar los enlaces de los botones
+        const preventivoBtn = document.querySelector('.btn-primary');
+        const correctivoBtn = document.querySelector('.btn-warning');
+        const servicioBtn = document.querySelector('.btn-info');
+        
+        if (equipoId && equipoId !== '0') {
+            preventivoBtn.href = `/ordenes/nueva/preventiva/${equipoId}`;
+            correctivoBtn.href = `/ordenes/nueva/correctiva/${equipoId}`;
+            servicioBtn.href = `/ordenes/nueva/servicio/${equipoId}`;
+            
+            // Habilitar botones
+            [preventivoBtn, correctivoBtn, servicioBtn].forEach(btn => {
+                btn.classList.remove('disabled');
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            });
+        } else {
+            // Deshabilitar botones
+            [preventivoBtn, correctivoBtn, servicioBtn].forEach(btn => {
+                btn.href = '#';
+                btn.classList.add('disabled');
+                btn.style.pointerEvents = 'none';
+                btn.style.opacity = '0.6';
+            });
+        }
+    });
+
+    // Inicializar deshabilitados
+    document.addEventListener('DOMContentLoaded', function() {
+        const preventivoBtn = document.querySelector('.btn-primary');
+        const correctivoBtn = document.querySelector('.btn-warning');
+        const servicioBtn = document.querySelector('.btn-info');
+        
+        [preventivoBtn, correctivoBtn, servicioBtn].forEach(btn => {
+            btn.href = '#';
+            btn.classList.add('disabled');
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.6';
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Mantenimiento Preventivo{% endblock %}
+
+{% block styles %}
+<style>
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f1ff;
+        color: #0c63e4;
+    }
+    .accordion-button .badge {
+        margin-left: 10px;
+    }
+    .card-vencido {
+        border-left: 4px solid #dc3545 !important;
+        background-color: #fff5f5;
+    }
+    .card-semana {
+        border-left: 4px solid #ffc107 !important;
+        background-color: #fffbf0;
+    }
+    .card-mes {
+        border-left: 4px solid #0dcaf0 !important;
+    }
+    .card-futuro {
+        border-left: 4px solid #198754 !important;
+    }
+    .hover-scale {
+        transition: transform 0.2s;
+    }
+    .hover-scale:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .alerta-vencido {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+    .frecuencia-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header con resumen global -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                Mantenimiento Preventivo
+            </h1>
+            <small class="text-muted">Cronogramas agrupados por equipo y frecuencia</small>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-warning" id="btnRecalcular" onclick="recalcularFechas()">
+                <i class="fas fa-sync-alt me-1"></i>Recalcular Fechas
+            </button>
+            <button class="btn btn-sm btn-success ms-2" onclick="window.location.reload()">
+                <i class="fas fa-refresh me-1"></i>Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen global -->
+    <div class="row mb-4" id="resumenGlobal">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Vencidas</h6>
+                            <h2 class="mb-0" id="totalVencidas">0</h2>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-dark shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Próximas (7 días)</h6>
+                            <h2 class="mb-0" id="totalProximas">0</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Este Mes</h6>
+                            <h2 class="mb-0" id="totalMes">0</h2>
+                        </div>
+                        <i class="fas fa-calendar-week fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Total Tareas</h6>
+                            <h2 class="mb-0" id="totalTareas">0</h2>
+                        </div>
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acordeones por equipo -->
+    <div class="accordion" id="accordionEquipos">
+        {% for equipo in equipos %}
+        {% set alerta_class = '' %}
+        {% set alerta_icon = '' %}
+        {% if equipo.vencidos > 0 %}
+            {% set alerta_class = 'border-danger' %}
+            {% set alerta_icon = '<i class="fas fa-bell text-danger me-2"></i>' %}
+        {% elif equipo.proximos_semana > 0 %}
+            {% set alerta_class = 'border-warning' %}
+            {% set alerta_icon = '<i class="fas fa-exclamation-circle text-warning me-2"></i>' %}
+        {% endif %}
+        
+        <div class="card mb-3 {{ alerta_class }}">
+            <div class="card-header p-0" id="heading{{ loop.index }}">
+                <h2 class="mb-0">
+                    <button class="accordion-button {% if loop.index > 3 %}collapsed{% endif %}" type="button" 
+                            data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" 
+                            aria-expanded="{% if loop.index <= 3 %}true{% else %}false{% endif %}" 
+                            aria-controls="collapse{{ loop.index }}">
+                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                            <div>
+                                {{ alerta_icon|safe }}
+                                <strong>{{ equipo.codigo }}</strong> - {{ equipo.nombre }}
+                            </div>
+                            <div>
+                                {% if equipo.vencidos > 0 %}
+                                <span class="badge bg-danger ms-2">
+                                    <i class="fas fa-skull-crosswalk me-1"></i>{{ equipo.vencidos }} Vencidas
+                                </span>
+                                {% endif %}
+                                {% if equipo.proximos_semana > 0 %}
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-hourglass-half me-1"></i>{{ equipo.proximos_semana }} Próximas
+                                </span>
+                                {% endif %}
+                                <span class="badge bg-secondary ms-2">
+                                    <i class="fas fa-tasks me-1"></i>{{ equipo.total_tareas }} Total
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+            </div>
+            
+            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.index <= 3 %}show{% endif %}" 
+                 aria-labelledby="heading{{ loop.index }}" data-bs-parent="#accordionEquipos">
+                <div class="card-body">
+                    <!-- Agrupar tareas por frecuencia -->
+                    {% set frecuencias = {} %}
+                    {% for tarea in equipo.tareas %}
+                        {% set freq = tarea.frecuencia_dias %}
+                        {% if freq not in frecuencias %}
+                            {% set _ = frecuencias.update({freq: []}) %}
+                        {% endif %}
+                        {% set _ = frecuencias[freq].append(tarea) %}
+                    {% endfor %}
+                    
+                    <!-- Mostrar grupos por frecuencia -->
+                    <div class="row">
+                        {% for frecuencia, tareas_grupo in frecuencias|dictsort %}
+                        {% set freq_texto = {
+                            7: '📅 Semanal',
+                            15: '📅 Quincenal', 
+                            30: '📅 Mensual',
+                            60: '📅 Bimestral',
+                            90: '📅 Trimestral',
+                            180: '📅 Semestral',
+                            365: '📅 Anual'
+                        } %}
+                        <div class="col-xl-6 col-lg-6 mb-4">
+                            <div class="card h-100 shadow-sm hover-scale">
+                                <div class="card-header bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            {{ freq_texto.get(frecuencia, '📆 Cada ' ~ frecuencia ~ ' días') }}
+                                        </h6>
+                                        <span class="badge bg-primary">{{ tareas_grupo|length }} tarea(s)</span>
+                                    </div>
+                                </div>
+                                <div class="card-body p-2">
+                                    {% for tarea in tareas_grupo %}
+                                    {% set card_class = 'card-vencido' if tarea.estado == 'vencido' else 'card-semana' if tarea.estado == 'semana' else 'card-mes' if tarea.estado == 'mes' else 'card-futuro' %}
+                                    {% set icono = '🔴' if tarea.estado == 'vencido' else '🟡' if tarea.estado == 'semana' else '🟢' %}
+                                    
+                                    <div class="card mb-2 {{ card_class }} hover-scale">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <span class="me-2">{{ icono }}</span>
+                                                        <span class="badge bg-secondary frecuencia-badge">
+                                                            <i class="fas fa-clock me-1"></i>{{ tarea.frecuencia_dias }} días
+                                                        </span>
+                                                        <span class="badge bg-info ms-1">
+                                                            <i class="fas fa-hourglass-half me-1"></i>{{ tarea.tiempo_estimado or 'N/A' }} min
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span class="badge bg-primary">{{ tarea.sistema_nombre }}</span>
+                                                        <p class="small mt-2 mb-1">{{ tarea.descripcion }}</p>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end ms-2">
+                                                    <div class="fw-bold {% if tarea.estado == 'vencido' %}text-danger{% elif tarea.estado == 'semana' %}text-warning{% else %}text-success{% endif %}">
+                                                        {{ tarea.fecha_formateada }}
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        {% if tarea.dias_restantes < 0 %}
+                                                            <span class="text-danger">⚠️ Vencido hace {{ tarea.dias_restantes|abs }} días</span>
+                                                        {% elif tarea.dias_restantes == 0 %}
+                                                            <span class="text-warning">🔥 HOY</span>
+                                                        {% else %}
+                                                            En {{ tarea.dias_restantes }} días
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <button class="btn btn-sm btn-success w-100" 
+                                            onclick="generarOrdenGrupo({{ equipo.id }}, {{ frecuencia }}, '{{ tareas_grupo[0].fecha_programada if tareas_grupo[0].fecha_programada else '' }}')">
+                                        <i class="fas fa-clipboard-list me-1"></i>
+                                        Generar Orden {{ freq_texto.get(frecuencia, '') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal para generar orden -->
+<div class="modal fade" id="ordenModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-list me-2"></i>Generar Orden de Trabajo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalContenido">
+                <div class="text-center py-3">Cargando...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarOrden">
+                    <i class="fas fa-check me-1"></i>Generar Orden
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let ordenData = null;
+
+function recalcularFechas() {
+    Swal.fire({
+        title: 'Recalculando fechas',
+        text: 'Actualizando todos los planes de mantenimiento...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    fetch('/calendario/api/recalcular-fechas', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            if (data.success) {
+                Swal.fire('Completado', `Se actualizaron ${data.actualizados} planes`, 'success');
+                window.location.reload();
+            } else {
+                Swal.fire('Error', data.error, 'error');
+            }
+        })
+        .catch(error => Swal.fire('Error', error.message, 'error'));
+}
+
+function generarOrdenGrupo(equipoId, frecuencia, fechaSugerida) {
+    // Obtener la fecha actual + 7 días por defecto
+    let fechaDefault = fechaSugerida;
+    if (!fechaDefault) {
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() + 7);
+        fechaDefault = fecha.toISOString().split('T')[0];
+    }
+    
+    Swal.fire({
+        title: 'Generar Orden de Mantenimiento',
+        html: `
+            <div class="text-start">
+                <p>Se generará una orden para todas las tareas con frecuencia <strong>${frecuencia} días</strong></p>
+                <div class="mb-3">
+                    <label class="form-label">Fecha de ejecución:</label>
+                    <input type="date" id="fechaEjecucion" class="form-control" value="${fechaDefault}">
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Generar Orden',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            const fecha = document.getElementById('fechaEjecucion').value;
+            if (!fecha) {
+                Swal.showValidationMessage('Debes seleccionar una fecha');
+                return false;
+            }
+            return { fecha: fecha };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            procesarGeneracionOrden(equipoId, frecuencia, result.value.fecha);
+        }
+    });
+}
+
+function procesarGeneracionOrden(equipoId, frecuencia, fecha) {
+    Swal.fire({
+        title: 'Generando orden',
+        text: 'Por favor espera...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    fetch('/calendario/api/generar-orden-grupo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            equipo_id: equipoId,
+            frecuencia_dias: frecuencia,
+            fecha_ejecucion: fecha
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        Swal.close();
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Orden Generada',
+                html: `Orden <strong>${data.numero_ot}</strong> creada con ${data.cantidad_tareas} tarea(s).<br>Tiempo estimado: ${data.tiempo_total} minutos`,
+                confirmButtonText: 'Ver Orden'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open(`/ordenes/${data.orden_id}`, '_blank');
+                }
+                window.location.reload();
+            });
+        } else {
+            Swal.fire('Error', data.error, 'error');
+        }
+    })
+    .catch(error => {
+        Swal.close();
+        Swal.fire('Error', error.message, 'error');
+    });
+}
+
+// Actualizar contadores globales
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular totales desde los datos del backend
+    const equipos = {{ equipos|tojson }};
+    let totalVencidas = 0;
+    let totalProximas = 0;
+    let totalMes = 0;
+    let totalTareas = 0;
+    
+    equipos.forEach(equipo => {
+        totalVencidas += equipo.vencidos || 0;
+        totalProximas += equipo.proximos_semana || 0;
+        totalTareas += equipo.total_tareas || 0;
+        
+        // Contar tareas del mes (entre 8 y 30 días)
+        if (equipo.tareas) {
+            equipo.tareas.forEach(tarea => {
+                if (tarea.dias_restantes > 7 && tarea.dias_restantes <= 30) {
+                    totalMes++;
+                }
+            });
+        }
+    });
+    
+    document.getElementById('totalVencidas').textContent = totalVencidas;
+    document.getElementById('totalProximas').textContent = totalProximas;
+    document.getElementById('totalMes').textContent = totalMes;
+    document.getElementById('totalTareas').textContent = totalTareas;
+});
+</script>
+{% endblock %}

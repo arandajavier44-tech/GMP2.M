@@ -1,0 +1,54 @@
+<!-- templates/ordenes/qr_preview.html -->
+{% extends "base.html" %}
+
+{% block title %}Vista previa del QR{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Personalizar Código QR</h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if orden.qr_code %}
+                    <img src="{{ url_for('static', filename=orden.qr_code) }}" 
+                         alt="QR Code" 
+                         class="img-fluid mb-3"
+                         style="max-width: 250px;">
+                    {% endif %}
+                    
+                    <form method="POST" action="{{ url_for('ordenes.regenerar_qr', orden_id=orden.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">Estilo del QR</label>
+                            <select name="qr_style" class="form-select">
+                                <option value="rounded">Redondeado</option>
+                                <option value="circle">Círculos</option>
+                                <option value="square">Cuadrados</option>
+                                <option value="gapped">Cuadrados con espacio</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Color principal</label>
+                            <input type="color" name="qr_color" class="form-control form-control-color" value="#1a5276">
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="incluir_logo" id="incluir_logo" checked>
+                            <label class="form-check-label" for="incluir_logo">
+                                Incluir logo GMP
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-qrcode me-2"></i>Regenerar QR
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

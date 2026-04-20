@@ -1,0 +1,20 @@
+<div class="btn-group btn-group-sm" role="group">
+    <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" 
+       class="btn btn-outline-primary" title="Ver">
+        <i class="fas fa-eye"></i>
+    </a>
+    <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" 
+       class="btn btn-outline-info" title="Imprimir" target="_blank">
+        <i class="fas fa-print"></i>
+    </a>
+    <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" 
+       class="btn btn-outline-success" title="Editar">
+        <i class="fas fa-edit"></i>
+    </a>
+    {% if session.role == 'Admin' or session.area == 'administracion' %}
+    <button class="btn btn-outline-danger" 
+            onclick="eliminarDocumento({{ doc.id }}, '{{ doc.codigo }}')" title="Eliminar">
+        <i class="fas fa-trash"></i>
+    </button>
+    {% endif %}
+</div>

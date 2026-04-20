@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Orden Preventiva{% endblock %}
+{% block page_title %}Nueva Orden Preventiva - Servicios Generales{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.panel_mantenimiento') }}">Panel</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.gestion_ordenes') }}">Órdenes</a></li>
+<li class="breadcrumb-item active">Nueva Preventiva</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-plus me-2"></i>Nueva Orden de Mantenimiento Preventivo
+                </h5>
+                <small>Programe una tarea de mantenimiento preventivo para instalaciones o servicios generales</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formPreventiva">
+                    <!-- Instalación -->
+                    <div class="card mb-4 border-info">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-building me-2"></i><strong>Instalación</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Seleccione Instalación *</label>
+                                <select name="instalacion_id" class="form-select" required>
+                                    <option value="">Seleccione una instalación...</option>
+                                    {% for inst in instalaciones %}
+                                    <option value="{{ inst.id }}">
+                                        {{ inst.codigo }} - {{ inst.nombre }} ({{ inst.categoria }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">
+                                    <a href="{{ url_for('servicios_generales.nueva_instalacion') }}" target="_blank">
+                                        <i class="fas fa-plus me-1"></i>Agregar nueva instalación
+                                    </a>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Detalles de la tarea -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-tasks me-2"></i><strong>Detalles de la Tarea</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Título de la tarea *</label>
+                                    <input type="text" name="titulo" class="form-control" required
+                                           placeholder="Ej: Mantenimiento preventivo de aires acondicionados">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Categoría</label>
+                                    <select name="categoria" class="form-select">
+                                        <option value="">Seleccione categoría...</option>
+                                        {% for cat in categorias %}
+                                        <option value="{{ cat }}">{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Prioridad *</label>
+                                    <select name="prioridad" class="form-select" required>
+                                        <option value="Baja">Baja</option>
+                                        <option value="Media" selected>Media</option>
+                                        <option value="Alta">Alta</option>
+                                        <option value="Urgente">Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Descripción de las tareas a realizar *</label>
+                                <textarea name="descripcion" class="form-control" rows="5" required
+                                          placeholder="Describa detalladamente las tareas de mantenimiento preventivo a realizar..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Programación -->
+                    <div class="card mb-4 border-success">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-calendar me-2"></i><strong>Programación</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Fecha estimada de ejecución *</label>
+                                    <input type="date" name="fecha_estimada" class="form-control" required
+                                           min="{{ now.strftime('%Y-%m-%d') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tiempo estimado (horas)</label>
+                                    <input type="number" name="tiempo_estimado" class="form-control" 
+                                           step="0.5" min="0.5" placeholder="Ej: 2.5">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Asignación -->
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-user-check me-2"></i><strong>Asignación</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Asignar a técnico</label>
+                                    <select name="asignado_a" class="form-select">
+                                        <option value="">Seleccionar técnico...</option>
+                                        {% for t in tecnicos %}
+                                        <option value="{{ t.username }}">{{ t.nombre_completo or t.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Ubicación específica</label>
+                                    <input type="text" name="ubicacion" class="form-control" 
+                                           placeholder="Ej: Sala de máquinas, 2do piso">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('servicios_generales.gestion_ordenes') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus me-1"></i>Crear Orden Preventiva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('formPreventiva').addEventListener('submit', function(e) {
+    const titulo = this.querySelector('input[name="titulo"]').value.trim();
+    const descripcion = this.querySelector('textarea[name="descripcion"]').value.trim();
+    const fecha = this.querySelector('input[name="fecha_estimada"]').value;
+    
+    if (titulo.length < 5) {
+        e.preventDefault();
+        alert('El título debe tener al menos 5 caracteres');
+        return;
+    }
+    
+    if (descripcion.length < 20) {
+        e.preventDefault();
+        alert('La descripción debe ser más detallada (mínimo 20 caracteres)');
+        return;
+    }
+    
+    if (!fecha) {
+        e.preventDefault();
+        alert('Debe especificar una fecha estimada');
+        return;
+    }
+});
+</script>
+{% endblock %}

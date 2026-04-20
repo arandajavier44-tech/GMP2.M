@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario del Equipo{% endblock %}
+{% block page_title %}Inventario Crítico - {{ equipo.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('equipos.gestion_equipos') }}">Equipos</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}">{{ equipo.code }}</a></li>
+                <li class="breadcrumb-item active">Inventario Crítico</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Lista de repuestos del equipo -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-boxes me-2"></i>Repuestos Críticos Asociados
+                </h5>
+                <button class="btn btn-sm btn-light" onclick="mostrarModalAgregarRepuesto()">
+                    <i class="fas fa-plus-circle me-1"></i>Agregar Repuesto
+                </button>
+            </div>
+            <div class="card-body">
+                {% if repuestos %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Repuesto</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Mínimo</th>
+                                <th>Estado</th>
+                                <th>Último uso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in repuestos %}
+                            <tr>
+                                <td><strong>{{ item.repuesto.codigo }}</strong></td>
+                                <td>
+                                    {{ item.repuesto.nombre }}
+                                    {% if item.es_critico %}
+                                    <span class="badge bg-danger ms-1">Crítico</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.repuesto.categoria }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if item.repuesto.stock_actual > item.repuesto.stock_minimo else 'warning' if item.repuesto.stock_actual > 0 else 'danger' }}">
+                                        {{ item.repuesto.stock_actual }} u.
+                                    </span>
+                                </td>
+                                <td>{{ item.repuesto.stock_minimo }} u.</td>
+                                <td>
+                                    {% if item.repuesto.stock_actual <= 0 %}
+                                        <span class="badge bg-danger">Sin stock</span>
+                                    {% elif item.repuesto.stock_actual <= item.repuesto.stock_minimo %}
+                                        <span class="badge bg-warning">Stock mínimo</span>
+                                    {% else %}
+                                        <span class="badge bg-success">OK</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.repuesto.consumos %}
+                                        {{ item.repuesto.consumos[0].fecha_consumo.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                        <span class="text-muted">Sin uso</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editarAsignacion({{ item.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarAsignacion({{ item.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">No hay repuestos asociados</h5>
+                    <p class="mb-3">Este equipo no tiene repuestos críticos registrados</p>
+                    <button class="btn btn-primary" onclick="mostrarModalAgregarRepuesto()">
+                        <i class="fas fa-plus-circle me-2"></i>Agregar Primer Repuesto
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Resumen de inventario -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Resumen
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="small text-muted">Total repuestos:</label>
+                    <h3>{{ repuestos|length }}</h3>
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted">Repuestos críticos:</label>
+                    <h3>{{ repuestos|selectattr('es_critico', 'equalto', true)|list|length }}</h3>
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted">Stock bajo:</label>
+                    <h3 class="text-warning">{{ repuestos|selectattr('repuesto.stock_actual', '<=', 'repuesto.stock_minimo')|list|length }}</h3>
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted">Sin stock:</label>
+                    <h3 class="text-danger">{{ repuestos|selectattr('repuesto.stock_actual', 'equalto', 0)|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas de stock -->
+        {% set stock_bajo = repuestos|selectattr('repuesto.stock_actual', '<=', 'repuesto.stock_minimo')|list %}
+        {% if stock_bajo %}
+        <div class="card shadow border-warning">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Alertas de Stock
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for item in stock_bajo %}
+                <div class="alert alert-warning py-2 mb-2">
+                    <small>
+                        <strong>{{ item.repuesto.codigo }}</strong><br>
+                        {{ item.repuesto.nombre }}<br>
+                        Stock: {{ item.repuesto.stock_actual }} / {{ item.repuesto.stock_minimo }} u.
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para agregar repuesto -->
+<div class="modal fade" id="modalAgregarRepuesto" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Agregar Repuesto al Equipo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('equipos.agregar_repuesto', equipo_id=equipo.id) }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="repuesto_id" class="form-label">Seleccionar Repuesto *</label>
+                            <select class="form-select" id="repuesto_id" name="repuesto_id" required>
+                                <option value="">Buscar repuesto...</option>
+                                {% for repuesto in todos_repuestos %}
+                                <option value="{{ repuesto.id }}">
+                                    {{ repuesto.codigo }} - {{ repuesto.nombre }} (Stock: {{ repuesto.stock_actual }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="cantidad_por_uso" class="form-label">Cantidad por uso</label>
+                            <input type="number" class="form-control" id="cantidad_por_uso" name="cantidad_por_uso" value="1" min="1">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="es_critico" name="es_critico">
+                                <label class="form-check-label" for="es_critico">
+                                    <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+                                    Marcar como repuesto crítico (requiere verificación antes de cada uso)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Nota:</strong> Si el repuesto no existe, puede 
+                        <a href="#" onclick="mostrarModalNuevoRepuesto()" class="alert-link">crear uno nuevo</a>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Asociar Repuesto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para nuevo repuesto -->
+<div class="modal fade" id="modalNuevoRepuesto" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-box me-2"></i>Crear Nuevo Repuesto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('inventario.nuevo_repuesto_api') }}" id="formNuevoRepuesto">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nuevo_codigo" class="form-label">Código *</label>
+                            <input type="text" class="form-control" id="nuevo_codigo" name="codigo" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nuevo_nombre" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nuevo_nombre" name="nombre" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nuevo_categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="nuevo_categoria" name="categoria">
+                                <option value="Mecánico">Mecánico</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Neumático">Neumático</option>
+                                <option value="Hidráulico">Hidráulico</option>
+                                <option value="Instrumentación">Instrumentación</option>
+                                <option value="Seguridad">Seguridad</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nuevo_stock" class="form-label">Stock inicial</label>
+                            <input type="number" class="form-control" id="nuevo_stock" name="stock_actual" value="0" min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nuevo_minimo" class="form-label">Stock mínimo</label>
+                            <input type="number" class="form-control" id="nuevo_minimo" name="stock_minimo" value="5" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="nuevo_maximo" class="form-label">Stock máximo</label>
+                            <input type="number" class="form-control" id="nuevo_maximo" name="stock_maximo" value="50" min="1">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="nuevo_descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="nuevo_descripcion" name="descripcion" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Crear Repuesto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function mostrarModalAgregarRepuesto() {
+    new bootstrap.Modal(document.getElementById('modalAgregarRepuesto')).show();
+}
+
+function mostrarModalNuevoRepuesto() {
+    // Cerrar modal actual
+    bootstrap.Modal.getInstance(document.getElementById('modalAgregarRepuesto')).hide();
+    // Abrir modal nuevo repuesto
+    new bootstrap.Modal(document.getElementById('modalNuevoRepuesto')).show();
+}
+
+function editarAsignacion(id) {
+    // Implementar edición
+    Swal.fire({
+        title: 'Editar asignación',
+        text: 'Funcionalidad en desarrollo',
+        icon: 'info'
+    });
+}
+
+function eliminarAsignacion(id) {
+    Swal.fire({
+        title: '¿Eliminar repuesto?',
+        text: 'Esta acción no se puede deshacer',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Aquí iría la petición para eliminar
+            Swal.fire('Eliminado', 'Repuesto eliminado del equipo', 'success');
+        }
+    });
+}
+
+// Manejar creación de nuevo repuesto vía AJAX
+document.getElementById('formNuevoRepuesto')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('¡Creado!', 'Repuesto creado exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoRepuesto')).hide();
+            // Recargar la página para mostrar el nuevo repuesto
+            location.reload();
+        } else {
+            Swal.fire('Error', data.error || 'No se pudo crear el repuesto', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Error al crear el repuesto', 'error');
+    });
+});
+</script>
+{% endblock %}

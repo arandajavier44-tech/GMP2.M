@@ -1,0 +1,347 @@
+<!-- templates/partials/comentarios.html -->
+<div class="card shadow mt-4" id="comentarios-section">
+    <div class="card-header bg-info text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-comments me-2"></i>
+                Seguimiento y Comentarios
+                <span class="badge bg-light text-dark ms-2" id="total-comentarios">0</span>
+            </h6>
+            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#comentariosCollapse">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+    </div>
+    <div class="collapse show" id="comentariosCollapse">
+        <div class="card-body">
+            <!-- Lista de comentarios -->
+            <div id="comentarios-lista" class="mb-4" style="max-height: 500px; overflow-y: auto;">
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                    <p>Cargando comentarios...</p>
+                </div>
+            </div>
+            
+            <!-- Formulario para nuevo comentario -->
+            <div class="border-top pt-3">
+                <form id="form-comentario">
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">
+                            <i class="fas fa-edit me-1"></i>Agregar comentario:
+                        </label>
+                        <textarea class="form-control" id="comentario-contenido" rows="3" 
+                                  placeholder="Escribe tu comentario... Usa @ para mencionar a otro usuario"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <small class="text-muted">
+                                <i class="fas fa-at me-1"></i>
+                                Menciona a usuarios con <kbd>@nombre</kbd>
+                            </small>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="btn-adjuntar">
+                                <i class="fas fa-paperclip me-1"></i>Adjuntar
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-paper-plane me-1"></i>Enviar comentario
+                            </button>
+                        </div>
+                    </div>
+                    <input type="file" id="archivo-adjunto" style="display: none;">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Inicializar con los datos de la entidad
+const entidadTipoComentarios = '{{ entidad_tipo }}';
+const entidadIdComentarios = {{ entidad_id }};
+
+// Almacenar usuarios disponibles para autocompletar
+let usuariosDisponibles = [];
+
+// Cargar usuarios para autocompletar
+function cargarUsuarios() {
+    fetch('/api/usuarios/lista')
+        .then(response => response.json())
+        .then(data => {
+            usuariosDisponibles = data;
+        });
+}
+
+function cargarComentarios() {
+    fetch(`/api/comentarios/${entidadTipoComentarios}/${entidadIdComentarios}`)
+        .then(response => response.json())
+        .then(data => {
+            renderizarComentarios(data);
+            document.getElementById('total-comentarios').textContent = data.length;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('comentarios-lista').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error al cargar los comentarios
+                </div>
+            `;
+        });
+}
+
+function renderizarComentarios(comentarios) {
+    const container = document.getElementById('comentarios-lista');
+    
+    if (!comentarios || comentarios.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-comment-dots fa-3x mb-3 opacity-50"></i>
+                <p>No hay comentarios aún. Sé el primero en comentar.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    comentarios.forEach(c => {
+        const esAutor = c.usuario_id === {{ session.user_id }};
+        const avatarClass = c.usuario_avatar || 'fa-user';
+        
+        html += `
+            <div class="card mb-3 ${esAutor ? 'border-primary bg-light' : 'border-light'}" id="comentario-${c.id}">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                <i class="fas ${avatarClass} fa-lg text-${esAutor ? 'primary' : 'secondary'}"></i>
+                            </div>
+                            <div>
+                                <strong class="${esAutor ? 'text-primary' : ''}">
+                                    ${escapeHtml(c.usuario_nombre)}
+                                </strong>
+                                <span class="badge bg-secondary ms-2">${escapeHtml(c.usuario_area)}</span>
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            <i class="far fa-clock me-1"></i>${c.created_at_formateado}
+                        </small>
+                    </div>
+                    
+                    <div class="mt-2 ps-4">
+                        ${formatearMenciones(escapeHtml(c.contenido))}
+                    </div>
+                    
+                    ${c.adjuntos && c.adjuntos.length > 0 ? `
+                        <div class="mt-2 ps-4">
+                            <small class="text-muted">
+                                <i class="fas fa-paperclip me-1"></i>Adjuntos:
+                                ${c.adjuntos.map(a => `<a href="${a.url}" target="_blank" class="text-decoration-none">📎 ${escapeHtml(a.nombre)}</a>`).join(', ')}
+                            </small>
+                        </div>
+                    ` : ''}
+                    
+                    ${c.respuestas && c.respuestas.length > 0 ? `
+                        <div class="mt-3 ps-4 border-start border-3 border-secondary">
+                            <small class="text-muted mb-2 d-block">
+                                <i class="fas fa-reply-all me-1"></i>Respuestas (${c.respuestas.length}):
+                            </small>
+                            ${c.respuestas.map(r => `
+                                <div class="small mb-2">
+                                    <strong>${escapeHtml(r.usuario_nombre)}</strong>:
+                                    ${formatearMenciones(escapeHtml(r.contenido))}
+                                    <span class="text-muted ms-2">${r.created_at_formateado}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="mt-2 ps-4">
+                        <button class="btn btn-sm btn-link text-muted p-0" onclick="mostrarRespuesta(${c.id})">
+                            <i class="fas fa-reply me-1"></i>Responder
+                        </button>
+                    </div>
+                    
+                    <div id="respuesta-form-${c.id}" style="display: none;" class="mt-2 ps-4">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Escribe tu respuesta..." 
+                                   id="respuesta-input-${c.id}">
+                            <button class="btn btn-outline-primary btn-sm" onclick="enviarRespuesta(${c.id})">
+                                Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+function formatearMenciones(texto) {
+    // Resaltar menciones @usuario
+    return texto.replace(/@(\w+)/g, '<span class="badge bg-info text-dark">@$1</span>');
+}
+
+function mostrarRespuesta(comentarioId) {
+    const form = document.getElementById(`respuesta-form-${comentarioId}`);
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        document.getElementById(`respuesta-input-${comentarioId}`).focus();
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+function enviarRespuesta(comentarioId) {
+    const input = document.getElementById(`respuesta-input-${comentarioId}`);
+    const contenido = input.value.trim();
+    
+    if (!contenido) return;
+    
+    fetch(`/api/comentarios/${entidadTipoComentarios}/${entidadIdComentarios}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contenido: contenido,
+            respuesta_a_id: comentarioId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            input.value = '';
+            document.getElementById(`respuesta-form-${comentarioId}`).style.display = 'none';
+            cargarComentarios();
+            Swal.fire('Éxito', 'Respuesta enviada', 'success');
+        }
+    });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Autocompletar para menciones
+document.getElementById('comentario-contenido').addEventListener('input', function(e) {
+    const value = e.target.value;
+    const lastAtIndex = value.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1 && lastAtIndex === value.length - 1) {
+        // Mostrar sugerencias de usuarios
+        const sugerencias = usuariosDisponibles.filter(u => 
+            u.username !== '{{ session.username }}' && 
+            !value.includes(`@${u.username}`)
+        );
+        
+        if (sugerencias.length > 0) {
+            // Aquí se podría implementar un dropdown de sugerencias
+        }
+    }
+});
+
+// Adjuntar archivo
+document.getElementById('btn-adjuntar').addEventListener('click', function() {
+    document.getElementById('archivo-adjunto').click();
+});
+
+document.getElementById('archivo-adjunto').addEventListener('change', function(e) {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    
+    // Primero enviar el comentario, luego adjuntar
+    const contenido = document.getElementById('comentario-contenido').value.trim();
+    
+    if (!contenido) {
+        Swal.fire('Info', 'Escribe un comentario antes de adjuntar', 'info');
+        return;
+    }
+    
+    // Enviar comentario primero
+    fetch(`/api/comentarios/${entidadTipoComentarios}/${entidadIdComentarios}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contenido: contenido, menciones: [] })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Adjuntar archivo al comentario
+            return fetch(`/api/comentarios/${data.comentario_id}/adjuntar`, {
+                method: 'POST',
+                body: formData
+            });
+        }
+    })
+    .then(() => {
+        document.getElementById('comentario-contenido').value = '';
+        document.getElementById('archivo-adjunto').value = '';
+        cargarComentarios();
+        Swal.fire('Éxito', 'Comentario enviado con adjunto', 'success');
+    });
+});
+
+document.getElementById('form-comentario').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const contenido = document.getElementById('comentario-contenido').value.trim();
+    
+    if (!contenido) {
+        Swal.fire('Info', 'Escribe un comentario antes de enviar', 'info');
+        return;
+    }
+    
+    // Detectar menciones @usuario
+    const menciones = [];
+    const regex = /@(\w+)/g;
+    let match;
+    while ((match = regex.exec(contenido)) !== null) {
+        menciones.push(match[1]);
+    }
+    
+    fetch(`/api/comentarios/${entidadTipoComentarios}/${entidadIdComentarios}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contenido: contenido,
+            menciones: menciones
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('comentario-contenido').value = '';
+            cargarComentarios();
+            
+            if (menciones.length > 0) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Comentario enviado',
+                    text: `Se notificará a ${menciones.join(', ')}`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Comentario enviado',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        }
+    })
+    .catch(error => {
+        Swal.fire('Error', 'No se pudo enviar el comentario', 'error');
+    });
+});
+
+// Inicializar
+cargarUsuarios();
+cargarComentarios();
+</script>

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Documentos del Equipo{% endblock %}
+{% block page_title %}Documentos GMP - {{ equipo.code }}: {{ equipo.name }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('documentacion.index') }}">Documentación</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}">{{ equipo.code }}</a></li>
+                <li class="breadcrumb-item active">Documentos</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-industry me-2"></i>{{ equipo.code }}</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Nombre:</strong> {{ equipo.name }}</p>
+                <p><strong>Clasificación GMP:</strong> {{ equipo.gmp_classification }}</p>
+                <p><strong>Ubicación:</strong> {{ equipo.location or 'N/E' }}</p>
+                <p><strong>Estado:</strong> {{ equipo.current_status }}</p>
+                <hr>
+                <p><strong>Documentos asociados:</strong> {{ documentos|length }}</p>
+                <a href="{{ url_for('equipos.detalle_equipo', equipo_id=equipo.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-arrow-left me-2"></i>Volver al Equipo
+                </a>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Resumen por Tipo</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% set tipos = {'sop': 'SOP', 'ficha': 'Ficha Técnica', 'protocolo': 'Protocolo', 'certificado': 'Certificado', 'reporte': 'Reporte'} %}
+                    {% for tipo_key, tipo_nombre in tipos.items() %}
+                    {% set count = documentos|selectattr('tipo', 'equalto', tipo_key)|list|length %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ tipo_nombre }}
+                        <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Documentos Asociados</h5>
+                <span class="badge bg-light text-dark">{{ documentos|length }}</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="documentosTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Título</th>
+                                <th>Tipo</th>
+                                <th>QR</th>
+                                <th>Versión</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documentos %}
+                            <tr>
+                                <td><strong>{{ doc.codigo }}</strong></td>
+                                <td>{{ doc.titulo[:60] }}{% if doc.titulo|length > 60 %}...{% endif %}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if doc.tipo == 'sop' else 'success' if doc.tipo == 'validacion' else 'info' if doc.tipo == 'calibracion' else 'warning' if doc.tipo == 'ficha' else 'danger' if doc.tipo == 'protocolo' else 'secondary' }}">
+                                        {{ doc.tipo|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if doc.qr_code %}
+                                    <a href="{{ url_for('static', filename=doc.qr_code) }}" download title="Descargar QR" class="text-info">
+                                        <i class="fas fa-qrcode fa-lg"></i>
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ doc.version }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'warning' if doc.estado == 'Borrador' else 'success' if doc.estado == 'Vigente' else 'secondary' }}">
+                                        {{ doc.estado }}
+                                    </span>
+                                </td>
+                                <td>{{ doc.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('documentacion.ver_documento', documento_id=doc.id) }}" class="btn btn-sm btn-outline-primary" title="Ver"><i class="fas fa-eye"></i></a>
+                                        <a href="{{ url_for('documentacion.print_documento', documento_id=doc.id) }}" class="btn btn-sm btn-outline-info" title="Imprimir" target="_blank"><i class="fas fa-print"></i></a>
+                                        <a href="{{ url_for('documentacion.editar_documento', documento_id=doc.id) }}" class="btn btn-sm btn-outline-success" title="Editar"><i class="fas fa-edit"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No hay documentos asociados a este equipo</p>
+                                    <a href="{{ url_for('documentacion.index') }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus me-2"></i>Generar Documento
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#documentosTable').DataTable({
+            language: { url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json" },
+            pageLength: 15,
+            order: [[6, 'desc']]
+        });
+    });
+</script>
+{% endblock %}

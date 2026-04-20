@@ -1,0 +1,19 @@
+{
+  "numero_ot": "OT-P-202604-4MM9",
+  "titulo": "Mantenimiento Preventivo - GMP-ZUL-01",
+  "estado": "Completada",
+  "equipo": "GMP-ZUL-01",
+  "equipo_nombre": "ZULIANA ",
+  "fecha_creacion": "04/04/2026 05:21",
+  "prioridad": "Media",
+  "tipo": "Preventivo",
+  "asignado_a": "jefe",
+  "fecha_estimada": "04/04/2026",
+  "metadata": {
+    "tipo": "orden",
+    "fecha_generacion": "2026-04-04T02:24:19.478097",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/ordenes/3"
+}

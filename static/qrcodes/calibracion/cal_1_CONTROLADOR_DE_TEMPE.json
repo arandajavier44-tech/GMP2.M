@@ -1,0 +1,17 @@
+{
+  "instrumento": "CONTROLADOR DE TEMPERATURA",
+  "certificado_numero": "0001122",
+  "fecha_calibracion": "24/02/2026",
+  "fecha_proxima": "24/02/2027",
+  "resultado": "Conforme",
+  "laboratorio": "Eczane Pharma",
+  "clasificacion_gmp": "Importante",
+  "estado": "Activo",
+  "metadata": {
+    "tipo": "calibracion",
+    "fecha_generacion": "2026-04-03T20:05:32.510476",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/calibraciones/1"
+}

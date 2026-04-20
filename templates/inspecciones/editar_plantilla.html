@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Plantilla{% endblock %}
+{% block page_title %}Editar Plantilla: {{ plantilla.nombre }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.listar_plantillas') }}">Plantillas</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.ver_plantilla', plantilla_id=plantilla.id) }}">{{ plantilla.nombre }}</a></li>
+                <li class="breadcrumb-item active">Editar</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Editar Plantilla de Inspección
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formPlantilla">
+                    <!-- Datos básicos -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label gmp-required">Nombre de la plantilla *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ plantilla.nombre }}" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="categoria" class="form-label gmp-required">Categoría GMP *</label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="produccion" {% if plantilla.categoria == 'produccion' %}selected{% endif %}>🏭 Producción - Equipos</option>
+                                <option value="servicio" {% if plantilla.categoria == 'servicio' %}selected{% endif %}>🔧 Servicios (HVAC, Agua, Aire, Vapor)</option>
+                                <option value="edificio" {% if plantilla.categoria == 'edificio' %}selected{% endif %}>🏢 Infraestructura Edilicia</option>
+                                <option value="calidad" {% if plantilla.categoria == 'calidad' %}selected{% endif %}>🔬 Laboratorio/Calidad</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="frecuencia" class="form-label gmp-required">Frecuencia *</label>
+                            <select class="form-select" id="frecuencia" name="frecuencia" required>
+                                <option value="diaria" {% if plantilla.frecuencia == 'diaria' %}selected{% endif %}>Diaria</option>
+                                <option value="semanal" {% if plantilla.frecuencia == 'semanal' %}selected{% endif %}>Semanal</option>
+                                <option value="mensual" {% if plantilla.frecuencia == 'mensual' %}selected{% endif %}>Mensual</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="2">{{ plantilla.descripcion or '' }}</textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="tipo" class="form-label gmp-required">Tipo *</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="equipo" {% if plantilla.tipo == 'equipo' %}selected{% endif %}>Equipo específico</option>
+                                <option value="area" {% if plantilla.tipo == 'area' %}selected{% endif %}>Área</option>
+                                <option value="general" {% if plantilla.tipo == 'general' %}selected{% endif %}>General</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="equipo-selector" {% if plantilla.tipo != 'equipo' %}style="display: none;"{% endif %}>
+                            <label for="equipo_id" class="form-label">Equipo</label>
+                            <select class="form-select" id="equipo_id" name="equipo_id">
+                                <option value="">Seleccionar equipo...</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}" {% if plantilla.equipo_id == equipo.id %}selected{% endif %}>
+                                    {{ equipo.code }} - {{ equipo.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="area-input" {% if plantilla.tipo != 'area' %}style="display: none;"{% endif %}>
+                            <label for="area" class="form-label">Área</label>
+                            <input type="text" class="form-control" id="area" name="area" value="{{ plantilla.area or '' }}">
+                        </div>
+                    </div>
+
+                    <!-- Items de inspección -->
+                    <h5 class="border-bottom pb-2 mb-3">Items de Inspección</h5>
+                    <div id="items-container">
+                        {% for item in items %}
+                        <div class="card mb-3 item-card">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Item {{ loop.index }}</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarItem(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <input type="hidden" name="item_id[]" value="{{ item.id }}">
+                                <div class="row">
+                                    <div class="col-md-8 mb-2">
+                                        <label class="form-label">Descripción *</label>
+                                        <input type="text" class="form-control item-desc" name="items_desc[]" value="{{ item.descripcion }}" required>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">Tipo de respuesta</label>
+                                        <select class="form-select item-tipo" name="items_tipo[]">
+                                            <option value="booleano" {% if item.tipo_respuesta == 'booleano' %}selected{% endif %}>Sí/No</option>
+                                            <option value="texto" {% if item.tipo_respuesta == 'texto' %}selected{% endif %}>Texto</option>
+                                            <option value="numerico" {% if item.tipo_respuesta == 'numerico' %}selected{% endif %}>Numérico</option>
+                                            <option value="opciones" {% if item.tipo_respuesta == 'opciones' %}selected{% endif %}>Opciones</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12 mb-2">
+                                        <label class="form-label">Criterio de aceptación</label>
+                                        <input type="text" class="form-control item-criterio" name="items_criterio[]" value="{{ item.criterio or '' }}">
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input item-critico" type="checkbox" name="items_critico[]" value="1" {% if item.es_critico %}checked{% endif %}>
+                                            <label class="form-check-label">
+                                                <span class="text-danger">Item crítico</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-success mb-4" onclick="agregarItem()">
+                        <i class="fas fa-plus me-1"></i>Agregar Item
+                    </button>
+
+                    <!-- Botones -->
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('inspecciones.ver_plantilla', plantilla_id=plantilla.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-2"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para nuevo item -->
+<template id="item-template">
+    <div class="card mb-3 item-card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Item <span class="item-numero">1</span></span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarItem(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8 mb-2">
+                    <label class="form-label">Descripción *</label>
+                    <input type="text" class="form-control item-desc" name="items_desc[]" required>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">Tipo de respuesta</label>
+                    <select class="form-select item-tipo" name="items_tipo[]">
+                        <option value="booleano">Sí/No</option>
+                        <option value="texto">Texto</option>
+                        <option value="numerico">Numérico</option>
+                        <option value="opciones">Opciones</option>
+                    </select>
+                </div>
+                <div class="col-md-12 mb-2">
+                    <label class="form-label">Criterio de aceptación</label>
+                    <input type="text" class="form-control item-criterio" name="items_criterio[]">
+                </div>
+                <div class="col-md-12">
+                    <div class="form-check">
+                        <input class="form-check-input item-critico" type="checkbox" name="items_critico[]" value="1">
+                        <label class="form-check-label">
+                            <span class="text-danger">Item crítico</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let itemCount = {{ items|length }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('tipo').addEventListener('change', function() {
+            const tipo = this.value;
+            if (tipo === 'equipo') {
+                document.getElementById('equipo-selector').style.display = 'block';
+                document.getElementById('area-input').style.display = 'none';
+            } else if (tipo === 'area') {
+                document.getElementById('equipo-selector').style.display = 'none';
+                document.getElementById('area-input').style.display = 'block';
+            } else {
+                document.getElementById('equipo-selector').style.display = 'none';
+                document.getElementById('area-input').style.display = 'none';
+            }
+        });
+    });
+
+    function agregarItem() {
+        const container = document.getElementById('items-container');
+        const template = document.getElementById('item-template');
+        const clone = template.content.cloneNode(true);
+        itemCount++;
+        clone.querySelector('.item-numero').textContent = itemCount;
+        container.appendChild(clone);
+    }
+
+    function eliminarItem(btn) {
+        const card = btn.closest('.item-card');
+        if (document.querySelectorAll('.item-card').length > 1) {
+            card.remove();
+            document.querySelectorAll('.item-card').forEach((card, idx) => {
+                card.querySelector('.item-numero').textContent = idx + 1;
+            });
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No se puede eliminar',
+                text: 'La plantilla debe tener al menos un item'
+            });
+        }
+    }
+</script>
+
+<style>
+.gmp-required::after { content: " *"; color: #dc3545; font-weight: bold; }
+.item-card { border-left: 3px solid #28a745; }
+</style>
+{% endblock %}

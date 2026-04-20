@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Órdenes de Trabajo{% endblock %}
+{% block page_title %}Gestión de Órdenes de Trabajo{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4><i class="fas fa-clipboard-list me-2"></i>Listado de Órdenes de Trabajo</h4>
+        <a href="{{ url_for('ordenes.nueva_orden') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nueva Orden
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body py-3">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">Tipo</label>
+                        <select class="form-select form-select-sm" id="filtroTipo">
+                            <option value="">Todos</option>
+                            <option value="Preventivo">Preventivo</option>
+                            <option value="Correctivo">Correctivo</option>
+                            <option value="Servicio">Servicio</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">Estado</label>
+                        <select class="form-select form-select-sm" id="filtroEstado">
+                            <option value="">Todos</option>
+                            <option value="Pendiente">Pendiente</option>
+                            <option value="Aprobada">Aprobada</option>
+                            <option value="En Progreso">En Progreso</option>
+                            <option value="Completada">Completada</option>
+                            <option value="Cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold small">Prioridad</label>
+                        <select class="form-select form-select-sm" id="filtroPrioridad">
+                            <option value="">Todas</option>
+                            <option value="Baja">Baja</option>
+                            <option value="Media">Media</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Crítica">Crítica</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">Equipo</label>
+                        <input type="text" class="form-control form-control-sm" id="filtroEquipo" placeholder="Código o nombre...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small">Asignado a</label>
+                        <input type="text" class="form-control form-control-sm" id="filtroAsignado" placeholder="Técnico...">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12 text-end">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="limpiarFiltros()">
+                            <i class="fas fa-eraser me-1"></i>Limpiar
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="aplicarFiltros()">
+                            <i class="fas fa-search me-1"></i>Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leyenda de estados -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap align-items-center">
+            <span class="me-3"><i class="fas fa-circle text-warning me-1"></i> Pendiente</span>
+            <span class="me-3"><i class="fas fa-circle text-info me-1"></i> Aprobada</span>
+            <span class="me-3"><i class="fas fa-circle text-primary me-1"></i> En Progreso</span>
+            <span class="me-3"><i class="fas fa-circle text-success me-1"></i> Completada</span>
+            <span class="me-3"><i class="fas fa-circle text-danger me-1"></i> Cancelada</span>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de órdenes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="ordenesTable">
+                        <thead>
+                            <tr>
+                                <th>N° OT</th>
+                                <th>Tipo</th>
+                                <th>Equipo</th>
+                                <th>Título</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Asignado a</th>
+                                <th>Fecha Creación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if ordenes %}
+                                {% for orden in ordenes %}
+                                <tr class="fila-orden" 
+                                    data-tipo="{{ orden.tipo }}"
+                                    data-estado="{{ orden.estado }}"
+                                    data-prioridad="{{ orden.prioridad }}"
+                                    data-equipo="{{ orden.equipo.code if orden.equipo }} {{ orden.equipo.name if orden.equipo }}"
+                                    data-asignado="{{ orden.asignado_a or '' }}">
+                                    <td>
+                                        <strong>{{ orden.numero_ot }}</strong>
+                                        {% if orden.tipo == 'Servicio' and orden.estado == 'Pendiente' %}
+                                            <span class="badge bg-warning ms-1" title="Requiere aprobación">⏳</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'primary' if orden.tipo == 'Preventivo' else 'warning' if orden.tipo == 'Correctivo' else 'info' }}">
+                                            <i class="fas fa-{{ 'calendar-check' if orden.tipo == 'Preventivo' else 'exclamation-triangle' if orden.tipo == 'Correctivo' else 'tools' }} me-1"></i>
+                                            {{ orden.tipo }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if orden.equipo %}
+                                            <a href="{{ url_for('equipos.detalle_equipo', equipo_id=orden.equipo.id) }}" class="text-decoration-none">
+                                                {{ orden.equipo.code }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ orden.titulo[:50] }}{% if orden.titulo|length > 50 %}...{% endif %}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if orden.prioridad == 'Baja' else 'info' if orden.prioridad == 'Media' else 'warning' if orden.prioridad == 'Alta' else 'danger' }}">
+                                            <i class="fas fa-flag me-1"></i>{{ orden.prioridad }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if orden.estado == 'Pendiente' else 'info' if orden.estado == 'Aprobada' else 'primary' if orden.estado == 'En Progreso' else 'success' if orden.estado == 'Completada' else 'danger' }}">
+                                            {{ orden.estado }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if orden.asignado_a %}
+                                            <i class="fas fa-user me-1"></i>{{ orden.asignado_a }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ orden.fecha_creacion.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('ordenes.detalle_orden', orden_id=orden.id) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if orden.estado == 'En Progreso' and session.role in ['Mantenimiento', 'Admin', 'Supervisor'] %}
+                                            <a href="{{ url_for('ordenes.detalle_orden', orden_id=orden.id) }}#completarModal" 
+                                               class="btn btn-sm btn-outline-success" title="Completar">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-5">
+                                        <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                                        <h5 class="text-muted">No hay órdenes de trabajo</h5>
+                                        <p class="mb-3">Comience creando una nueva orden de trabajo</p>
+                                        <a href="{{ url_for('ordenes.nueva_orden') }}" class="btn btn-primary">
+                                            <i class="fas fa-plus-circle me-2"></i>Nueva Orden
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let ordenesTable;
+    
+    $(document).ready(function() {
+        ordenesTable = $('#ordenesTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "order": [[7, 'desc']],
+            "columnDefs": [
+                { "orderable": false, "targets": 8 }
+            ]
+        });
+    });
+
+    function aplicarFiltros() {
+        const tipo = $('#filtroTipo').val();
+        const estado = $('#filtroEstado').val();
+        const prioridad = $('#filtroPrioridad').val();
+        const equipo = $('#filtroEquipo').val().toLowerCase();
+        const asignado = $('#filtroAsignado').val().toLowerCase();
+        
+        ordenesTable.rows().every(function() {
+            const data = this.data();
+            const row = this.node();
+            const tipoRow = $(row).data('tipo') || '';
+            const estadoRow = $(row).data('estado') || '';
+            const prioridadRow = $(row).data('prioridad') || '';
+            const equipoRow = $(row).data('equipo') || '';
+            const asignadoRow = $(row).data('asignado') || '';
+            
+            let mostrar = true;
+            
+            if (tipo && tipoRow !== tipo) mostrar = false;
+            if (estado && estadoRow !== estado) mostrar = false;
+            if (prioridad && prioridadRow !== prioridad) mostrar = false;
+            if (equipo && !equipoRow.toLowerCase().includes(equipo)) mostrar = false;
+            if (asignado && !asignadoRow.toLowerCase().includes(asignado)) mostrar = false;
+            
+            if (mostrar) {
+                $(row).show();
+            } else {
+                $(row).hide();
+            }
+        });
+    }
+
+    function limpiarFiltros() {
+        $('#filtroTipo').val('');
+        $('#filtroEstado').val('');
+        $('#filtroPrioridad').val('');
+        $('#filtroEquipo').val('');
+        $('#filtroAsignado').val('');
+        ordenesTable.rows().every(function() {
+            $(this.node()).show();
+        });
+    }
+</script>
+
+<style>
+    .dataTables_filter {
+        margin-bottom: 15px;
+    }
+    .btn-group .btn {
+        margin: 0 2px;
+    }
+    .fila-orden:hover {
+        background-color: rgba(0,0,0,.02);
+    }
+</style>
+{% endblock %}
+

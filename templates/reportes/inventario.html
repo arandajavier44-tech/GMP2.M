@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Inventario{% endblock %}
+{% block page_title %}Reporte de Inventario - Stock y Consumos{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('reportes.index') }}">Reportes</a></li>
+                <li class="breadcrumb-item active">Inventario</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Repuestos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total_repuestos">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Stock Crítico
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="stock_critico">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Stock Bajo
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="stock_bajo">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Valor Total
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="valor_total">$0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-chart-bar me-2"></i>Stock por Categoría
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="categoriaChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-chart-pie me-2"></i>Estado del Stock
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="estadoChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de repuestos -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-table me-2"></i>Detalle de Repuestos
+                </h6>
+                <div>
+                    <button class="btn btn-sm btn-light me-2" onclick="exportarReporte('pdf')">
+                        <i class="fas fa-file-pdf me-1"></i>PDF
+                    </button>
+                    <button class="btn btn-sm btn-light" onclick="exportarReporte('excel')">
+                        <i class="fas fa-file-excel me-1"></i>Excel
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="inventarioTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Stock</th>
+                                <th>Mínimo</th>
+                                <th>Estado</th>
+                                <th>Costo Unit.</th>
+                                <th>Valor Total</th>
+                                <th>Consumo 30d</th>
+                                <th>Ubicación</th>
+                                <th>Equipos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body">
+                            <tr>
+                                <td colspan="11" class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando datos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let categoriaChart, estadoChart;
+    let inventarioTable;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarDatos();
+    });
+
+    function cargarDatos() {
+        fetch('/reportes/api/inventario/data')
+            .then(response => response.json())
+            .then(data => {
+                // Calcular estadísticas
+                const total = data.length;
+                const critico = data.filter(r => r.estado === 'Crítico').length;
+                const bajo = data.filter(r => r.estado === 'Bajo').length;
+                const valorTotal = data.reduce((sum, r) => sum + (r.valor_total || 0), 0);
+                
+                document.getElementById('total_repuestos').textContent = total;
+                document.getElementById('stock_critico').textContent = critico;
+                document.getElementById('stock_bajo').textContent = bajo;
+                document.getElementById('valor_total').textContent = '$' + valorTotal.toFixed(2);
+
+                // Agrupar por categoría
+                const categorias = {};
+                data.forEach(r => {
+                    categorias[r.categoria || 'Sin categoría'] = (categorias[r.categoria || 'Sin categoría'] || 0) + 1;
+                });
+
+                // Gráfico de categorías
+                if (categoriaChart) categoriaChart.destroy();
+                const catCtx = document.getElementById('categoriaChart').getContext('2d');
+                categoriaChart = new Chart(catCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(categorias),
+                        datasets: [{
+                            label: 'Cantidad de Repuestos',
+                            data: Object.values(categorias),
+                            backgroundColor: '#4e73df',
+                            borderColor: '#4e73df',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico de estados
+                if (estadoChart) estadoChart.destroy();
+                const estCtx = document.getElementById('estadoChart').getContext('2d');
+                estadoChart = new Chart(estCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Normal', 'Bajo', 'Crítico'],
+                        datasets: [{
+                            data: [
+                                data.filter(r => r.estado === 'Normal').length,
+                                bajo,
+                                critico
+                            ],
+                            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                            hoverBackgroundColor: ['#218838', '#e0a800', '#c82333'],
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Llenar tabla
+                let html = '';
+                data.forEach(r => {
+                    let estadoClass = '';
+                    if (r.estado === 'Crítico') estadoClass = 'danger';
+                    else if (r.estado === 'Bajo') estadoClass = 'warning';
+                    else estadoClass = 'success';
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${r.codigo}</strong></td>
+                            <td>${r.nombre}</td>
+                            <td>${r.categoria || '-'}</td>
+                            <td class="text-center"><span class="badge bg-${estadoClass}">${r.stock_actual}</span></td>
+                            <td class="text-center">${r.stock_minimo}</td>
+                            <td><span class="badge bg-${estadoClass}">${r.estado}</span></td>
+                            <td>$${r.costo_unitario ? r.costo_unitario.toFixed(2) : '-'}</td>
+                            <td>$${r.valor_total}</td>
+                            <td class="text-center">${r.consumo_30d}</td>
+                            <td>${r.ubicacion || '-'}</td>
+                            <td><small>${r.equipos || '-'}</small></td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('tabla-body').innerHTML = html;
+                
+                // Inicializar DataTable
+                if (inventarioTable) {
+                    inventarioTable.destroy();
+                }
+                inventarioTable = $('#inventarioTable').DataTable({
+                    language: {
+                        url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+                    },
+                    pageLength: 10,
+                    order: [[0, 'asc']]
+                });
+            });
+    }
+
+    function exportarReporte(formato) {
+        window.location.href = `/reportes/exportar/${formato}/inventario`;
+    }
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.border-left-danger {
+    border-left: 4px solid #e74a3b !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+.border-left-success {
+    border-left: 4px solid #1cc88a !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+</style>
+{% endblock %}

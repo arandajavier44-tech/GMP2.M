@@ -1,0 +1,19 @@
+{
+  "numero_ot": "OT-0002-2026-GMP-PR-BLI-ZUL-01",
+  "titulo": "No regula bien la temperatura",
+  "estado": "Completada",
+  "equipo": "GMP-PR-BLI-ZUL-01",
+  "equipo_nombre": "ZULIANA ",
+  "fecha_creacion": "06/04/2026 17:37",
+  "prioridad": "Alta",
+  "tipo": "Servicio",
+  "asignado_a": "admin",
+  "fecha_estimada": "N/A",
+  "metadata": {
+    "tipo": "orden",
+    "fecha_generacion": "2026-04-06T14:42:19.091661",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/ordenes/2"
+}

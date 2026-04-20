@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Instalación{% endblock %}
+{% block page_title %}Registrar Nueva Instalación{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.panel_mantenimiento') }}">Panel</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.gestion_instalaciones') }}">Instalaciones</a></li>
+<li class="breadcrumb-item active">Nueva Instalación</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>Registrar Nueva Instalación
+                </h5>
+                <small>Complete los datos de la instalación o servicio general</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formInstalacion">
+                    <!-- Datos básicos -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-info-circle me-2"></i><strong>Datos Básicos</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Código *</label>
+                                    <input type="text" name="codigo" class="form-control" required
+                                           placeholder="Ej: INST-001">
+                                    <small class="text-muted">Código único para identificar la instalación</small>
+                                </div>
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label">Nombre *</label>
+                                    <input type="text" name="nombre" class="form-control" required
+                                           placeholder="Ej: Aire Acondicionado Split - Oficina 203">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Categoría *</label>
+                                    <select name="categoria" class="form-select" required>
+                                        <option value="">Seleccione categoría...</option>
+                                        {% for cat in categorias %}
+                                        <option value="{{ cat }}">{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Subcategoría</label>
+                                    <input type="text" name="subcategoria" class="form-control" 
+                                           placeholder="Ej: Split, Central, Ventana...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ubicación -->
+                    <div class="card mb-4 border-success">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-map-marker-alt me-2"></i><strong>Ubicación</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Edificio</label>
+                                    <select name="edificio" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        {% for edif in edificios %}
+                                        <option value="{{ edif }}">{{ edif }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Piso / Nivel</label>
+                                    <input type="text" name="piso" class="form-control" 
+                                           placeholder="Ej: Planta Baja, 1er Piso, Sótano...">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Sector</label>
+                                    <select name="sector" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        {% for sec in sectores %}
+                                        <option value="{{ sec }}">{{ sec }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ubicación detallada</label>
+                                <input type="text" name="ubicacion" class="form-control" 
+                                       placeholder="Ej: Pasillo principal, junto a la puerta de emergencia">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Especificaciones técnicas -->
+                    <div class="card mb-4 border-info">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-microchip me-2"></i><strong>Especificaciones Técnicas</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Marca</label>
+                                    <input type="text" name="marca" class="form-control" placeholder="Ej: Samsung">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Modelo</label>
+                                    <input type="text" name="modelo" class="form-control" placeholder="Ej: AR12">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Año de instalación</label>
+                                    <input type="number" name="anio_instalacion" class="form-control" 
+                                           min="1950" max="{{ now.year }}" placeholder="{{ now.year }}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Especificaciones adicionales</label>
+                                <textarea name="especificaciones" class="form-control" rows="3"
+                                          placeholder="Potencia, capacidad, dimensiones, número de serie, etc."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mantenimiento -->
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-calendar-check me-2"></i><strong>Programación de Mantenimiento</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="requiere_mantenimiento" 
+                                           id="requiereMantenimiento" value="true">
+                                    <label class="form-check-label" for="requiereMantenimiento">
+                                        <strong>Requiere mantenimiento periódico programado</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="mantenimientoConfig" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Frecuencia de mantenimiento</label>
+                                        <div class="input-group">
+                                            <input type="number" name="frecuencia_dias" class="form-control" 
+                                                   placeholder="Cantidad" min="1">
+                                            <span class="input-group-text">días</span>
+                                        </div>
+                                        <small class="text-muted">Ej: 30 para mensual, 90 para trimestral, 365 para anual</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Responsables -->
+                    <div class="card mb-4 border-secondary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-users me-2"></i><strong>Responsables</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Área responsable</label>
+                                    <select name="responsable_area" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        <option value="Mantenimiento">Mantenimiento</option>
+                                        <option value="Producción">Producción</option>
+                                        <option value="Administración">Administración</option>
+                                        <option value="Calidad">Calidad</option>
+                                        <option value="Servicios Generales">Servicios Generales</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Proveedor de servicio (tercero)</label>
+                                    <input type="text" name="proveedor_servicio" class="form-control" 
+                                           placeholder="Ej: Empresa de climatización S.A.">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('servicios_generales.gestion_instalaciones') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Registrar Instalación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostrar/ocultar configuración de mantenimiento
+document.getElementById('requiereMantenimiento').addEventListener('change', function() {
+    const config = document.getElementById('mantenimientoConfig');
+    config.style.display = this.checked ? 'block' : 'none';
+    
+    // Hacer requerido el campo de frecuencia si está marcado
+    const frecuenciaInput = document.querySelector('input[name="frecuencia_dias"]');
+    frecuenciaInput.required = this.checked;
+});
+
+// Validación del formulario
+document.getElementById('formInstalacion').addEventListener('submit', function(e) {
+    const codigo = this.querySelector('input[name="codigo"]').value.trim();
+    const nombre = this.querySelector('input[name="nombre"]').value.trim();
+    const categoria = this.querySelector('select[name="categoria"]').value;
+    
+    if (codigo.length < 3) {
+        e.preventDefault();
+        alert('El código debe tener al menos 3 caracteres');
+        return;
+    }
+    
+    if (nombre.length < 3) {
+        e.preventDefault();
+        alert('El nombre debe tener al menos 3 caracteres');
+        return;
+    }
+    
+    if (!categoria) {
+        e.preventDefault();
+        alert('Debe seleccionar una categoría');
+        return;
+    }
+    
+    // Validar frecuencia si está marcado
+    const requiereMant = document.getElementById('requiereMantenimiento').checked;
+    if (requiereMant) {
+        const frecuencia = this.querySelector('input[name="frecuencia_dias"]').value;
+        if (!frecuencia || parseInt(frecuencia) < 1) {
+            e.preventDefault();
+            alert('Debe especificar una frecuencia de mantenimiento válida');
+            return;
+        }
+    }
+});
+</script>
+{% endblock %}

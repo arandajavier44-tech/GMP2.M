@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Matriz de Riesgos{% endblock %}
+{% block page_title %}Editor de Matriz: {{ matriz.nombre }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('riesgos.index') }}">Matrices</a></li>
+                <li class="breadcrumb-item active">{{ matriz.nombre }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Tabla de riesgos -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Riesgos Identificados
+                </h5>
+                <button class="btn btn-sm btn-light" onclick="agregarRiesgo()">
+                    <i class="fas fa-plus me-1"></i>Nuevo Riesgo
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="riesgosTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Código</th>
+                                <th>Descripción</th>
+                                <th>Categoría</th>
+                                <th>S</th>
+                                <th>O</th>
+                                <th>D</th>
+                                <th>NPR</th>
+                                <th>Nivel</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="riesgos-body">
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>Cargando riesgos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Información de la matriz -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="formMatriz">
+                    <div class="mb-3">
+                        <label class="fw-bold">Nombre:</label>
+                        <input type="text" class="form-control" id="nombre" value="{{ matriz.nombre }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Metodología:</label>
+                        <select class="form-select" id="metodologia">
+                            <option value="FMEA" {% if matriz.metodologia == 'FMEA' %}selected{% endif %}>FMEA</option>
+                            <option value="HAZOP" {% if matriz.metodologia == 'HAZOP' %}selected{% endif %}>HAZOP</option>
+                            <option value="What-If" {% if matriz.metodologia == 'What-If' %}selected{% endif %}>What-If</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Elaborado por:</label>
+                        <input type="text" class="form-control" value="{{ matriz.elaborado_por }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold">Fecha creación:</label>
+                        <input type="text" class="form-control" value="{{ matriz.fecha_creacion.strftime('%d/%m/%Y') }}" readonly>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Leyenda de colores -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-palette me-2"></i>Niveles de Riesgo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 20px; height: 20px; background-color: #dc3545; margin-right: 10px;"></div>
+                    <span><strong>Crítico</strong> (NPR ≥ 200)</span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 20px; height: 20px; background-color: #fd7e14; margin-right: 10px;"></div>
+                    <span><strong>Alto</strong> (NPR 100-199)</span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <div style="width: 20px; height: 20px; background-color: #ffc107; margin-right: 10px;"></div>
+                    <span><strong>Medio</strong> (NPR 50-99)</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div style="width: 20px; height: 20px; background-color: #28a745; margin-right: 10px;"></div>
+                    <span><strong>Bajo</strong> (NPR {'<'} 50)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar/editar riesgo -->
+<div class="modal fade" id="riesgoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitulo">Agregar Riesgo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formRiesgo">
+                <div class="modal-body">
+                    <input type="hidden" id="riesgoId">
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Descripción del Riesgo *</label>
+                            <textarea class="form-control" id="descripcion" rows="2" required></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Causa</label>
+                            <textarea class="form-control" id="causa" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Efecto</label>
+                            <textarea class="form-control" id="efecto" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="fw-bold">Categoría</label>
+                            <select class="form-select" id="categoria">
+                                <option value="calidad">Calidad</option>
+                                <option value="seguridad">Seguridad</option>
+                                <option value="ambiental">Ambiental</option>
+                                <option value="operacional">Operacional</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label class="fw-bold">Severidad (1-5)</label>
+                            <input type="number" class="form-control" id="severidad" min="1" max="5" value="3">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label class="fw-bold">Ocurrencia (1-5)</label>
+                            <input type="number" class="form-control" id="ocurrencia" min="1" max="5" value="3">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label class="fw-bold">Detectabilidad (1-5)</label>
+                            <input type="number" class="form-control" id="detectabilidad" min="1" max="5" value="3">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label class="fw-bold">NPR</label>
+                            <input type="text" class="form-control" id="npr" readonly>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Controles Actuales</label>
+                            <textarea class="form-control" id="controles_actuales" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label class="fw-bold">Controles Propuestos</label>
+                            <textarea class="form-control" id="controles_propuestos" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Responsable</label>
+                            <input type="text" class="form-control" id="responsable">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Fecha Límite</label>
+                            <input type="date" class="form-control" id="fecha_limite">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold">Estado</label>
+                            <select class="form-select" id="estado">
+                                <option value="Identificado">Identificado</option>
+                                <option value="En Tratamiento">En Tratamiento</option>
+                                <option value="Controlado">Controlado</option>
+                                <option value="Aceptado">Aceptado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Riesgo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let matrizId = {{ matriz.id }};
+    let editandoId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarRiesgos();
+        
+        // Calcular NPR automáticamente
+        ['severidad', 'ocurrencia', 'detectabilidad'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calcularNPR);
+        });
+    });
+
+    function calcularNPR() {
+        const s = parseInt(document.getElementById('severidad').value) || 1;
+        const o = parseInt(document.getElementById('ocurrencia').value) || 1;
+        const d = parseInt(document.getElementById('detectabilidad').value) || 1;
+        const npr = s * o * d;
+        document.getElementById('npr').value = npr;
+    }
+
+    function cargarRiesgos() {
+        fetch(`/riesgos/api/riesgos/${matrizId}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('riesgos-body');
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No hay riesgos identificados. Agregue el primer riesgo.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                let criticos = 0, tratamiento = 0, controlados = 0;
+                
+                data.forEach(r => {
+                    const npr = r.npr || (r.severidad * r.ocurrencia * r.detectabilidad);
+                    let nivel = '';
+                    let color = '';
+                    
+                    if (npr >= 200) {
+                        nivel = 'Crítico';
+                        color = 'danger';
+                        criticos++;
+                    } else if (npr >= 100) {
+                        nivel = 'Alto';
+                        color = 'warning';
+                    } else if (npr >= 50) {
+                        nivel = 'Medio';
+                        color = 'info';
+                    } else {
+                        nivel = 'Bajo';
+                        color = 'success';
+                    }
+                    
+                    if (r.estado === 'En Tratamiento') tratamiento++;
+                    if (r.estado === 'Controlado') controlados++;
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${r.codigo}</strong></td>
+                            <td>${r.descripcion.substring(0, 50)}...</td>
+                            <td>${r.categoria}</td>
+                            <td>${r.severidad}</td>
+                            <td>${r.ocurrencia}</td>
+                            <td>${r.detectabilidad}</td>
+                            <td><strong>${npr}</strong></td>
+                            <td><span class="badge bg-${color}">${nivel}</span></td>
+                            <td><span class="badge bg-secondary">${r.estado}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editarRiesgo(${r.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="eliminarRiesgo(${r.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+                
+                // Actualizar contadores
+                document.getElementById('total-criticos').textContent = criticos;
+                document.getElementById('total-tratamiento').textContent = tratamiento;
+                document.getElementById('total-controlados').textContent = controlados;
+            });
+    }
+
+    function agregarRiesgo() {
+        editandoId = null;
+        document.getElementById('modalTitulo').textContent = 'Agregar Nuevo Riesgo';
+        document.getElementById('formRiesgo').reset();
+        document.getElementById('riesgoId').value = '';
+        calcularNPR();
+        new bootstrap.Modal(document.getElementById('riesgoModal')).show();
+    }
+
+    function editarRiesgo(id) {
+        editandoId = id;
+        document.getElementById('modalTitulo').textContent = 'Editar Riesgo';
+        
+        fetch(`/riesgos/api/riesgos/${matrizId}`)
+            .then(response => response.json())
+            .then(riesgos => {
+                const riesgo = riesgos.find(r => r.id === id);
+                if (riesgo) {
+                    document.getElementById('descripcion').value = riesgo.descripcion;
+                    document.getElementById('causa').value = riesgo.causa || '';
+                    document.getElementById('efecto').value = riesgo.efecto || '';
+                    document.getElementById('categoria').value = riesgo.categoria || 'calidad';
+                    document.getElementById('severidad').value = riesgo.severidad;
+                    document.getElementById('ocurrencia').value = riesgo.ocurrencia;
+                    document.getElementById('detectabilidad').value = riesgo.detectabilidad;
+                    document.getElementById('controles_actuales').value = riesgo.controles_actuales || '';
+                    document.getElementById('controles_propuestos').value = riesgo.controles_propuestos || '';
+                    document.getElementById('responsable').value = riesgo.responsable || '';
+                    document.getElementById('fecha_limite').value = riesgo.fecha_limite || '';
+                    document.getElementById('estado').value = riesgo.estado || 'Identificado';
+                    
+                    calcularNPR();
+                }
+            });
+        
+        new bootstrap.Modal(document.getElementById('riesgoModal')).show();
+    }
+
+    document.getElementById('formRiesgo').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const data = {
+            descripcion: document.getElementById('descripcion').value,
+            causa: document.getElementById('causa').value,
+            efecto: document.getElementById('efecto').value,
+            categoria: document.getElementById('categoria').value,
+            severidad: parseInt(document.getElementById('severidad').value),
+            ocurrencia: parseInt(document.getElementById('ocurrencia').value),
+            detectabilidad: parseInt(document.getElementById('detectabilidad').value),
+            controles_actuales: document.getElementById('controles_actuales').value,
+            controles_propuestos: document.getElementById('controles_propuestos').value,
+            responsable: document.getElementById('responsable').value,
+            fecha_limite: document.getElementById('fecha_limite').value,
+            estado: document.getElementById('estado').value
+        };
+        
+        let url = `/riesgos/api/riesgos/${matrizId}`;
+        let method = 'POST';
+        
+        if (editandoId) {
+            url = `/riesgos/api/riesgos/${editandoId}`;
+            method = 'PUT';
+        }
+        
+        fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Guardado',
+                    text: 'Riesgo guardado correctamente',
+                    timer: 2000
+                });
+                bootstrap.Modal.getInstance(document.getElementById('riesgoModal')).hide();
+                cargarRiesgos();
+            } else {
+                throw new Error(result.error);
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        });
+    });
+
+    function eliminarRiesgo(id) {
+        Swal.fire({
+            title: '¿Eliminar riesgo?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/riesgos/api/riesgos/${id}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Eliminado', 'Riesgo eliminado', 'success');
+                            cargarRiesgos();
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire('Error', error.message, 'error');
+                    });
+            }
+        });
+    }
+</script>
+
+<style>
+    .border-left-primary { border-left: 4px solid #4e73df !important; }
+    .border-left-danger { border-left: 4px solid #e74a3b !important; }
+    .border-left-warning { border-left: 4px solid #f6c23e !important; }
+    .border-left-success { border-left: 4px solid #1cc88a !important; }
+    .text-gray-300 { color: #dddfeb !important; }
+</style>
+{% endblock %}

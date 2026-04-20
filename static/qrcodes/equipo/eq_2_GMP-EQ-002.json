@@ -1,0 +1,16 @@
+{
+  "code": "GMP-EQ-002",
+  "name": "ZULIANA ",
+  "gmp_classification": "Crítico GMP",
+  "current_status": "Operativo",
+  "ubicacion": "Blisteado",
+  "manufacturer": "ZULIANA",
+  "model": "BLI-ZUL-002",
+  "metadata": {
+    "tipo": "equipo",
+    "fecha_generacion": "2026-04-13T14:02:38.442641",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/equipos/2"
+}

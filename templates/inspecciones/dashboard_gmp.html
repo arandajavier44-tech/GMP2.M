@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard GMP - Inspecciones{% endblock %}
+{% block page_title %}Dashboard de Inspecciones GMP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item active">Dashboard GMP</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow border-left-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Inspecciones</h6>
+                        <h2 class="mb-0">{{ total_inspecciones }}</h2>
+                    </div>
+                    <i class="fas fa-clipboard-list fa-3x text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow border-left-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Últimos 30 días</h6>
+                        <h2 class="mb-0">{{ ultimos_30_dias }}</h2>
+                    </div>
+                    <i class="fas fa-calendar-alt fa-3x text-success opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow border-left-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Porcentaje Conformidad</h6>
+                        <h2 class="mb-0">
+                            {% set total = total_inspecciones %}
+                            {% set conformes_data = namespace(value=0) %}
+                            {% for cat in categorias %}
+                                {% if cat[0] %}
+                                    {# Aquí se calcularía #}
+                                {% endif %}
+                            {% endfor %}
+                            {{ (conformes / total * 100)|round if total > 0 else 100 }}%
+                        </h2>
+                    </div>
+                    <i class="fas fa-chart-line fa-3x text-warning opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow border-left-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">No Conformes</h6>
+                        <h2 class="mb-0">{{ total_inspecciones - (conformes|default(0)) }}</h2>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de tendencia -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Tendencia de Inspecciones (últimos 30 días)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="tendenciaChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Por Categoría GMP</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="categoriasChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de inspecciones recientes -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="fas fa-history me-2"></i>Inspecciones Recientes</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="recientesTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Plantilla</th>
+                                <th>Categoría</th>
+                                <th>Realizada por</th>
+                                <th>Resultado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recientesBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let tendenciaChart, categoriasChart;
+
+    $(document).ready(function() {
+        cargarDatos();
+    });
+
+    function cargarDatos() {
+        fetch('/inspecciones/api/estadisticas')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Datos recibidos:', data);
+            });
+
+        // Cargar inspecciones recientes
+        fetch('/inspecciones/api/inspecciones-recientes')
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('recientesBody');
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay inspecciones registradas</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.map(ins => `
+                    <tr>
+                        <td>${ins.fecha}</td>
+                        <td>${ins.plantilla_nombre}</td>
+                        <td><span class="badge bg-secondary">${ins.categoria || 'N/A'}</span></td>
+                        <td>${ins.realizada_por}</td>
+                        <td>${ins.conforme ? '<span class="badge bg-success">Conforme</span>' : '<span class="badge bg-danger">No Conforme</span>'}</td>
+                        <td><a href="/inspecciones/ver/${ins.id}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a></td>
+                    </tr>
+                `).join('');
+            });
+
+        // Gráfico de tendencia con datos de ejemplo (usando tendencia del backend)
+        const fechas = {{ tendencia|map(attribute='fecha')|list|tojson }};
+        const conformes = {{ tendencia|map(attribute='conformes')|list|tojson }};
+        const totales = {{ tendencia|map(attribute='totales')|list|tojson }};
+        const categoriasData = {{ categorias|tojson }};
+        const catLabels = categoriasData.map(c => c.nombre);
+        const catValues = categoriasData.map(c => c.total);
+        
+        const ctx = document.getElementById('tendenciaChart').getContext('2d');
+        tendenciaChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: fechas,
+                datasets: [{
+                    label: 'Inspecciones Conformes',
+                    data: conformes,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Total Inspecciones',
+                    data: totales,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                }
+            }
+        });
+
+        // Gráfico de categorías
+        const categoriasData = {{ categorias|list|tojson }};
+        const catLabels = categoriasData.map(c => c[0] || 'Sin categoría');
+        const catValues = categoriasData.map(c => c[1] || 0);
+        
+        const ctx2 = document.getElementById('categoriasChart').getContext('2d');
+        categoriasChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catValues,
+                    backgroundColor: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

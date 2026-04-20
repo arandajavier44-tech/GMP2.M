@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Instalación{% endblock %}
+{% block page_title %}Editar Instalación - {{ instalacion.codigo }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.panel_mantenimiento') }}">Panel</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.gestion_instalaciones') }}">Instalaciones</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('servicios_generales.detalle_instalacion', instalacion_id=instalacion.id) }}">{{ instalacion.codigo }}</a></li>
+<li class="breadcrumb-item active">Editar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Editar Instalación: {{ instalacion.codigo }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formInstalacion">
+                    <!-- Datos básicos -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-info-circle me-2"></i><strong>Datos Básicos</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Código *</label>
+                                    <input type="text" name="codigo" class="form-control" required
+                                           value="{{ instalacion.codigo }}" readonly>
+                                    <small class="text-muted">El código no se puede modificar</small>
+                                </div>
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label">Nombre *</label>
+                                    <input type="text" name="nombre" class="form-control" required
+                                           value="{{ instalacion.nombre }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Categoría *</label>
+                                    <select name="categoria" class="form-select" required>
+                                        <option value="">Seleccione categoría...</option>
+                                        {% for cat in categorias %}
+                                        <option value="{{ cat }}" {% if instalacion.categoria == cat %}selected{% endif %}>{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Subcategoría</label>
+                                    <input type="text" name="subcategoria" class="form-control" 
+                                           value="{{ instalacion.subcategoria or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ubicación -->
+                    <div class="card mb-4 border-success">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-map-marker-alt me-2"></i><strong>Ubicación</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Edificio</label>
+                                    <select name="edificio" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        {% for edif in edificios %}
+                                        <option value="{{ edif }}" {% if instalacion.edificio == edif %}selected{% endif %}>{{ edif }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Piso / Nivel</label>
+                                    <input type="text" name="piso" class="form-control" 
+                                           value="{{ instalacion.piso or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Sector</label>
+                                    <select name="sector" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        {% for sec in sectores %}
+                                        <option value="{{ sec }}" {% if instalacion.sector == sec %}selected{% endif %}>{{ sec }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ubicación detallada</label>
+                                <input type="text" name="ubicacion" class="form-control" 
+                                       value="{{ instalacion.ubicacion or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Especificaciones técnicas -->
+                    <div class="card mb-4 border-info">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-microchip me-2"></i><strong>Especificaciones Técnicas</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Marca</label>
+                                    <input type="text" name="marca" class="form-control" 
+                                           value="{{ instalacion.marca or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Modelo</label>
+                                    <input type="text" name="modelo" class="form-control" 
+                                           value="{{ instalacion.modelo or '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Año de instalación</label>
+                                    <input type="number" name="anio_instalacion" class="form-control" 
+                                           min="1950" max="{{ now.year }}" value="{{ instalacion.anio_instalacion or '' }}">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Especificaciones adicionales</label>
+                                <textarea name="especificaciones" class="form-control" rows="3">{{ instalacion.especificaciones or '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mantenimiento -->
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-calendar-check me-2"></i><strong>Programación de Mantenimiento</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="requiere_mantenimiento" 
+                                           id="requiereMantenimiento" value="true"
+                                           {% if instalacion.requiere_mantenimiento_periodico %}checked{% endif %}>
+                                    <label class="form-check-label" for="requiereMantenimiento">
+                                        <strong>Requiere mantenimiento periódico programado</strong>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div id="mantenimientoConfig" style="display: {% if instalacion.requiere_mantenimiento_periodico %}block{% else %}none{% endif %};">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Frecuencia de mantenimiento (días)</label>
+                                        <input type="number" name="frecuencia_dias" class="form-control" 
+                                               value="{{ instalacion.frecuencia_mantenimiento_dias or '' }}" min="1">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Próxima ejecución</label>
+                                        <input type="date" name="proxima_ejecucion" class="form-control"
+                                               value="{{ instalacion.proxima_ejecucion.strftime('%Y-%m-%d') if instalacion.proxima_ejecucion else '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Responsables -->
+                    <div class="card mb-4 border-secondary">
+                        <div class="card-header bg-light">
+                            <i class="fas fa-users me-2"></i><strong>Responsables</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Área responsable</label>
+                                    <select name="responsable_area" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        <option value="Mantenimiento" {% if instalacion.responsable_area == 'Mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                                        <option value="Producción" {% if instalacion.responsable_area == 'Producción' %}selected{% endif %}>Producción</option>
+                                        <option value="Administración" {% if instalacion.responsable_area == 'Administración' %}selected{% endif %}>Administración</option>
+                                        <option value="Calidad" {% if instalacion.responsable_area == 'Calidad' %}selected{% endif %}>Calidad</option>
+                                        <option value="Servicios Generales" {% if instalacion.responsable_area == 'Servicios Generales' %}selected{% endif %}>Servicios Generales</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Proveedor de servicio (tercero)</label>
+                                    <input type="text" name="proveedor_servicio" class="form-control" 
+                                           value="{{ instalacion.proveedor_servicio or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Auditoría -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Información de auditoría:</strong> 
+                        Creado por {{ instalacion.created_by or 'Sistema' }} el {{ instalacion.created_at.strftime('%d/%m/%Y %H:%M') if instalacion.created_at else 'N/A' }}
+                        {% if instalacion.updated_at %}
+                        | Última modificación: {{ instalacion.updated_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('servicios_generales.detalle_instalacion', instalacion_id=instalacion.id) }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-1"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mostrar/ocultar configuración de mantenimiento
+document.getElementById('requiereMantenimiento').addEventListener('change', function() {
+    const config = document.getElementById('mantenimientoConfig');
+    config.style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}

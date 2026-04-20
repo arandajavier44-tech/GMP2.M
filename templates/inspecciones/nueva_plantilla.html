@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Plantilla{% endblock %}
+{% block page_title %}Nueva Plantilla de Inspección{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.listar_plantillas') }}">Plantillas</a></li>
+                <li class="breadcrumb-item active">Nueva</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Crear Nueva Plantilla de Inspección
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formPlantilla">
+                    <!-- Datos básicos -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre" class="form-label gmp-required">Nombre de la plantilla *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="categoria" class="form-label gmp-required">Categoría GMP *</label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="produccion">🏭 Producción - Equipos</option>
+                                <option value="servicio">🔧 Servicios (HVAC, Agua, Aire, Vapor)</option>
+                                <option value="edificio">🏢 Infraestructura Edilicia</option>
+                                <option value="calidad">🔬 Laboratorio/Calidad</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="frecuencia" class="form-label gmp-required">Frecuencia *</label>
+                            <select class="form-select" id="frecuencia" name="frecuencia" required>
+                                <option value="diaria">Diaria</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="mensual">Mensual</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="tipo" class="form-label gmp-required">Tipo *</label>
+                            <select class="form-select" id="tipo" name="tipo" required>
+                                <option value="equipo">Equipo específico</option>
+                                <option value="area">Área</option>
+                                <option value="general">General</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="equipo-selector">
+                            <label for="equipo_id" class="form-label">Equipo</label>
+                            <select class="form-select" id="equipo_id" name="equipo_id">
+                                <option value="">Seleccionar equipo...</option>
+                                {% for equipo in equipos %}
+                                <option value="{{ equipo.id }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" id="area-input" style="display: none;">
+                            <label for="area" class="form-label">Área</label>
+                            <input type="text" class="form-control" id="area" name="area" placeholder="Ej: Producción, Calidad, Almacén">
+                        </div>
+                    </div>
+
+                    <!-- Items de inspección -->
+                    <h5 class="border-bottom pb-2 mb-3">Items de Inspección</h5>
+                    <div id="items-container"></div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-success mb-4" onclick="agregarItem()">
+                        <i class="fas fa-plus me-1"></i>Agregar Item
+                    </button>
+
+                    <!-- Botones -->
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('inspecciones.listar_plantillas') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Guardar Plantilla
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para item -->
+<template id="item-template">
+    <div class="card mb-3 item-card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="fw-bold">Item <span class="item-numero">1</span></span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarItem(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8 mb-2">
+                    <label class="form-label">Descripción *</label>
+                    <input type="text" class="form-control item-desc" name="items_desc[]" required>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <label class="form-label">Tipo de respuesta</label>
+                    <select class="form-select item-tipo" name="items_tipo[]">
+                        <option value="booleano">Sí/No</option>
+                        <option value="texto">Texto</option>
+                        <option value="numerico">Numérico</option>
+                        <option value="opciones">Opciones</option>
+                    </select>
+                </div>
+                <div class="col-md-12 mb-2">
+                    <label class="form-label">Criterio de aceptación</label>
+                    <input type="text" class="form-control item-criterio" name="items_criterio[]">
+                </div>
+                <div class="col-md-12">
+                    <div class="form-check">
+                        <input class="form-check-input item-critico" type="checkbox" name="items_critico[]" value="1">
+                        <label class="form-check-label">
+                            <span class="text-danger">Item crítico</span> (su incumplimiento invalida la inspección)
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let itemCount = 0;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('tipo').addEventListener('change', function() {
+            const tipo = this.value;
+            if (tipo === 'equipo') {
+                document.getElementById('equipo-selector').style.display = 'block';
+                document.getElementById('area-input').style.display = 'none';
+                document.getElementById('equipo_id').required = true;
+                document.getElementById('area').required = false;
+            } else if (tipo === 'area') {
+                document.getElementById('equipo-selector').style.display = 'none';
+                document.getElementById('area-input').style.display = 'block';
+                document.getElementById('equipo_id').required = false;
+                document.getElementById('area').required = true;
+            } else {
+                document.getElementById('equipo-selector').style.display = 'none';
+                document.getElementById('area-input').style.display = 'none';
+                document.getElementById('equipo_id').required = false;
+                document.getElementById('area').required = false;
+            }
+        });
+
+        agregarItem();
+    });
+
+    function agregarItem() {
+        const container = document.getElementById('items-container');
+        const template = document.getElementById('item-template');
+        const clone = template.content.cloneNode(true);
+        
+        itemCount++;
+        clone.querySelector('.item-numero').textContent = itemCount;
+        container.appendChild(clone);
+    }
+
+    function eliminarItem(btn) {
+        const card = btn.closest('.item-card');
+        if (document.querySelectorAll('.item-card').length > 1) {
+            card.remove();
+            document.querySelectorAll('.item-card').forEach((card, idx) => {
+                card.querySelector('.item-numero').textContent = idx + 1;
+            });
+            itemCount--;
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No se puede eliminar',
+                text: 'La plantilla debe tener al menos un item'
+            });
+        }
+    }
+
+    document.getElementById('formPlantilla').addEventListener('submit', function(e) {
+        const nombre = document.getElementById('nombre').value;
+        const items = document.querySelectorAll('.item-desc');
+        let itemsValidos = 0;
+        
+        items.forEach(item => {
+            if (item.value.trim()) itemsValidos++;
+        });
+        
+        if (!nombre) {
+            e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Debe ingresar un nombre para la plantilla' });
+            return;
+        }
+        
+        if (itemsValidos === 0) {
+            e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Items requeridos', text: 'Debe agregar al menos un item de inspección' });
+            return;
+        }
+    });
+</script>
+
+<style>
+.gmp-required::after { content: " *"; color: #dc3545; font-weight: bold; }
+.item-card { border-left: 3px solid #28a745; }
+</style>
+{% endblock %}

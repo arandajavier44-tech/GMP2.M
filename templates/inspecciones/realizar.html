@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Realizar Inspección{% endblock %}
+{% block page_title %}Realizar Inspección: {{ plantilla.nombre }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.index') }}">Inspecciones</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('inspecciones.listar_plantillas') }}">Plantillas</a></li>
+                <li class="breadcrumb-item active">{{ plantilla.nombre }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>Formulario de Inspección
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formInspeccion">
+                    <!-- Información de la inspección -->
+                    <div class="alert alert-info mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Fecha:</strong> {{ now.strftime('%d/%m/%Y') }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Inspector:</strong> {{ session.nombre_completo or session.username }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items de inspección -->
+                    {% for item in items %}
+                    <div class="card mb-3 item-card {% if item.es_critico %}border-danger{% endif %}">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>Item {{ loop.index }}</strong>
+                                {% if item.es_critico %}
+                                <span class="badge bg-danger ms-2">Crítico</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">{{ item.descripcion }}</label>
+                                {% if item.criterio %}
+                                <p class="small text-muted"><i class="fas fa-info-circle me-1"></i>{{ item.criterio }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            {% if item.tipo_respuesta == 'booleano' %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="item_{{ item.id }}" 
+                                               id="item_{{ item.id }}_si" value="si" required>
+                                        <label class="form-check-label" for="item_{{ item.id }}_si">
+                                            <i class="fas fa-check-circle text-success me-1"></i>Sí (Conforme)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="item_{{ item.id }}" 
+                                               id="item_{{ item.id }}_no" value="no">
+                                        <label class="form-check-label" for="item_{{ item.id }}_no">
+                                            <i class="fas fa-times-circle text-danger me-1"></i>No (No conforme)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% elif item.tipo_respuesta == 'numerico' %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <input type="number" step="0.01" class="form-control" 
+                                           name="item_{{ item.id }}" placeholder="Valor medido" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" placeholder="Unidad" disabled
+                                           value="{{ item.unidad or '' }}">
+                                </div>
+                            </div>
+                            
+                            {% elif item.tipo_respuesta == 'texto' %}
+                            <textarea class="form-control" name="item_{{ item.id }}" rows="2" 
+                                      placeholder="Ingrese observación" required></textarea>
+                            
+                            {% elif item.tipo_respuesta == 'opciones' and item.opciones %}
+                            <select class="form-select" name="item_{{ item.id }}" required>
+                                <option value="">Seleccionar...</option>
+                                {% for opcion in item.opciones %}
+                                <option value="{{ opcion }}">{{ opcion }}</option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+                            
+                            <div class="mt-2">
+                                <input type="text" class="form-control form-control-sm" 
+                                       name="obs_{{ item.id }}" placeholder="Observaciones (opcional)">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Observaciones generales -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-sticky-note me-2"></i>Observaciones Generales
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="observaciones_generales" rows="3" 
+                                      placeholder="Observaciones adicionales de la inspección..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Acciones correctivas -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-tools me-2"></i>Acciones Correctivas
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <textarea class="form-control" name="acciones" rows="3" 
+                                      placeholder="Acciones tomadas o requeridas..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('inspecciones.seleccionar_plantilla') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i>Registrar Inspección
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Información de la plantilla -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Plantilla:</th>
+                        <td>{{ plantilla.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <th>Frecuencia:</th>
+                        <td><span class="badge bg-info">{{ plantilla.frecuencia|capitalize }}</span></td>
+                    </tr>
+                    {% if plantilla.equipo %}
+                    <tr>
+                        <th>Equipo:</th>
+                        <td>{{ plantilla.equipo.code }} - {{ plantilla.equipo.name }}</td>
+                    </tr>
+                    {% elif plantilla.area %}
+                    <tr>
+                        <th>Área:</th>
+                        <td>{{ plantilla.area }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Total items:</th>
+                        <td>{{ items|length }}</td>
+                    </tr>
+                    <tr>
+                        <th>Items críticos:</th>
+                        <td>{{ items|selectattr('es_critico')|list|length }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Instrucciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="small">
+                    <li class="mb-2">Complete todos los items obligatorios</li>
+                    <li class="mb-2">Los items marcados en <span class="text-danger">rojo</span> son críticos</li>
+                    <li class="mb-2">Si un item crítico es "No conforme", la inspección será rechazada</li>
+                    <li class="mb-2">Agregue observaciones cuando sea necesario</li>
+                    <li class="mb-2">Registre las acciones correctivas tomadas</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('formInspeccion').addEventListener('submit', function(e) {
+        // Validar que todos los items tengan respuesta
+        const radios = document.querySelectorAll('input[type="radio"]');
+        const grupos = {};
+        
+        radios.forEach(radio => {
+            const name = radio.name;
+            if (!grupos[name]) {
+                grupos[name] = false;
+            }
+        });
+        
+        radios.forEach(radio => {
+            if (radio.checked) {
+                grupos[radio.name] = true;
+            }
+        });
+        
+        let incompletos = [];
+        for (let [name, completado] of Object.entries(grupos)) {
+            if (!completado) {
+                incompletos.push(name);
+            }
+        }
+        
+        if (incompletos.length > 0) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Items incompletos',
+                text: 'Debe responder todos los items de la inspección'
+            });
+        }
+    });
+</script>
+
+<style>
+.item-card {
+    transition: all 0.2s;
+}
+.item-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

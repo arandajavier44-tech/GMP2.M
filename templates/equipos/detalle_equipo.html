@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle del Equipo{% endblock %}
+{% block page_title %}Detalle del Equipo GMP{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('equipos.gestion_equipos') }}">Equipos</a></li>
+                <li class="breadcrumb-item active">{{ equipo.code }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal para cambiar estado -->
+<div class="modal fade" id="cambiarEstadoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-sync-alt me-2"></i>Cambiar Estado del Equipo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('equipos.cambiar_estado', equipo_id=equipo.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Seleccionar nuevo estado</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="Operativo" {% if equipo.current_status == 'Operativo' %}selected{% endif %}>🟢 Operativo</option>
+                            <option value="En Mantenimiento" {% if equipo.current_status == 'En Mantenimiento' %}selected{% endif %}>🟡 En Mantenimiento</option>
+                            <option value="Fuera de Servicio" {% if equipo.current_status == 'Fuera de Servicio' %}selected{% endif %}>🔴 Fuera de Servicio</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>El cambio de estado quedará registrado en el historial del equipo.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cambiar Estado</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Información principal del equipo -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-industry me-2"></i>{{ equipo.name }}</h5>
+                <div>
+                    <span class="badge bg-light text-dark me-2">{{ equipo.code }}</span>
+                    <span class="semaforo semaforo-{{ equipo.get_status_color() }}"></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Información General</h6>
+                        <table class="table table-sm">
+                            <tr><th>Clasificación GMP:</th><td><span class="badge bg-info">{{ equipo.gmp_classification }}</span>{% if equipo.gmp_classification %}  <span class="badge bg-secondary">{{ equipo.gmp_classification }}</span>{% endif %}</span> </span>
+                            <tr><th>Contacto con Producto:</th><td>{{ equipo.product_contact }}</span> </span>
+                            <tr><th>Ubicación:</th><td>{{ equipo.location or 'No especificada' }}</span> </span>
+                            <tr><th>Estado:</th><td><div class="d-flex align-items-center"><span class="semaforo semaforo-{{ equipo.get_status_color() }} me-2"></span><span class="badge bg-{{ 'success' if equipo.current_status == 'Operativo' else 'warning' if equipo.current_status == 'En Mantenimiento' else 'danger' }}">{{ equipo.current_status }}</span></div></span> </span>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Información Técnica</h6>
+                        <table class="table table-sm">
+                            <tr><th>Fabricante:</th><td>{{ equipo.manufacturer or 'N/A' }}</span> </span>
+                            <tr><th>Modelo:</th><td>{{ equipo.model or 'N/A' }}</span> </span>
+                            <tr><th>Serie:</th><td>{{ equipo.serial_number or 'N/A' }}</span> </span>
+                            <tr><th>Fecha Instalación:</th><td>{{ equipo.installation_date.strftime('%d/%m/%Y') if equipo.installation_date else 'N/A' }}</span> </span>
+                        </table>
+                    </div>
+                </div>
+                {% if equipo.description %}
+                <div class="mt-3"><h6 class="fw-bold">Descripción:</h6><p class="text-muted">{{ equipo.description }}</p></div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sistemas del equipo -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Sistemas del Equipo con Inventarios Críticos</h5>
+            </div>
+            <div class="card-body">
+                {% if equipo.sistemas %}
+                    <div class="accordion" id="accordionSistemas">
+                        {% for sistema in equipo.sistemas %}
+                        <div class="accordion-item mb-2 border">
+                            <h2 class="accordion-header" id="heading{{ sistema.id }}">
+                                <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ sistema.id }}">
+                                    <div class="d-flex align-items-center w-100">
+                                        <i class="fas fa-cog me-2" style="color: {{ sistema.color }}"></i>
+                                        <strong>{{ sistema.nombre }}</strong>
+                                        <span class="badge bg-info ms-3">{{ sistema.categoria }}</span>
+                                        <span class="badge bg-success ms-2">{{ sistema.planes_pm|length }} tareas</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse{{ sistema.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" data-bs-parent="#accordionSistemas">
+                                <div class="accordion-body">
+                                    {% if sistema.descripcion %}<p class="text-muted small">{{ sistema.descripcion }}</p>{% endif %}
+                                    {% if sistema.planes_pm %}
+                                        {% for plan in sistema.planes_pm %}
+                                        <div class="card mb-3 border-{{ 'primary' if plan.repuestos_necesarios else 'secondary' }}">
+                                            <div class="card-header bg-light py-2">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span><i class="fas fa-tasks text-primary me-2"></i><strong>{{ plan.tarea_descripcion }}</strong></span>
+                                                    <span class="badge bg-info">c/{{ plan.frecuencia_dias }} días</span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body py-2">
+                                                {% if plan.repuestos_necesarios %}
+                                                    <div class="small">
+                                                        <span class="text-success fw-bold"><i class="fas fa-boxes me-1"></i>Repuestos críticos necesarios:</span>
+                                                        <ul class="list-unstyled mt-2">
+                                                            {% for rep in plan.repuestos_necesarios %}
+                                                            <li class="mb-2 p-2 bg-light rounded">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <div><i class="fas fa-box text-success me-2"></i><strong>{{ rep.repuesto.codigo }}</strong> - {{ rep.repuesto.nombre }}{% if rep.repuesto.numero_parte %}<br><small class="text-muted">N° Parte: {{ rep.repuesto.numero_parte }}</small>{% endif %}</div>
+                                                                    <div class="text-end"><span class="badge bg-warning text-dark me-2">Requiere: {{ rep.cantidad_requerida }} ud(s)</span><span class="badge bg-{{ 'danger' if rep.repuesto.stock_actual <= rep.repuesto.stock_minimo else 'warning' if rep.repuesto.stock_actual <= rep.repuesto.stock_minimo * 2 else 'success' }}">Stock: {{ rep.repuesto.stock_actual }}</span></div>
+                                                                </div>
+                                                                {% if rep.repuesto.ubicacion %}<div class="small text-muted mt-1 ms-4"><i class="fas fa-map-marker-alt me-1"></i>Ubicación: {{ rep.repuesto.ubicacion }}</div>{% endif %}
+                                                            </li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                {% else %}
+                                                    <p class="small text-muted mb-0"><i class="fas fa-info-circle me-1"></i>Esta tarea no requiere repuestos críticos</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-3"><i class="fas fa-info-circle me-2"></i>Este equipo no tiene sistemas registrados</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Validación GMP -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-dark"><h5 class="mb-0"><i class="fas fa-file-certificate me-2"></i>Validación GMP</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                     <tr><th>Estado:</th><td>{% if equipo.validation_status %}<span class="badge bg-info">{{ equipo.validation_status }}</span>{% else %}<span class="badge bg-secondary">Pendiente</span>{% endif %}</span> </span>
+                    {% if equipo.validation_date %}<tr><th>Fecha Validación:</th><td>{{ equipo.validation_date.strftime('%d/%m/%Y') }}</span> </span>{% endif %}
+                    {% if equipo.next_validation %}<tr><th>Próxima Validación:</th><td>{{ equipo.next_validation.strftime('%d/%m/%Y') }}</span> </span>{% endif %}
+                </table>
+            </div>
+        </div>
+        
+        <!-- Documentación -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Documentación</h5></div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    {% if equipo.sop_number %}<li><i class="fas fa-file-pdf text-danger me-2"></i>SOP Operación: {{ equipo.sop_number }}</li>{% endif %}
+                    {% if equipo.maintenance_sop %}<li><i class="fas fa-file-pdf text-danger me-2"></i>SOP Mantenimiento: {{ equipo.maintenance_sop }}</li>{% endif %}
+                    {% if equipo.cleaning_sop %}<li><i class="fas fa-file-pdf text-danger me-2"></i>SOP Limpieza: {{ equipo.cleaning_sop }}</li>{% endif %}
+                    {% if equipo.calibration_sop %}<li><i class="fas fa-file-pdf text-danger me-2"></i>SOP Calibración: {{ equipo.calibration_sop }}</li>{% endif %}
+                </ul>
+            </div>
+        </div>
+        
+        <!-- CÓDIGO QR DEL EQUIPO -->
+        {% if equipo.qr_code %}
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>Código QR del Equipo</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="{{ url_for('static', filename=equipo.qr_code) }}" alt="QR Code" style="max-width: 150px;" class="mb-3 img-fluid">
+                <p class="text-muted small">
+                    <i class="fas fa-mobile-alt me-1"></i>
+                    Escanee este código para acceder rápidamente a la ficha del equipo desde su dispositivo móvil.
+                </p>
+                <a href="{{ url_for('static', filename=equipo.qr_code) }}" download class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-download me-1"></i>Descargar QR
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Inventarios Críticos -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-danger text-white"><h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Inventarios Críticos</h5></div>
+            <div class="card-body">
+                {% set repuestos_criticos = equipo.get_repuestos_criticos() %}
+                {% if repuestos_criticos %}
+                    <div class="list-group">
+                        {% for rp in repuestos_criticos %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><strong>{{ rp.repuesto.codigo }}</strong><br><small>{{ rp.repuesto.nombre }}</small></div>
+                                <div><span class="badge bg-{{ 'danger' if rp.repuesto.stock_actual <= rp.repuesto.stock_minimo else 'warning' if rp.repuesto.stock_actual <= rp.repuesto.stock_minimo * 2 else 'success' }}">Stock: {{ rp.repuesto.stock_actual }}</span></div>
+                            </div>
+                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i>{{ rp.repuesto.ubicacion or 'Sin ubicación' }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-2 mb-0"><i class="fas fa-info-circle me-2"></i>No hay inventarios críticos asociados</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Acciones -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white"><h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Acciones</h5></div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#cambiarEstadoModal">
+                        <i class="fas fa-sync-alt me-2"></i>Cambiar Estado
+                    </button>
+                    
+                    <!-- NUEVO BOTÓN DE TRAZABILIDAD -->
+                    <a href="{{ url_for('ordenes.trazabilidad_equipo', equipo_id=equipo.id) }}" class="btn btn-info">
+                        <i class="fas fa-chart-line me-2"></i>Ver Trazabilidad
+                    </a>
+                    
+                    {% if session.role == 'Admin' %}
+                    <a href="{{ url_for('equipos.editar_equipo', equipo_id=equipo.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Editar Equipo
+                    </a>
+                    <a href="{{ url_for('equipos.asignar_repuestos', equipo_id=equipo.id) }}" class="btn btn-success">
+                        <i class="fas fa-boxes me-2"></i>Asignar Repuestos
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('ordenes.nueva_orden') }}?equipo_id={{ equipo.id }}" class="btn btn-outline-primary">
+                        <i class="fas fa-clipboard-list me-2"></i>Nueva Orden de Trabajo
+                    </a>
+                    
+                    <a href="{{ url_for('equipos.imprimir_ficha', equipo_id=equipo.id) }}" class="btn btn-secondary" target="_blank">
+                        <i class="fas fa-print me-2"></i>Imprimir Ficha
+                    </a>
+                    
+                    {% if session.role == 'Admin' %}
+                    <form method="POST" action="{{ url_for('equipos.eliminar_equipo', equipo_id=equipo.id) }}" onsubmit="return confirm('¿Está SEGURO de eliminar este equipo? Esta acción NO SE PUEDE DESHACER.');">
+                        <button type="submit" class="btn btn-danger w-100 mt-2">
+                            <i class="fas fa-trash me-2"></i>Eliminar Equipo
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leyenda de semáforo -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center justify-content-center">
+                    <span class="me-4"><i class="fas fa-info-circle me-1"></i><strong>Estados:</strong></span>
+                    <span class="me-4"><span class="semaforo semaforo-green"></span> Operativo</span>
+                    <span class="me-4"><span class="semaforo semaforo-yellow"></span> En Mantenimiento</span>
+                    <span class="me-4"><span class="semaforo semaforo-red"></span> Fuera de Servicio</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.badge.bg-danger').forEach(badge => {
+            if (badge.textContent.includes('Stock:')) {
+                const card = badge.closest('.list-group-item');
+                if (card) card.style.borderLeft = '3px solid #dc3545';
+            }
+        });
+        document.querySelectorAll('.badge.bg-danger').forEach(badge => {
+            const card = badge.closest('.card');
+            if (card && card.classList.contains('mb-3')) card.style.borderLeft = '3px solid #dc3545';
+        });
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    Swal.fire({ icon: '{{ "success" if category == "success" else "error" if category == "error" else "info" }}', title: '{{ message }}', showConfirmButton: false, timer: 3000 });
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    });
+</script>
+
+<style>
+    @media print {
+        .sidebar, .navbar, .btn, footer, .card-header.bg-secondary { display: none !important; }
+        .main-content { margin: 0 !important; padding: 20px !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
+    }
+    .semaforo { width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .semaforo-green { background-color: #28a745; }
+    .semaforo-yellow { background-color: #ffc107; }
+    .semaforo-red { background-color: #dc3545; }
+    .semaforo-gray { background-color: #6c757d; }
+</style>
+{% endblock %}

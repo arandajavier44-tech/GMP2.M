@@ -1,0 +1,19 @@
+{
+  "numero_ot": "OT-0004-2026-GMP-PR-ZUL-01",
+  "titulo": "Mantenimiento Preventivo - GMP-PR-ZUL-01 - VERIFICAR NIVEN DE ACEITE",
+  "estado": "Cancelada",
+  "equipo": "GMP-PR-ZUL-01",
+  "equipo_nombre": "ZULIANA ",
+  "fecha_creacion": "12/04/2026 12:40",
+  "prioridad": "Media",
+  "tipo": "Preventivo",
+  "asignado_a": "No asignado",
+  "fecha_estimada": "12/04/2026",
+  "metadata": {
+    "tipo": "orden",
+    "fecha_generacion": "2026-04-12T19:53:26.715722",
+    "version": "1.0",
+    "sistema": "GMP Maintenance System"
+  },
+  "url": "http://localhost:5000/ordenes/4"
+}

@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block title %}Calendario de Mantenimientos{% endblock %}
+{% block page_title %}Calendario de Mantenimientos Preventivos{% endblock %}
+
+{% block content %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Calendario de Mantenimientos</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Tarjetas de resumen -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Vencidos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="vencidas">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Esta Semana
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="esta_semana">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-week fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Este Mes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="este_mes">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Pendientes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="total_pendientes">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calendario -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-calendar-alt me-2"></i>Calendario de Mantenimientos Preventivos
+                </h6>
+                <div>
+                    <button class="btn btn-sm btn-light me-2" onclick="cambiarVista('dayGridMonth')">
+                        <i class="fas fa-calendar me-1"></i>Mes
+                    </button>
+                    <button class="btn btn-sm btn-light me-2" onclick="cambiarVista('timeGridWeek')">
+                        <i class="fas fa-calendar-week me-1"></i>Semana
+                    </button>
+                    <button class="btn btn-sm btn-light" onclick="cambiarVista('timeGridDay')">
+                        <i class="fas fa-calendar-day me-1"></i>Día
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="calendario"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de detalles de tarea -->
+<div class="modal fade" id="tareaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-tasks me-2"></i>Detalles de Mantenimiento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="tareaDetalle">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Cargando...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para generar orden -->
+<div class="modal fade" id="generarOrdenModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-list me-2"></i>Generar Orden de Trabajo
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Generar orden de trabajo para este mantenimiento?</p>
+                <div class="mb-3">
+                    <label for="fecha_orden" class="form-label">Fecha programada:</label>
+                    <input type="date" class="form-control" id="fecha_orden" value="{{ now.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="alert alert-info" id="generarInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarGenerarOrden()">Generar Orden</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.js'></script>
+
+<script>
+    let calendar;
+    let tareaSeleccionada = null;
+    let fechaSeleccionada = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarResumen();
+        
+        const calendarEl = document.getElementById('calendario');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: ''
+            },
+            events: '/calendario/api/eventos',
+            eventDidMount: function(info) {
+                // Agregar tooltip
+                info.el.title = info.event.title;
+            },
+            eventClick: function(info) {
+                if (info.event.url && info.event.url !== '#') {
+                    window.location.href = info.event.url;
+                    return;
+                }
+                
+                // Si es una tarea programada (sin orden)
+                const props = info.event.extendedProps;
+                if (props.tarea_id) {
+                    tareaSeleccionada = props.tarea_id;
+                    fechaSeleccionada = info.event.startStr;
+                    mostrarDetalleTarea(props.tarea_id);
+                }
+            },
+            datesSet: function() {
+                cargarResumen();
+            }
+        });
+        
+        calendar.render();
+    });
+
+    function cargarResumen() {
+        fetch('/calendario/api/resumen')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('vencidas').textContent = data.vencidas;
+                document.getElementById('esta_semana').textContent = data.esta_semana;
+                document.getElementById('este_mes').textContent = data.este_mes;
+                document.getElementById('total_pendientes').textContent = data.total_pendientes;
+            });
+    }
+
+    function cambiarVista(vista) {
+        calendar.changeView(vista);
+    }
+
+    function mostrarDetalleTarea(tareaId) {
+        fetch(`/calendario/api/tarea/${tareaId}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Equipo</h6>
+                            <p><strong>${data.equipo.code}</strong> - ${data.equipo.name}</p>
+                            <p><span class="badge bg-info">${data.equipo.gmp_classification}</span></p>
+                            
+                            <h6 class="fw-bold mt-3">Sistema</h6>
+                            <p>${data.sistema.nombre} (${data.sistema.categoria})</p>
+                            
+                            <h6 class="fw-bold mt-3">Tarea</h6>
+                            <p>${data.tarea.descripcion}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Programación</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Frecuencia:</th>
+                                    <td>${data.tarea.frecuencia} días</td>
+                                </tr>
+                                <tr>
+                                    <th>Tiempo estimado:</th>
+                                    <td>${data.tarea.tiempo_estimado} horas</td>
+                                </tr>
+                                <tr>
+                                    <th>Última ejecución:</th>
+                                    <td>${data.tarea.ultima_ejecucion || 'Nunca'}</td>
+                                </tr>
+                                <tr>
+                                    <th>Próxima ejecución:</th>
+                                    <td><strong>${data.tarea.proxima_ejecucion}</strong></td>
+                                </tr>
+                            </table>
+                `;
+                
+                if (data.orden_pendiente) {
+                    html += `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Ya existe una orden pendiente: 
+                            <a href="/ordenes/${data.orden_pendiente.id}">${data.orden_pendiente.numero_ot}</a>
+                        </div>
+                    `;
+                }
+                
+                if (data.historial && data.historial.length > 0) {
+                    html += `
+                        <h6 class="fw-bold mt-3">Historial</h6>
+                        <ul class="list-unstyled">
+                    `;
+                    data.historial.forEach(h => {
+                        html += `
+                            <li class="mb-1">
+                                <i class="fas fa-history me-2"></i>
+                                <a href="/ordenes/${h.id}">${h.numero_ot}</a>
+                                - ${h.fecha} (${h.estado})
+                            </li>
+                        `;
+                    });
+                    html += `</ul>`;
+                }
+                
+                html += `</div></div>`;
+                
+                document.getElementById('tareaDetalle').innerHTML = html;
+                
+                // Configurar footer del modal
+                let footer = document.getElementById('modalFooter');
+                if (!data.orden_pendiente) {
+                    footer.innerHTML = `
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-success" onclick="mostrarGenerarOrden('${data.tarea.descripcion}')">
+                            <i class="fas fa-clipboard-list me-2"></i>Generar Orden
+                        </button>
+                    `;
+                } else {
+                    footer.innerHTML = `
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    `;
+                }
+                
+                new bootstrap.Modal(document.getElementById('tareaModal')).show();
+            });
+    }
+
+    function mostrarGenerarOrden(tareaDesc) {
+        bootstrap.Modal.getInstance(document.getElementById('tareaModal')).hide();
+        
+        document.getElementById('generarInfo').innerHTML = `
+            <strong>Tarea:</strong> ${tareaDesc}<br>
+            <strong>Fecha:</strong> <span id="fechaMostrada">${fechaSeleccionada}</span>
+        `;
+        document.getElementById('fecha_orden').value = fechaSeleccionada;
+        
+        new bootstrap.Modal(document.getElementById('generarOrdenModal')).show();
+    }
+
+    function confirmarGenerarOrden() {
+        const fecha = document.getElementById('fecha_orden').value;
+        
+        fetch('/calendario/api/generar-orden', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                tarea_id: tareaSeleccionada,
+                fecha: fecha
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Orden generada',
+                    html: `Orden <strong>${data.numero_ot}</strong> creada correctamente`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                bootstrap.Modal.getInstance(document.getElementById('generarOrdenModal')).hide();
+                calendar.refetchEvents();
+                cargarResumen();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.error || 'No se pudo generar la orden'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error al generar la orden'
+            });
+        });
+    }
+</script>
+
+<style>
+.border-left-danger {
+    border-left: 4px solid #e74a3b !important;
+}
+.border-left-warning {
+    border-left: 4px solid #f6c23e !important;
+}
+.border-left-info {
+    border-left: 4px solid #36b9cc !important;
+}
+.border-left-primary {
+    border-left: 4px solid #4e73df !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+</style>
+{% endblock %}

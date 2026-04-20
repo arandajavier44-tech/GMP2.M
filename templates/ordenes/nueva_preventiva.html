@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Orden Preventiva{% endblock %}
+{% block page_title %}Nueva Orden Preventiva - {{ equipo.code }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.gestion_ordenes') }}">Órdenes</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('ordenes.nueva_orden') }}">Nueva Orden</a></li>
+                <li class="breadcrumb-item active">Preventiva</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Mantenimiento Preventivo - {{ equipo.code }}: {{ equipo.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formPreventiva">
+                    
+                    <!-- Información del equipo (resumen GMP) -->
+                    <div class="alert alert-gmp-info mb-4">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small><i class="fas fa-tag me-1"></i> Clasificación GMP:</small>
+                                <strong>{{ equipo.gmp_classification }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small><i class="fas fa-flask me-1"></i> Contacto producto:</small>
+                                <strong>{{ equipo.product_contact }}</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small><i class="fas fa-map-marker me-1"></i> Ubicación:</small>
+                                <strong>{{ equipo.location or 'N/E' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos básicos de la orden -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="prioridad" class="form-label fw-bold">
+                                <i class="fas fa-flag me-2"></i>Prioridad *
+                            </label>
+                            <select class="form-select" id="prioridad" name="prioridad" required>
+                                <option value="Baja">Baja</option>
+                                <option value="Media" selected>Media</option>
+                                <option value="Alta">Alta</option>
+                                <option value="Crítica">Crítica</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_estimada" class="form-label fw-bold">
+                                <i class="fas fa-calendar me-2"></i>Fecha estimada
+                            </label>
+                            <input type="date" class="form-control" id="fecha_estimada" name="fecha_estimada"
+                                   value="{{ now.strftime('%Y-%m-%d') }}">
+                        </div>
+                    </div>
+
+                    <!-- Sistemas y Tareas del Equipo -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-2">
+                            <i class="fas fa-cogs me-2"></i>
+                            Sistemas y Tareas de Mantenimiento
+                        </h6>
+                        
+                        {% if equipo.sistemas %}
+                            <div class="accordion" id="accordionSistemas">
+                                {% for sistema in equipo.sistemas %}
+                                <div class="accordion-item mb-2">
+                                    <h2 class="accordion-header" id="heading{{ sistema.id }}">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#collapse{{ sistema.id }}">
+                                            <div class="d-flex align-items-center w-100">
+                                                <i class="fas fa-cog me-2" style="color: {{ sistema.color }}"></i>
+                                                <strong>{{ sistema.nombre }}</strong>
+                                                <span class="badge bg-info ms-3">{{ sistema.categoria }}</span>
+                                                <span class="badge bg-success ms-2">{{ sistema.planes_pm|length }} tareas</span>
+                                            </div>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ sistema.id }}" class="accordion-collapse collapse" 
+                                         data-bs-parent="#accordionSistemas">
+                                        <div class="accordion-body">
+                                            {% if sistema.descripcion %}
+                                            <p class="text-muted small">{{ sistema.descripcion }}</p>
+                                            {% endif %}
+                                            
+                                            {% if sistema.planes_pm %}
+                                                {% for plan in sistema.planes_pm %}
+                                                <div class="card mb-2 tarea-card" data-tarea-id="{{ plan.id }}" data-sistema-id="{{ sistema.id }}">
+                                                    <div class="card-body py-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="form-check me-3">
+                                                                <input class="form-check-input tarea-checkbox" 
+                                                                       type="checkbox" 
+                                                                       value="{{ plan.id }}"
+                                                                       data-tarea-desc="{{ plan.tarea_descripcion }}"
+                                                                       data-sistema="{{ sistema.nombre }}"
+                                                                       id="tarea_{{ plan.id }}">
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <label for="tarea_{{ plan.id }}" class="fw-bold">
+                                                                    {{ plan.tarea_descripcion }}
+                                                                </label>
+                                                                <br>
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-clock me-1"></i>
+                                                                    Frecuencia: cada {{ plan.frecuencia_dias }} días
+                                                                    {% if plan.ultima_ejecucion %}
+                                                                    | Última: {{ plan.ultima_ejecucion.strftime('%d/%m/%Y') }}
+                                                                    {% endif %}
+                                                                </small>
+                                                            </div>
+                                                            
+                                                            <!-- Repuestos críticos asociados -->
+                                                            {% if plan.repuestos_necesarios %}
+                                                            <div class="ms-3">
+                                                                <span class="badge bg-warning text-dark" 
+                                                                      data-bs-toggle="tooltip" 
+                                                                      title="Requiere repuestos">
+                                                                    <i class="fas fa-box me-1"></i>
+                                                                    {{ plan.repuestos_necesarios|length }}
+                                                                </span>
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        
+                                                        <!-- Detalle de repuestos (oculto por defecto) -->
+                                                        {% if plan.repuestos_necesarios %}
+                                                        <div class="repuestos-detalle mt-2 ms-4 ps-3 border-start border-warning d-none">
+                                                            <small class="text-warning fw-bold">
+                                                                <i class="fas fa-boxes me-1"></i>Repuestos necesarios:
+                                                            </small>
+                                                            <ul class="list-unstyled small mt-1">
+                                                                {% for rep in plan.repuestos_necesarios %}
+                                                                <li class="mb-1">
+                                                                    <i class="fas fa-circle me-1" style="color: {{ 'danger' if rep.repuesto.stock_actual <= rep.repuesto.stock_minimo else 'warning' if rep.repuesto.stock_actual <= rep.repuesto.stock_minimo * 2 else 'success' }}; font-size: 8px;"></i>
+                                                                    <strong>{{ rep.repuesto.codigo }}</strong> - {{ rep.repuesto.nombre }}
+                                                                    <span class="badge bg-info ms-2">Req: {{ rep.cantidad_requerida }}</span>
+                                                                    <span class="badge bg-{{ 'danger' if rep.repuesto.stock_actual <= rep.repuesto.stock_minimo else 'warning' if rep.repuesto.stock_actual <= rep.repuesto.stock_minimo * 2 else 'success' }}">
+                                                                        Stock: {{ rep.repuesto.stock_actual }}
+                                                                    </span>
+                                                                </li>
+                                                                {% endfor %}
+                                                            </ul>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Este equipo no tiene sistemas registrados. No se puede crear una orden preventiva.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tareas seleccionadas (resumen) -->
+                    <div class="mb-4" id="resumen-tareas" style="display: none;">
+                        <h6 class="fw-bold border-bottom pb-2 text-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Tareas Seleccionadas
+                        </h6>
+                        <div id="lista-tareas-seleccionadas" class="bg-light p-3 rounded">
+                            <!-- Se llenará con JS -->
+                        </div>
+                    </div>
+
+                    <!-- Asignación -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="asignado_a" class="form-label fw-bold">
+                                <i class="fas fa-user me-2"></i>Asignar a
+                            </label>
+                            <input type="text" class="form-control" id="asignado_a" name="asignado_a"
+                                   placeholder="Nombre del técnico">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tiempo_estimado" class="form-label fw-bold">
+                                <i class="fas fa-clock me-2"></i>Tiempo estimado (horas)
+                            </label>
+                            <input type="number" step="0.5" class="form-control" id="tiempo_estimado" name="tiempo_estimado">
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="mb-4">
+                        <label for="observaciones" class="form-label fw-bold">
+                            <i class="fas fa-sticky-note me-2"></i>Observaciones
+                        </label>
+                        <textarea class="form-control" id="observaciones" name="observaciones" rows="2"
+                                  placeholder="Información adicional relevante..."></textarea>
+                    </div>
+
+                    <!-- Campos ocultos -->
+                    <div id="tareas-hidden"></div>
+                    <input type="hidden" name="total_tareas" id="total_tareas" value="0">
+
+                    <!-- Botones -->
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('ordenes.nueva_orden') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary" id="btnSubmit" {% if not equipo.sistemas %}disabled{% endif %}>
+                            <i class="fas fa-save me-2"></i>Crear Orden Preventiva
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Información del equipo -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-industry me-2"></i>Información del Equipo
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th>Código:</th>
+                        <td>{{ equipo.code }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nombre:</th>
+                        <td>{{ equipo.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Clasificación:</th>
+                        <td><span class="badge bg-info">{{ equipo.gmp_classification }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>Estado:</th>
+                        <td>
+                            <span class="semaforo semaforo-{{ equipo.get_status_color() }} me-1"></span>
+                            {{ equipo.current_status }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Checklist GMP -->
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>Checklist GMP
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="gmp_check_1" checked disabled>
+                    <label class="form-check-label" for="gmp_check_1">
+                        <small>Identificación del equipo verificada</small>
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="gmp_check_2" checked disabled>
+                    <label class="form-check-label" for="gmp_check_2">
+                        <small>Clasificación GMP válida</small>
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="gmp_check_3">
+                    <label class="form-check-label" for="gmp_check_3">
+                        <small>Seleccionar al menos una tarea</small>
+                    </label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="gmp_check_4">
+                    <label class="form-check-label" for="gmp_check_4">
+                        <small>Asignar responsable</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.tarea-checkbox');
+        const resumenDiv = document.getElementById('resumen-tareas');
+        const listaResumen = document.getElementById('lista-tareas-seleccionadas');
+        const tareasHidden = document.getElementById('tareas-hidden');
+        const totalTareas = document.getElementById('total_tareas');
+        const btnSubmit = document.getElementById('btnSubmit');
+        const gmpCheck3 = document.getElementById('gmp_check_3');
+        const gmpCheck4 = document.getElementById('gmp_check_4');
+        const asignadoInput = document.getElementById('asignado_a');
+        
+        // Inicializar tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Mostrar/ocultar repuestos al hacer clic en la tarea
+        document.querySelectorAll('.tarea-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('form-check-input') && 
+                    !e.target.closest('.form-check')) {
+                    const repuestosDetalle = this.querySelector('.repuestos-detalle');
+                    if (repuestosDetalle) {
+                        repuestosDetalle.classList.toggle('d-none');
+                    }
+                }
+            });
+        });
+
+        // Manejar selección de tareas
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', actualizarResumen);
+        });
+
+        // Validar asignado
+        asignadoInput.addEventListener('input', function() {
+            gmpCheck4.checked = this.value.trim() !== '';
+        });
+
+        function actualizarResumen() {
+            const seleccionadas = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            if (seleccionadas.length > 0) {
+                resumenDiv.style.display = 'block';
+                gmpCheck3.checked = true;
+                
+                // Actualizar lista visual
+                let html = '<ul class="list-unstyled mb-0">';
+                seleccionadas.forEach(cb => {
+                    const tareaDesc = cb.dataset.tareaDesc;
+                    const sistema = cb.dataset.sistema;
+                    html += `<li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                <strong>${sistema}:</strong> ${tareaDesc}
+                             </li>`;
+                });
+                html += '</ul>';
+                listaResumen.innerHTML = html;
+                
+                // Actualizar campos ocultos
+                tareasHidden.innerHTML = '';
+                seleccionadas.forEach((cb, index) => {
+                    const tareaId = cb.value;
+                    
+                    // Campo para ID de tarea
+                    const inputId = document.createElement('input');
+                    inputId.type = 'hidden';
+                    inputId.name = `tarea_${index}_id`;
+                    inputId.value = tareaId;
+                    tareasHidden.appendChild(inputId);
+                    
+                    // Campo para descripción
+                    const inputDesc = document.createElement('input');
+                    inputDesc.type = 'hidden';
+                    inputDesc.name = `tarea_${index}_descripcion`;
+                    inputDesc.value = cb.dataset.tareaDesc;
+                    tareasHidden.appendChild(inputDesc);
+                    
+                    // Campo para sistema
+                    const inputSis = document.createElement('input');
+                    inputSis.type = 'hidden';
+                    inputSis.name = `tarea_${index}_sistema`;
+                    inputSis.value = cb.dataset.sistema;
+                    tareasHidden.appendChild(inputSis);
+                });
+                
+                totalTareas.value = seleccionadas.length;
+            } else {
+                resumenDiv.style.display = 'none';
+                gmpCheck3.checked = false;
+                totalTareas.value = 0;
+            }
+            
+            // Validar botón submit
+            validarSubmit();
+        }
+
+        function validarSubmit() {
+            const tareasSeleccionadas = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const asignado = asignadoInput.value.trim();
+            
+            if (tareasSeleccionadas > 0 && asignado !== '') {
+                btnSubmit.disabled = false;
+            } else {
+                btnSubmit.disabled = true;
+            }
+        }
+
+        // Validación antes de enviar
+        document.getElementById('formPreventiva').addEventListener('submit', function(e) {
+            const tareasSeleccionadas = Array.from(checkboxes).filter(cb => cb.checked);
+            
+            if (tareasSeleccionadas.length === 0) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Seleccione tareas',
+                    text: 'Debe seleccionar al menos una tarea para la orden preventiva'
+                });
+                return;
+            }
+            
+            if (!asignadoInput.value.trim()) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Asignación requerida',
+                    text: 'Debe asignar un responsable para la orden'
+                });
+                return;
+            }
+            
+            // Confirmación GMP
+            Swal.fire({
+                title: '¿Confirmar orden GMP?',
+                html: `
+                    <p>Se crearán <strong>${tareasSeleccionadas.length} tarea(s)</strong> de mantenimiento preventivo.</p>
+                    <p class="text-muted small">Esta orden cumplirá con los requisitos GMP de trazabilidad y firmas.</p>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, crear orden',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+.alert-gmp-info {
+    background-color: #e7f3ff;
+    border-color: #b8daff;
+    color: #004085;
+    border-radius: 0.5rem;
+    padding: 10px 15px;
+}
+
+.tarea-card {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.tarea-card:hover {
+    background-color: #f8f9fa;
+}
+
+.tarea-card .form-check {
+    pointer-events: auto;
+}
+
+.repuestos-detalle {
+    border-left-width: 3px !important;
+}
+</style>
+{% endblock %}

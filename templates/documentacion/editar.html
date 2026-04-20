@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Documento{% endblock %}
+{% block page_title %}Editar: {{ documento.titulo }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('documentacion.index') }}">Documentación</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('documentacion.ver_documento', documento_id=documento.id) }}">{{ documento.codigo }}</a></li>
+                <li class="breadcrumb-item active">Editar</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>Editor de Documento - {{ documento.codigo }}
+                </h5>
+                <div>
+                    <span class="badge bg-light text-dark me-2">Versión: {{ documento.version }}</span>
+                    <span class="badge bg-{{ 'warning' if documento.estado == 'Borrador' else 'success' }}">
+                        {{ documento.estado }}
+                    </span>
+                    {% if documento.qr_code %}
+                    <span class="badge bg-info ms-2">
+                        <i class="fas fa-qrcode me-1"></i>QR Generado
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <!-- Panel de herramientas -->
+                    <div class="col-md-3 border-end">
+                        <div class="p-3">
+                            <h6 class="fw-bold"><i class="fas fa-tools me-2"></i>Herramientas</h6>
+                            <hr>
+                            
+                            <div class="mb-3">
+                                <label class="fw-bold small">Campos del documento</label>
+                                <div class="list-group" id="camposLista"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="fw-bold small">Agregar sección</label>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="agregarSeccion('texto')">
+                                        <i class="fas fa-paragraph me-1"></i>Texto
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="agregarSeccion('tabla')">
+                                        <i class="fas fa-table me-1"></i>Tabla
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="agregarSeccion('lista')">
+                                        <i class="fas fa-list me-1"></i>Lista
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" onclick="agregarSeccion('firma')">
+                                        <i class="fas fa-signature me-1"></i>Firma
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="fw-bold small">Historial de cambios</label>
+                                <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;" id="historialCambios"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Área de edición -->
+                    <div class="col-md-9">
+                        <div class="p-3">
+                            <div class="mb-3">
+                                <label for="tituloDoc" class="form-label fw-bold">Título del documento</label>
+                                <input type="text" class="form-control" id="tituloDoc" value="{{ documento.titulo }}">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Contenido editable</label>
+                                <div id="editor-contenido" class="border rounded p-3" style="min-height: 500px; background: white;" contenteditable="true">
+                                    {{ documento.contenido|safe }}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Campos editables detectados</label>
+                                <div id="campos-detectados" class="bg-light p-3 rounded" style="max-height: 200px; overflow-y: auto;"></div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <button class="btn btn-outline-secondary" onclick="previsualizar()">
+                                        <i class="fas fa-eye me-2"></i>Previsualizar
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="verHistorial()">
+                                        <i class="fas fa-history me-2"></i>Historial
+                                    </button>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('documentacion.ver_documento', documento_id=documento.id) }}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancelar
+                                    </a>
+                                    <button class="btn btn-success" onclick="guardarCambios()">
+                                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de previsualización -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Previsualización del Documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent" style="max-height: 70vh; overflow-y: auto;"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de historial -->
+<div class="modal fade" id="historialModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Historial de Cambios</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="historialContent"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let documentoId = {{ documento.id }};
+    let cambiosPendientes = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        detectarCamposEditables();
+        cargarHistorial();
+    });
+
+    function detectarCamposEditables() {
+        const editor = document.getElementById('editor-contenido');
+        const elementos = editor.querySelectorAll('[data-campo]');
+        const camposDetectados = document.getElementById('campos-detectados');
+        const camposLista = document.getElementById('camposLista');
+        
+        let html = '<ul class="list-unstyled">';
+        elementos.forEach(el => {
+            const campo = el.dataset.campo;
+            html += `<li class="mb-2"><span class="badge bg-primary">${campo}</span><small class="text-muted ms-2">${el.innerText.substring(0, 50)}...</small></li>`;
+        });
+        html += '</ul>';
+        camposDetectados.innerHTML = html || '<p class="text-muted">No se detectaron campos editables</p>';
+        
+        let listaHtml = '';
+        elementos.forEach(el => {
+            const campo = el.dataset.campo;
+            const valor = el.innerText;
+            listaHtml += `<div class="list-group-item list-group-item-action" onclick="editarCampo('${campo}')"><strong>${campo}</strong><br><small>${valor.substring(0, 50)}</small></div>`;
+        });
+        camposLista.innerHTML = listaHtml || '<div class="list-group-item">No hay campos editables</div>';
+    }
+
+    function editarCampo(campo) {
+        const elementos = document.querySelectorAll(`[data-campo="${campo}"]`);
+        if (elementos.length === 0) return;
+        const elemento = elementos[0];
+        const valorActual = elemento.innerText;
+        
+        Swal.fire({
+            title: 'Editar campo',
+            html: `<div class="mb-3"><label class="fw-bold">Campo: ${campo}</label><textarea id="nuevoValor" class="form-control" rows="5">${valorActual}</textarea></div>`,
+            showCancelButton: true,
+            confirmButtonText: 'Guardar',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => { return { campo, valor: document.getElementById('nuevoValor').value }; }
+        }).then((result) => {
+            if (result.isConfirmed) { actualizarCampo(campo, result.value.valor); }
+        });
+    }
+
+    function actualizarCampo(campo, nuevoValor) {
+        const elementos = document.querySelectorAll(`[data-campo="${campo}"]`);
+        elementos.forEach(el => { el.innerText = nuevoValor; });
+        cambiosPendientes.push({ campo: campo, valor: nuevoValor, timestamp: new Date().toISOString() });
+        Swal.fire({ icon: 'success', title: 'Campo actualizado', text: 'El cambio se ha aplicado en el editor', timer: 1500, showConfirmButton: false });
+    }
+
+    function agregarSeccion(tipo) {
+        let html = '';
+        const id = 'seccion_' + Date.now();
+        
+        if (tipo === 'texto') {
+            html = `<div class="seccion-edit" id="${id}" data-seccion="texto"><div class="d-flex justify-content-between align-items-center mb-2"><input type="text" class="form-control form-control-sm w-75" placeholder="Título de la sección"><button class="btn btn-sm btn-outline-danger" onclick="eliminarSeccion('${id}')"><i class="fas fa-trash"></i></button></div><div contenteditable="true" class="border rounded p-2" style="min-height: 100px;">Escriba aquí el contenido...</div></div>`;
+        } else if (tipo === 'tabla') {
+            html = `<div class="seccion-edit" id="${id}" data-seccion="tabla"><div class="d-flex justify-content-between align-items-center mb-2"><input type="text" class="form-control form-control-sm w-75" placeholder="Título de la tabla"><button class="btn btn-sm btn-outline-danger" onclick="eliminarSeccion('${id}')"><i class="fas fa-trash"></i></button></div><table class="table table-bordered"><tr><th contenteditable="true">Columna 1</th><th contenteditable="true">Columna 2</th></tr><tr><td contenteditable="true"></td><td contenteditable="true"></td></tr></table><button class="btn btn-sm btn-outline-success" onclick="agregarFila(this)">+ Fila</button></div>`;
+        } else if (tipo === 'lista') {
+            html = `<div class="seccion-edit" id="${id}" data-seccion="lista"><div class="d-flex justify-content-between align-items-center mb-2"><input type="text" class="form-control form-control-sm w-75" placeholder="Título de la lista"><button class="btn btn-sm btn-outline-danger" onclick="eliminarSeccion('${id}')"><i class="fas fa-trash"></i></button></div><ul><li contenteditable="true">Item 1</li><li contenteditable="true">Item 2</li></ul><button class="btn btn-sm btn-outline-success" onclick="agregarItemLista(this)">+ Item</button></div>`;
+        } else if (tipo === 'firma') {
+            html = `<div class="seccion-edit" id="${id}" data-seccion="firma"><div class="row"><div class="col-4"><label>Nombre</label><input type="text" class="form-control form-control-sm" placeholder="Nombre"></div><div class="col-4"><label>Rol</label><input type="text" class="form-control form-control-sm" placeholder="Rol"></div><div class="col-4"><label>Firma</label><input type="text" class="form-control form-control-sm" placeholder="_________________"></div></div></div>`;
+        }
+        document.getElementById('editor-contenido').insertAdjacentHTML('beforeend', html);
+    }
+
+    function eliminarSeccion(id) { document.getElementById(id).remove(); }
+    function agregarFila(btn) { const tabla = btn.closest('table'); const fila = tabla.insertRow(); for (let i = 0; i < tabla.rows[0].cells.length; i++) { const celda = fila.insertCell(); celda.contentEditable = true; celda.innerHTML = ''; } }
+    function agregarItemLista(btn) { const lista = btn.previousElementSibling; const nuevoItem = document.createElement('li'); nuevoItem.contentEditable = true; nuevoItem.innerHTML = 'Nuevo item'; lista.appendChild(nuevoItem); }
+
+    function guardarCambios() {
+        const contenido = document.getElementById('editor-contenido').innerHTML;
+        const titulo = document.getElementById('tituloDoc').value;
+        
+        Swal.fire({ title: 'Guardando cambios', text: 'Por favor espere...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); fetch(`/documentacion/api/guardar/${documentoId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ titulo: titulo, contenido: contenido, cambios: cambiosPendientes }) }).then(response => response.json()).then(data => { Swal.close(); if (data.success) { Swal.fire({ icon: 'success', title: 'Guardado', text: 'Los cambios se han guardado correctamente', timer: 2000, showConfirmButton: false }).then(() => { window.location.href = `/documentacion/ver/${documentoId}`; }); } else { throw new Error(data.error); } }).catch(error => { Swal.fire({ icon: 'error', title: 'Error', text: error.message }); }); } });
+    }
+
+    function previsualizar() { document.getElementById('previewContent').innerHTML = document.getElementById('editor-contenido').innerHTML; new bootstrap.Modal(document.getElementById('previewModal')).show(); }
+
+    function cargarHistorial() {
+        fetch(`/documentacion/api/historial/${documentoId}`).then(response => response.json()).then(data => { let html = ''; data.forEach(c => { html += `<div class="mb-2 p-2 border-bottom"><small class="text-muted">${c.fecha}</small><br><strong>${c.usuario}:</strong> modificó <span class="badge bg-info">${c.campo}</span><br><small class="text-muted">${c.valor.substring(0, 100)}...</small></div>`; }); document.getElementById('historialCambios').innerHTML = html || '<p class="text-muted">Sin historial</p>'; });
+    }
+
+    function verHistorial() {
+        fetch(`/documentacion/api/historial/${documentoId}`).then(response => response.json()).then(data => { let html = '<div class="timeline">'; data.forEach(c => { html += `<div class="timeline-item mb-3"><div class="timeline-date text-muted small">${c.fecha}</div><div class="timeline-content p-2 bg-light rounded"><strong>${c.usuario}</strong> modificó <span class="badge bg-info">${c.campo}</span><p class="small mt-1 mb-0">${c.valor.substring(0, 200)}...</p></div></div>`; }); html += '</div>'; document.getElementById('historialContent').innerHTML = html || '<p class="text-muted">No hay historial de cambios</p>'; new bootstrap.Modal(document.getElementById('historialModal')).show(); });
+    }
+</script>
+
+<style>
+    [data-campo] { background-color: #fff9c4; cursor: pointer; transition: background-color 0.2s; }
+    [data-campo]:hover { background-color: #fff59d; }
+    .seccion-edit { border: 1px dashed #3498db; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    .seccion-edit:hover { border-color: #e74c3c; }
+    .timeline { position: relative; padding-left: 30px; }
+    .timeline:before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #3498db; }
+    .timeline-item { position: relative; }
+    .timeline-item:before { content: ''; position: absolute; left: -36px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #3498db; }
+</style>
+{% endblock %}

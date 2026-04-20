@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Inventario{% endblock %}
+{% block page_title %}Gestión de Inventario - Repuestos GMP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <h4><i class="fas fa-boxes me-2"></i>Listado de Repuestos</h4>
+        <div>
+            <a href="{{ url_for('inventario.nuevo_repuesto') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Nuevo Repuesto
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <!-- Filtro por equipo -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="filtroEquipo" class="form-label">Filtrar por equipo</label>
+                        <select class="form-select" id="filtroEquipo">
+                            <option value="">Todos los equipos</option>
+                            {% for equipo in equipos %}
+                            <option value="{{ equipo.id }}" data-code="{{ equipo.code }}">{{ equipo.code }} - {{ equipo.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover" id="repuestosTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Equipos Asignados</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Estado</th>
+                                <th>Ubicación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if repuestos %}
+                                {% for repuesto in repuestos %}
+                                <tr data-equipo-codes="
+                                    {%- if repuesto.equipos_asignados -%}
+                                        {%- for asig in repuesto.equipos_asignados -%}
+                                            {{ asig.equipo.code }}{% if not loop.last %},{% endif %}
+                                        {%- endfor -%}
+                                    {%- elif repuesto.equipo -%}
+                                        {{ repuesto.equipo.code }}
+                                    {%- endif -%}">
+                                    <td><strong>{{ repuesto.codigo }}</strong></td>
+                                    <td>{{ repuesto.nombre }}</span>
+                                    <td>{{ repuesto.categoria or 'N/A' }}</span>
+                                    <td>
+                                        {% if repuesto.equipos_asignados %}
+                                            {% for asig in repuesto.equipos_asignados %}
+                                                <a href="{{ url_for('equipos.detalle_equipo', equipo_id=asig.equipo.id) }}" class="text-decoration-none">
+                                                    <span class="badge bg-secondary mb-1">{{ asig.equipo.code }}</span>
+                                                </a>
+                                            {% endfor %}
+                                        {% elif repuesto.equipo %}
+                                            <a href="{{ url_for('equipos.detalle_equipo', equipo_id=repuesto.equipo.id) }}" class="text-decoration-none">
+                                                <span class="badge bg-secondary">{{ repuesto.equipo.code }}</span>
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Sin equipo</span>
+                                        {% endif %}
+                                    </span>
+                                    <td class="fw-bold">{{ repuesto.stock_actual }}</span>
+                                    <td>{{ repuesto.stock_minimo }}</span>
+                                    <td>
+                                        {% if repuesto.stock_actual <= repuesto.stock_minimo %}
+                                            <span class="badge bg-danger">Crítico</span>
+                                        {% elif repuesto.stock_actual <= repuesto.stock_minimo * 2 %}
+                                            <span class="badge bg-warning text-dark">Bajo</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Normal</span>
+                                        {% endif %}
+                                    </span>
+                                    <td>{{ repuesto.ubicacion or 'N/A' }}</span>
+                                    <td>
+                                        <a href="{{ url_for('inventario.detalle_repuesto', repuesto_id=repuesto.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </span>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-5">
+                                        <i class="fas fa-boxes fa-4x text-muted mb-3"></i>
+                                        <h5 class="text-muted">No hay repuestos registrados</h5>
+                                        <p class="mb-3">Comience registrando su primer repuesto</p>
+                                        <a href="{{ url_for('inventario.nuevo_repuesto') }}" class="btn btn-primary">
+                                            <i class="fas fa-plus-circle me-2"></i>Nuevo Repuesto
+                                        </a>
+                                    </span>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        var table = $('#repuestosTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            },
+            "pageLength": 10,
+            "order": [[0, 'asc']]
+        });
+
+        // Filtro por equipo - busca en la columna 3 (Equipos Asignados)
+        $('#filtroEquipo').on('change', function() {
+            var selectedOption = $(this).find('option:selected');
+            var equipoId = $(this).val();
+            var equipoCode = selectedOption.data('code');
+            
+            if (equipoId === '') {
+                table.column(3).search('').draw();
+            } else {
+                table.column(3).search(equipoCode, true, false).draw();
+            }
+        });
+    });
+</script>
+{% endblock %}

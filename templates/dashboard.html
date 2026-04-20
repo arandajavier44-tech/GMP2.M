@@ -1,0 +1,855 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard - Sistema GMP Maintenance{% endblock %}
+
+{% block content %}
+<!-- Tarjetas de Estadísticas Rápidas -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Equipos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_equipos }}</div>
+                        <div class="small mt-2">
+                            <span class="text-success me-2">🟢 {{ equipos_operativos }}</span>
+                            <span class="text-warning me-2">🟡 {{ equipos_mantenimiento }}</span>
+                            <span class="text-danger">🔴 {{ equipos_fuera_servicio }}</span>
+                        </div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-industry fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Temas Activos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="temas-abiertos">0</div>
+                        <div class="small mt-2">
+                            <span class="text-danger me-2" id="temas-alta">🔴 Alta: 0</span>
+                            <span class="text-warning" id="temas-media">🟡 Media: 0</span>
+                        </div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-comments fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Stock Crítico</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ repuestos_criticos }}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-boxes fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">CAPAs Abiertas</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ capas_abiertas }}</div>
+                    </div>
+                    <div class="col-auto"><i class="fas fa-clipboard-check fa-2x text-gray-300"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN DE TEMAS -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-comments me-2"></i>Conversaciones por Tema</h6>
+                <div>
+                    <button class="btn btn-sm btn-light me-2" data-bs-toggle="modal" data-bs-target="#nuevoTemaModal">
+                        <i class="fas fa-plus me-1"></i>Nuevo Tema
+                    </button>
+                    {% if current_user.nivel_jerarquico == 'jefe' or current_user.area_principal == 'administracion' %}
+                    <button class="btn btn-sm btn-outline-danger me-2" id="btnEliminarSeleccionados" style="display: none;">
+                        <i class="fas fa-trash me-1"></i> Eliminar (<span id="seleccionados-count">0</span>)
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="btnModoSeleccion">
+                        <i class="fas fa-check-square me-1"></i> Seleccionar
+                    </button>
+                    {% endif %}
+                    <div class="btn-group btn-group-sm ms-2" role="group">
+                        <button class="btn btn-light btn-filtro active" data-estado="todos">Todos</button>
+                        <button class="btn btn-light btn-filtro" data-estado="Abierto">Abiertos</button>
+                        <button class="btn btn-light btn-filtro" data-estado="En Proceso">En Proceso</button>
+                        <button class="btn btn-light btn-filtro" data-estado="Resuelto">Resueltos</button>
+                        <button class="btn btn-light btn-filtro" data-estado="Cerrado">Cerrados</button>
+                        <button class="btn btn-light btn-filtro" data-estado="Archivado">Archivados</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filtroSector">
+                            <option value="">Todos los sectores</option>
+                            <option value="mantenimiento">Mantenimiento</option>
+                            <option value="produccion">Producción</option>
+                            <option value="calidad">Calidad</option>
+                            <option value="administracion">Administración</option>
+                            <option value="rrhh">Recursos Humanos</option>
+                            <option value="contabilidad">Contabilidad</option>
+                            <option value="sistemas">Sistemas / IT</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="filtroTipo">
+                            <option value="">Todos los tipos</option>
+                            <option value="falla">🔧 Falla / Avería</option>
+                            <option value="solicitud">📋 Solicitud</option>
+                            <option value="reclamo">⚠️ Reclamo</option>
+                            <option value="consulta">❓ Consulta</option>
+                            <option value="mejora">💡 Mejora</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control form-control-sm" id="buscarTema" placeholder="Buscar por código, título...">
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <span class="badge bg-secondary" id="totalTemasFiltrados">0</span> temas
+                    </div>
+                </div>
+
+                <div id="lista-temas">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                        <p class="mt-2">Cargando temas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Órdenes y Equipos -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-clipboard-list me-2"></i>Últimas Órdenes</h6>
+                <a href="{{ url_for('ordenes.gestion_ordenes') }}" class="btn btn-sm btn-light">Ver todas</a>
+            </div>
+            <div class="card-body">
+                {% if ultimas_ordenes %}
+                    <div class="list-group">
+                        {% for orden in ultimas_ordenes %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><strong>{{ orden.numero_ot }}</strong><br><small>{{ orden.titulo }}</small></div>
+                                <div><span class="badge bg-{{ 'warning' if orden.estado == 'Pendiente' else 'primary' if orden.estado == 'En Progreso' else 'success' }}">{{ orden.estado }}</span></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-3 mb-0">No hay órdenes de trabajo</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold"><i class="fas fa-industry me-2"></i>Últimos Equipos</h6>
+                <a href="{{ url_for('equipos.gestion_equipos') }}" class="btn btn-sm btn-light">Ver todos</a>
+            </div>
+            <div class="card-body">
+                {% if ultimos_equipos %}
+                    <div class="list-group">
+                        {% for equipo in ultimos_equipos %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><strong>{{ equipo.code }}</strong> - {{ equipo.name }}</div>
+                                <div><span class="semaforo semaforo-{{ equipo.get_status_color() }} me-1"></span>{{ equipo.current_status }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted py-3 mb-0">No hay equipos registrados</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Tema -->
+<div class="modal fade" id="nuevoTemaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Nuevo Tema de Conversación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formNuevoTema" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Título *</label>
+                            <input type="text" name="titulo" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sector *</label>
+                            <select name="sector" class="form-select" required>
+                                <option value="">Seleccione...</option>
+                                <option value="mantenimiento">Mantenimiento</option>
+                                <option value="produccion">Producción</option>
+                                <option value="calidad">Calidad</option>
+                                <option value="administracion">Administración</option>
+                                <option value="rrhh">Recursos Humanos</option>
+                                <option value="contabilidad">Contabilidad</option>
+                                <option value="sistemas">Sistemas / IT</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo *</label>
+                            <select name="tipo" class="form-select" required>
+                                <option value="">Seleccione...</option>
+                                <option value="falla">🔧 Falla / Avería</option>
+                                <option value="solicitud">📋 Solicitud</option>
+                                <option value="reclamo">⚠️ Reclamo</option>
+                                <option value="consulta">❓ Consulta</option>
+                                <option value="mejora">💡 Mejora</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Prioridad</label>
+                            <select name="prioridad" class="form-select">
+                                <option value="Baja">🟢 Baja</option>
+                                <option value="Media" selected>🟡 Media</option>
+                                <option value="Alta">🔴 Alta</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Descripción *</label>
+                            <textarea name="descripcion" class="form-control" rows="4" required 
+                                      placeholder="Describa detalladamente el tema a tratar..."></textarea>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Asignar a (opcional)</label>
+                            <select name="asignado_a" class="form-select">
+                                <option value="">Sin asignar</option>
+                                {% for usuario in usuarios %}
+                                <option value="{{ usuario.id }}">{{ usuario.nombre_completo or usuario.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Adjuntar archivos</label>
+                            <input type="file" name="adjuntos" class="form-control" multiple 
+                                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Tema</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ver Tema -->
+<div class="modal fade" id="verTemaModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" id="modalTemaHeader">
+                <h5 class="modal-title"><span id="temaTitulo"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <ul class="nav nav-tabs" id="temaTabs" role="tablist">
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#conversacion">Conversación</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#historial">Historial</button></li>
+                            {% if current_user.nivel_jerarquico == 'jefe' or current_user.area_principal == 'administracion' %}
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#admin">Admin</button></li>
+                            {% endif %}
+                        </ul>
+
+                        <div class="tab-content mt-3">
+                            <div class="tab-pane fade show active" id="conversacion">
+                                <div id="conversacion-container" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>
+                                </div>
+                                <div class="mt-3">
+                                    <textarea id="nuevo-mensaje" class="form-control" rows="3" placeholder="Escribe tu mensaje... Usa @ para mencionar"></textarea>
+                                    
+                                    <!-- PREVISUALIZACIÓN DEL ARCHIVO SELECCIONADO -->
+                                    <div id="preview-archivo" class="mt-2" style="display: none;">
+                                        <div class="alert alert-info py-2 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="fas fa-paperclip me-2"></i>
+                                                <strong>Archivo seleccionado:</strong>
+                                                <span id="nombre-archivo"></span>
+                                            </div>
+                                            <button type="button" class="btn-close" onclick="limpiarArchivoSeleccionado()"></button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2 d-flex justify-content-between align-items-center flex-wrap">
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAdjuntarMensaje">
+                                                <i class="fas fa-paperclip"></i> Seleccionar archivo
+                                            </button>
+                                            <span id="estado-archivo" class="text-muted ms-2 small"></span>
+                                        </div>
+                                        <button type="button" class="btn btn-primary btn-sm" id="btnEnviarMensaje">
+                                            <i class="fas fa-paper-plane"></i> Enviar mensaje
+                                        </button>
+                                    </div>
+                                    <input type="file" id="archivo-mensaje" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="historial">
+                                <div id="historial-container" style="max-height: 400px; overflow-y: auto;">
+                                    <div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</div>
+                                </div>
+                            </div>
+                            
+                            {% if current_user.nivel_jerarquico == 'jefe' or current_user.area_principal == 'administracion' %}
+                            <div class="tab-pane fade" id="admin">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6>Reasignar Tema</h6>
+                                        <hr>
+                                        <select id="reasignarUsuario" class="form-select mb-2">
+                                            <option value="">Seleccionar usuario...</option>
+                                        </select>
+                                        <textarea id="reasignarComentario" class="form-control mb-2" rows="2" placeholder="Motivo de la reasignación..."></textarea>
+                                        <button class="btn btn-warning w-100 mb-3" id="btnReasignar">Reasignar Tema</button>
+                                        
+                                        <h6>Gestión del Tema</h6>
+                                        <hr>
+                                        <button class="btn btn-outline-success w-100 mb-2" id="btnReabrir" style="display: none;">Reabrir Tema</button>
+                                        <button class="btn btn-outline-danger w-100" id="btnEliminarAdmin">Eliminar Tema</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Información</h6>
+                                <hr>
+                                <p><strong>Código:</strong> <span id="temaCodigo"></span></p>
+                                <p><strong>Sector:</strong> <span id="temaSector"></span></p>
+                                <p><strong>Tipo:</strong> <span id="temaTipo"></span></p>
+                                <p><strong>Prioridad:</strong> <span id="temaPrioridad"></span></p>
+                                <p><strong>Estado:</strong> <span id="temaEstado"></span></p>
+                                <p><strong>Creado:</strong> <span id="temaCreado"></span></p>
+                                <p><strong>Asignado:</strong> <span id="temaAsignado"></span></p>
+                                <hr>
+                                <select id="cambiarEstadoSelect" class="form-select mb-2">
+                                    <option value="Abierto">Abierto</option>
+                                    <option value="En Proceso">En Proceso</option>
+                                    <option value="Resuelto">Resuelto</option>
+                                    <option value="Cerrado">Cerrado</option>
+                                </select>
+                                <button class="btn btn-warning w-100 mb-2" id="btnCambiarEstado">Cambiar Estado</button>
+                                <button class="btn btn-success w-100 mb-2" id="btnResolver">Marcar Resuelto</button>
+                                <button class="btn btn-danger w-100" id="btnArchivar">Archivar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let temaActual = null;
+let filtroEstado = 'todos';
+let filtroSector = '';
+let filtroTipo = '';
+let busqueda = '';
+let modoSeleccion = false;
+let temasSeleccionados = new Set();
+let archivoSeleccionado = null;
+
+function getElement(id) {
+    const el = document.getElementById(id);
+    if (!el) console.warn('Elemento no encontrado:', id);
+    return el;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatearMenciones(texto) {
+    if (!texto) return '';
+    return texto.replace(/@(\w+)/g, '<span class="badge bg-info text-dark">@$1</span>');
+}
+
+function limpiarArchivoSeleccionado() {
+    archivoSeleccionado = null;
+    const archivoMensaje = getElement('archivo-mensaje');
+    const previewArchivo = getElement('preview-archivo');
+    const nombreArchivo = getElement('nombre-archivo');
+    const estadoArchivo = getElement('estado-archivo');
+    
+    if (archivoMensaje) archivoMensaje.value = '';
+    if (previewArchivo) previewArchivo.style.display = 'none';
+    if (nombreArchivo) nombreArchivo.innerHTML = '';
+    if (estadoArchivo) estadoArchivo.innerHTML = '';
+}
+
+function cargarEstadisticas() {
+    fetch('/api/temas/estadisticas')
+        .then(r => r.json())
+        .then(data => {
+            const temasAbiertos = getElement('temas-abiertos');
+            const temasAlta = getElement('temas-alta');
+            const temasMedia = getElement('temas-media');
+            if (temasAbiertos) temasAbiertos.textContent = data.abiertos || 0;
+            if (temasAlta) temasAlta.innerHTML = `🔴 Alta: ${data.alta || 0}`;
+            if (temasMedia) temasMedia.innerHTML = `🟡 Media: ${data.media || 0}`;
+        })
+        .catch(error => console.error('Error cargando estadísticas:', error));
+}
+
+function cargarUsuariosAsignables() {
+    fetch('/api/usuarios/asignables')
+        .then(r => r.json())
+        .then(data => {
+            const select = getElement('reasignarUsuario');
+            if (select) {
+                select.innerHTML = '<option value="">Seleccionar usuario...</option>';
+                data.forEach(u => {
+                    select.innerHTML += `<option value="${u.id}">${escapeHtml(u.nombre)} (${u.area})</option>`;
+                });
+            }
+        })
+        .catch(error => console.error('Error cargando usuarios:', error));
+}
+
+function cargarMensajes(temaId) {
+    fetch(`/api/temas/${temaId}/mensajes`)
+        .then(r => r.json())
+        .then(data => {
+            const container = getElement('conversacion-container');
+            if (!container) return;
+            if (data.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">No hay mensajes aún. Sé el primero en comentar.</div>';
+                return;
+            }
+            let html = '';
+            data.forEach(msg => {
+                const esPropio = msg.usuario_id == {{ current_user.id }};
+                html += `
+                    <div class="card mb-2 ${esPropio ? 'border-primary bg-light' : 'border-light'}">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between">
+                                <strong class="${esPropio ? 'text-primary' : ''}">${escapeHtml(msg.usuario_nombre)}</strong>
+                                <small class="text-muted">${msg.created_at_formateada}</small>
+                            </div>
+                            <div class="mt-1">${formatearMenciones(escapeHtml(msg.contenido))}</div>
+                            ${msg.adjuntos && msg.adjuntos.length > 0 ? `<div class="mt-2"><small class="text-muted"><i class="fas fa-paperclip me-1"></i>Adjuntos: ${msg.adjuntos.map(a => `<a href="${a.url}" target="_blank" class="ms-2">📎 ${escapeHtml(a.nombre)}</a>`).join('')}</small></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        })
+        .catch(error => console.error('Error cargando mensajes:', error));
+}
+
+function cargarHistorial(temaId) {
+    fetch(`/api/temas/${temaId}/historial`)
+        .then(r => r.json())
+        .then(data => {
+            const container = getElement('historial-container');
+            if (!container) return;
+            if (!data.historial || data.historial.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">No hay historial de cambios</div>';
+                return;
+            }
+            let html = '<div class="timeline">';
+            data.historial.forEach(h => {
+                html += `
+                    <div class="timeline-item mb-3">
+                        <div class="timeline-date">${new Date(h.fecha).toLocaleString()}</div>
+                        <div class="timeline-content">
+                            <strong>${escapeHtml(h.usuario_nombre)}</strong>
+                            <p class="mb-1">${escapeHtml(h.comentario || 'Cambio de asignación')}</p>
+                            <small class="text-muted">
+                                De: ${escapeHtml(h.asignado_anterior || 'Sin asignar')} → 
+                                Para: ${escapeHtml(h.asignado_nuevo || 'Sin asignar')}
+                            </small>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(error => console.error('Error cargando historial:', error));
+}
+
+function verTema(id) {
+    temaActual = id;
+    fetch(`/api/temas/${id}`)
+        .then(r => r.json())
+        .then(tema => {
+            getElement('temaTitulo').textContent = tema.titulo;
+            getElement('temaCodigo').textContent = tema.codigo;
+            getElement('temaSector').textContent = tema.sector;
+            getElement('temaTipo').textContent = tema.tipo;
+            getElement('temaPrioridad').innerHTML = `<span class="badge bg-${tema.prioridad === 'Alta' ? 'danger' : tema.prioridad === 'Media' ? 'warning' : 'success'}">${tema.prioridad}</span>`;
+            getElement('temaEstado').innerHTML = `<span class="badge bg-${tema.estado === 'Abierto' ? 'danger' : tema.estado === 'En Proceso' ? 'warning' : tema.estado === 'Resuelto' ? 'success' : 'secondary'}">${tema.estado}</span>`;
+            getElement('temaCreado').textContent = `${tema.creado_por_nombre} - ${tema.fecha_creacion_formateada}`;
+            getElement('temaAsignado').textContent = tema.asignado_a_nombre || 'Sin asignar';
+            getElement('cambiarEstadoSelect').value = tema.estado;
+            
+            const btnReabrir = getElement('btnReabrir');
+            if (btnReabrir) btnReabrir.style.display = (tema.estado === 'Cerrado' || tema.estado === 'Archivado' || tema.estado === 'Resuelto') ? 'block' : 'none';
+            
+            const header = getElement('modalTemaHeader');
+            if (header) header.className = `modal-header bg-${tema.estado === 'Abierto' ? 'danger' : tema.estado === 'En Proceso' ? 'warning' : tema.estado === 'Resuelto' ? 'success' : 'secondary'} text-white`;
+            
+            cargarMensajes(id);
+            cargarHistorial(id);
+            cargarUsuariosAsignables();
+            limpiarArchivoSeleccionado();
+            new bootstrap.Modal(getElement('verTemaModal')).show();
+        })
+        .catch(error => console.error('Error cargando tema:', error));
+}
+
+function cargarTemas() {
+    let url = `/api/temas?estado=${filtroEstado}&sector=${filtroSector}&tipo=${filtroTipo}&busqueda=${busqueda}`;
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            const container = getElement('lista-temas');
+            const totalSpan = getElement('totalTemasFiltrados');
+            if (totalSpan) totalSpan.textContent = data.length;
+            if (!container) return;
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-comment-slash fa-3x text-muted mb-2"></i>
+                        <p class="text-muted">No hay temas para mostrar</p>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#nuevoTemaModal">
+                            <i class="fas fa-plus me-1"></i>Crear nuevo tema
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            let html = '<div class="list-group">';
+            data.forEach(tema => {
+                const estadoColor = tema.estado === 'Abierto' ? 'danger' : tema.estado === 'En Proceso' ? 'warning' : tema.estado === 'Resuelto' ? 'success' : 'secondary';
+                html += `
+                    <div class="list-group-item list-group-item-action" onclick="verTema(${tema.id})" style="cursor: pointer;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-${estadoColor} me-2">${tema.estado}</span>
+                                <strong>${tema.codigo}</strong> - ${escapeHtml(tema.titulo)}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-tag me-1"></i>${tema.sector} |
+                                    <i class="fas fa-comment me-1"></i>${tema.mensajes_count} mensajes |
+                                    <i class="fas fa-calendar me-1"></i>${tema.fecha_creacion_formateada}
+                                </small>
+                            </div>
+                            <div>
+                                <span class="badge bg-${tema.prioridad === 'Alta' ? 'danger' : tema.prioridad === 'Media' ? 'warning' : 'success'}">
+                                    ${tema.prioridad}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(error => console.error('Error cargando temas:', error));
+}
+
+function eliminarTema(id) {
+    Swal.fire({ title: '¿Eliminar tema?', text: 'Esta acción no se puede deshacer', icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then(result => {
+        if (result.isConfirmed) {
+            fetch(`/api/temas/${id}/eliminar`, { method: 'DELETE' }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    Swal.fire('Eliminado', data.mensaje, 'success');
+                    bootstrap.Modal.getInstance(getElement('verTemaModal')).hide();
+                    cargarTemas();
+                    cargarEstadisticas();
+                } else {
+                    Swal.fire('Error', data.error, 'error');
+                }
+            });
+        }
+    });
+}
+
+// Eventos de filtros
+document.querySelectorAll('.btn-filtro').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        filtroEstado = this.getAttribute('data-estado');
+        cargarTemas();
+    });
+});
+
+getElement('filtroSector')?.addEventListener('change', function() { filtroSector = this.value; cargarTemas(); });
+getElement('filtroTipo')?.addEventListener('change', function() { filtroTipo = this.value; cargarTemas(); });
+getElement('buscarTema')?.addEventListener('keyup', function() { busqueda = this.value; cargarTemas(); });
+
+// Nuevo tema
+getElement('formNuevoTema')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/api/temas', { method: 'POST', body: formData }).then(r => r.json()).then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(getElement('nuevoTemaModal')).hide();
+            this.reset();
+            cargarTemas();
+            cargarEstadisticas();
+            Swal.fire('Éxito', 'Tema creado correctamente', 'success');
+        }
+    });
+});
+
+// Adjuntar archivo con previsualización
+getElement('btnAdjuntarMensaje')?.addEventListener('click', function() {
+    getElement('archivo-mensaje')?.click();
+});
+
+getElement('archivo-mensaje')?.addEventListener('change', function(e) {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf', 
+                              'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                              'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    
+    if (!tiposPermitidos.includes(archivo.type)) {
+        Swal.fire('Error', 'Tipo de archivo no permitido. Solo PDF, imágenes, Word y Excel', 'error');
+        this.value = '';
+        return;
+    }
+    
+    if (archivo.size > 10 * 1024 * 1024) {
+        Swal.fire('Error', 'El archivo no puede superar los 10MB', 'error');
+        this.value = '';
+        return;
+    }
+    
+    archivoSeleccionado = archivo;
+    
+    const previewArchivo = getElement('preview-archivo');
+    const nombreArchivo = getElement('nombre-archivo');
+    const estadoArchivo = getElement('estado-archivo');
+    
+    if (previewArchivo) previewArchivo.style.display = 'block';
+    if (nombreArchivo) nombreArchivo.innerHTML = `<i class="fas fa-file me-1"></i> ${archivo.name} (${(archivo.size / 1024).toFixed(1)} KB)`;
+    if (estadoArchivo) estadoArchivo.innerHTML = '<span class="text-success">✓ Archivo listo para adjuntar</span>';
+});
+
+// Enviar mensaje con o sin archivo
+getElement('btnEnviarMensaje')?.addEventListener('click', function() {
+    const contenido = getElement('nuevo-mensaje')?.value.trim() || '';
+    if (!contenido && !archivoSeleccionado) {
+        Swal.fire('Info', 'Escribe un mensaje o adjunta un archivo', 'info');
+        return;
+    }
+    
+    Swal.fire({ title: 'Enviando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    
+    const enviarMensajeTexto = () => {
+        if (!contenido) return Promise.resolve({ success: true });
+        return fetch(`/api/temas/${temaActual}/mensajes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contenido: contenido })
+        }).then(r => r.json());
+    };
+    
+    if (archivoSeleccionado) {
+        const formData = new FormData();
+        formData.append('archivo', archivoSeleccionado);
+        
+        fetch(`/api/temas/${temaActual}/adjuntar`, { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    limpiarArchivoSeleccionado();
+                    return enviarMensajeTexto();
+                } else {
+                    throw new Error(data.error || 'Error al adjuntar archivo');
+                }
+            })
+            .then(() => {
+                getElement('nuevo-mensaje').value = '';
+                cargarMensajes(temaActual);
+                Swal.fire('Éxito', 'Mensaje enviado correctamente', 'success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', error.message || 'Error al enviar', 'error');
+            });
+    } else {
+        enviarMensajeTexto()
+            .then(data => {
+                if (data.success) {
+                    getElement('nuevo-mensaje').value = '';
+                    cargarMensajes(temaActual);
+                    Swal.fire('Éxito', 'Mensaje enviado', 'success');
+                } else {
+                    throw new Error(data.error || 'Error al enviar mensaje');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', error.message || 'Error al enviar mensaje', 'error');
+            });
+    }
+});
+
+// Cambiar estado
+getElement('btnCambiarEstado')?.addEventListener('click', function() {
+    const nuevoEstado = getElement('cambiarEstadoSelect')?.value || 'Abierto';
+    fetch(`/api/temas/${temaActual}/estado`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estado: nuevoEstado }) })
+        .then(() => { cargarTemas(); cargarEstadisticas(); verTema(temaActual); Swal.fire('Éxito', `Estado cambiado a ${nuevoEstado}`, 'success'); })
+        .catch(error => { console.error('Error:', error); Swal.fire('Error', 'Error al cambiar estado', 'error'); });
+});
+
+// Resolver tema
+getElement('btnResolver')?.addEventListener('click', function() {
+    Swal.fire({ title: 'Resolver tema', text: '¿Esta conversación está resuelta?', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, resolver' }).then(result => {
+        if (result.isConfirmed) {
+            fetch(`/api/temas/${temaActual}/resolver`, { method: 'POST' })
+                .then(() => { cargarTemas(); cargarEstadisticas(); verTema(temaActual); Swal.fire('Éxito', 'Tema resuelto', 'success'); })
+                .catch(error => { console.error('Error:', error); Swal.fire('Error', 'Error al resolver tema', 'error'); });
+        }
+    });
+});
+
+// Archivar tema
+getElement('btnArchivar')?.addEventListener('click', function() {
+    Swal.fire({ title: 'Archivar tema', text: 'Esta conversación se archivará', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, archivar' }).then(result => {
+        if (result.isConfirmed) {
+            fetch(`/api/temas/${temaActual}/archivar`, { method: 'POST' })
+                .then(() => { bootstrap.Modal.getInstance(getElement('verTemaModal')).hide(); cargarTemas(); cargarEstadisticas(); Swal.fire('Éxito', 'Tema archivado', 'success'); })
+                .catch(error => { console.error('Error:', error); Swal.fire('Error', 'Error al archivar tema', 'error'); });
+        }
+    });
+});
+
+// Reasignar tema
+getElement('btnReasignar')?.addEventListener('click', function() {
+    const asignadoId = getElement('reasignarUsuario')?.value;
+    const comentario = getElement('reasignarComentario')?.value || '';
+    if (!asignadoId) { Swal.fire('Error', 'Seleccione un usuario para asignar', 'error'); return; }
+    Swal.fire({ title: '¿Reasignar tema?', text: 'El usuario seleccionado recibirá una notificación', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, reasignar' }).then(result => {
+        if (result.isConfirmed) {
+            fetch(`/api/temas/${temaActual}/reasignar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asignado_id: asignadoId, comentario: comentario }) })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Éxito', data.mensaje, 'success');
+                        getElement('reasignarComentario').value = '';
+                        verTema(temaActual);
+                        cargarTemas();
+                    } else {
+                        Swal.fire('Error', data.error, 'error');
+                    }
+                })
+                .catch(error => { console.error('Error:', error); Swal.fire('Error', 'Error al reasignar', 'error'); });
+        }
+    });
+});
+
+// Reabrir tema
+getElement('btnReabrir')?.addEventListener('click', function() {
+    Swal.fire({ title: '¿Reabrir tema?', text: 'El tema volverá a estado "Abierto"', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, reabrir' }).then(result => {
+        if (result.isConfirmed) {
+            fetch(`/api/temas/${temaActual}/reabrir`, { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Éxito', data.mensaje, 'success');
+                        verTema(temaActual);
+                        cargarTemas();
+                        cargarEstadisticas();
+                    } else {
+                        Swal.fire('Error', data.error, 'error');
+                    }
+                })
+                .catch(error => { console.error('Error:', error); Swal.fire('Error', 'Error al reabrir tema', 'error'); });
+        }
+    });
+});
+
+// Eliminar desde admin
+getElement('btnEliminarAdmin')?.addEventListener('click', function() {
+    eliminarTema(temaActual);
+});
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    cargarEstadisticas();
+    cargarTemas();
+});
+</script>
+
+<style>
+.border-left-primary { border-left: 4px solid #4e73df !important; }
+.border-left-warning { border-left: 4px solid #f6c23e !important; }
+.border-left-info { border-left: 4px solid #36b9cc !important; }
+.border-left-danger { border-left: 4px solid #e74a3b !important; }
+.text-gray-300 { color: #dddfeb !important; }
+.text-gray-800 { color: #5a5c69 !important; }
+.semaforo { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.semaforo-green { background-color: #28a745; }
+.semaforo-yellow { background-color: #ffc107; }
+.semaforo-red { background-color: #dc3545; }
+.btn-filtro.active { background-color: #007bff !important; color: white !important; }
+.timeline { position: relative; padding-left: 30px; }
+.timeline:before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #e3e6f0; }
+.timeline-item { position: relative; margin-bottom: 20px; }
+.timeline-item:before { content: ''; position: absolute; left: -36px; top: 0; width: 12px; height: 12px; border-radius: 50%; background: #4e73df; border: 2px solid white; }
+.timeline-date { font-size: 0.8rem; color: #858796; margin-bottom: 5px; }
+.timeline-content { background: #f8f9fc; padding: 10px 15px; border-radius: 5px; }
+</style>
+{% endblock %}

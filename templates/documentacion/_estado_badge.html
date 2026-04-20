@@ -1,0 +1,3 @@
+<span class="badge bg-{{ 'warning' if documento.estado == 'Borrador' else 'success' if documento.estado == 'Vigente' else 'secondary' }}">
+    {{ documento.estado }}
+</span>

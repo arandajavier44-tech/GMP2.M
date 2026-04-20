@@ -1,0 +1,954 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Equipo - GMP{% endblock %}
+{% block page_title %}Nuevo Equipo - Cumplimiento GMP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-industry"></i> Registrar Nuevo Equipo - Normas GMP
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="formNuevoEquipoGMP">
+                    
+                    <!-- SECCIÓN 1: IDENTIFICACIÓN GMP DEL EQUIPO -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="section-header mb-3">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-fingerprint me-2"></i>
+                                    Identificación GMP del Equipo
+                                </h5>
+                                <div class="alert alert-gmp-info">
+                                    <small><i class="fas fa-info-circle me-1"></i> Campos obligatorios según normativa GMP</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="code" class="form-label gmp-required">
+                                <i class="fas fa-barcode me-1"></i>Código GMP *
+                            </label>
+                            <input type="text" class="form-control gmp-field" id="code" name="code" required
+                                   placeholder="GMP-EQ-XXX" maxlength="20">
+                            <small class="form-text text-muted">Formato: GMP-EQ-XXX</small>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="name" class="form-label gmp-required">
+                                <i class="fas fa-tag me-1"></i>Nombre del Equipo *
+                            </label>
+                            <input type="text" class="form-control gmp-field" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="gmp_id" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>ID GMP Interno
+                            </label>
+                            <input type="text" class="form-control" id="gmp_id" name="gmp_id"
+                                   placeholder="GMP-INT-XXXX">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: CLASIFICACIÓN Y CRITICIDAD GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-clipboard-check me-2"></i>
+                                Clasificación GMP y Criticidad
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="gmp_classification" class="form-label gmp-required">
+                                <i class="fas fa-thermometer-full me-1"></i>Clasificación GMP *
+                            </label>
+                            <select class="form-select gmp-field" id="gmp_classification" name="gmp_classification" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Crítico GMP">Crítico GMP (Afecta calidad producto)</option>
+                                <option value="No Crítico GMP">No Crítico GMP</option>
+                                <option value="Auxiliar">Auxiliar (No contacto producto)</option>
+                                <option value="Validado">Validado</option>
+                                <option value="Calificado">Calificado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="risk_level" class="form-label">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Nivel de Riesgo
+                            </label>
+                            <select class="form-select" id="risk_level" name="risk_level">
+                                <option value="Alto">Alto</option>
+                                <option value="Medio" selected>Medio</option>
+                                <option value="Bajo">Bajo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="product_contact" class="form-label gmp-required">
+                                <i class="fas fa-vial me-1"></i>Contacto con Producto *
+                            </label>
+                            <select class="form-select gmp-field" id="product_contact" name="product_contact" required>
+                                <option value="Directo">Contacto Directo</option>
+                                <option value="Indirecto">Contacto Indirecto</option>
+                                <option value="No Contacto">Sin Contacto</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="cleaning_level" class="form-label">
+                                <i class="fas fa-spray-can me-1"></i>Nivel de Limpieza
+                            </label>
+                            <select class="form-select" id="cleaning_level" name="cleaning_level">
+                                <option value="CIP">CIP (Limpieza en Sitio)</option>
+                                <option value="SIP">SIP (Esterilización en Sitio)</option>
+                                <option value="Manual">Manual</option>
+                                <option value="No Requerido">No Requerido</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: INFORMACIÓN TÉCNICA -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-tools me-2"></i>
+                                Información Técnica
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="manufacturer" class="form-label">
+                                <i class="fas fa-industry me-1"></i>Fabricante
+                            </label>
+                            <input type="text" class="form-control" id="manufacturer" name="manufacturer">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="model" class="form-label">
+                                <i class="fas fa-cube me-1"></i>Modelo
+                            </label>
+                            <input type="text" class="form-control" id="model" name="model">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="serial_number" class="form-label">
+                                <i class="fas fa-hashtag me-1"></i>Número de Serie
+                            </label>
+                            <input type="text" class="form-control" id="serial_number" name="serial_number">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="capacity" class="form-label">
+                                <i class="fas fa-weight me-1"></i>Capacidad
+                            </label>
+                            <input type="text" class="form-control" id="capacity" name="capacity" placeholder="Ej: 1000 L, 500 kg/h">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="operating_range" class="form-label">
+                                <i class="fas fa-sliders-h me-1"></i>Rango Operativo
+                            </label>
+                            <input type="text" class="form-control" id="operating_range" name="operating_range" 
+                                   placeholder="Ej: 20-80°C, 1-10 bar">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="power_requirements" class="form-label">
+                                <i class="fas fa-plug me-1"></i>Requisitos de Energía
+                            </label>
+                            <input type="text" class="form-control" id="power_requirements" name="power_requirements"
+                                   placeholder="Ej: 380V, 50Hz, 15kW">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">
+                                <i class="fas fa-file-alt me-1"></i>Descripción Técnica
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: VALIDACIÓN Y CALIFICACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-file-certificate me-2"></i>
+                                Validación y Calificación GMP
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="validation_status" class="form-label">
+                                <i class="fas fa-check-circle me-1"></i>Estado Validación
+                            </label>
+                            <select class="form-select" id="validation_status" name="validation_status">
+                                <option value="">No Validado</option>
+                                <option value="DQ">DQ (Diseño)</option>
+                                <option value="IQ">IQ (Instalación)</option>
+                                <option value="OQ">OQ (Operacional)</option>
+                                <option value="PQ">PQ (Rendimiento)</option>
+                                <option value="Completo">Completamente Validado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="validation_date" class="form-label">
+                                <i class="fas fa-calendar-check me-1"></i>Fecha Validación
+                            </label>
+                            <input type="date" class="form-control" id="validation_date" name="validation_date">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="next_validation" class="form-label">
+                                <i class="fas fa-calendar-alt me-1"></i>Próxima Validación
+                            </label>
+                            <input type="date" class="form-control" id="next_validation" name="next_validation">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="validation_doc" class="form-label">
+                                <i class="fas fa-file-pdf me-1"></i>Documento Validación
+                            </label>
+                            <input type="text" class="form-control" id="validation_doc" name="validation_doc" 
+                                   placeholder="Código documento">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requires_requalification" name="requires_requalification">
+                                <label class="form-check-label" for="requires_requalification">
+                                    <i class="fas fa-redo me-1"></i>Requiere Recalificación Periódica
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 5: LOCALIZACIÓN Y PRODUCCIÓN -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Localización y Área de Producción
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="fas fa-map-pin me-1"></i>Ubicación Física
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="production_area" class="form-label">
+                                <i class="fas fa-industry me-1"></i>Área de Producción
+                            </label>
+                            <select class="form-select" id="production_area" name="production_area">
+                                <option value="">Seleccionar...</option>
+                                <option value="Área Crítica">Área Crítica (Clase A/B)</option>
+                                <option value="Área Limpia">Área Limpia (Clase C/D)</option>
+                                <option value="Área Controlada">Área Controlada</option>
+                                <option value="Área General">Área General</option>
+                                <option value="Almacén">Almacén</option>
+                                <option value="Laboratorio">Laboratorio</option>
+                                <option value="Servicios">Servicios</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="room_number" class="form-label">
+                                <i class="fas fa-door-closed me-1"></i>Sala/Número
+                            </label>
+                            <input type="text" class="form-control" id="room_number" name="room_number">
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="installation_date" class="form-label">
+                                <i class="fas fa-calendar-plus me-1"></i>Fecha Instalación
+                            </label>
+                            <input type="date" class="form-control" id="installation_date" name="installation_date">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 6: DOCUMENTACIÓN GMP -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="border-bottom pb-2 mb-3 text-primary">
+                                <i class="fas fa-archive me-2"></i>
+                                Documentación GMP Asociada
+                            </h5>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="sop_number" class="form-label">
+                                <i class="fas fa-book me-1"></i>Número SOP Operación
+                            </label>
+                            <input type="text" class="form-control" id="sop_number" name="sop_number" 
+                                   placeholder="SOP-OP-XXX">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="maintenance_sop" class="form-label">
+                                <i class="fas fa-wrench me-1"></i>SOP Mantenimiento
+                            </label>
+                            <input type="text" class="form-control" id="maintenance_sop" name="maintenance_sop"
+                                   placeholder="SOP-MT-XXX">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="cleaning_sop" class="form-label">
+                                <i class="fas fa-spray-can me-1"></i>SOP Limpieza
+                            </label>
+                            <input type="text" class="form-control" id="cleaning_sop" name="cleaning_sop"
+                                   placeholder="SOP-CL-XXX">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="calibration_sop" class="form-label">
+                                <i class="fas fa-ruler-combined me-1"></i>SOP Calibración
+                            </label>
+                            <input type="text" class="form-control" id="calibration_sop" name="calibration_sop"
+                                   placeholder="SOP-CA-XXX">
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label for="gmp_notes" class="form-label">
+                                <i class="fas fa-sticky-note me-1"></i>Observaciones GMP
+                            </label>
+                            <textarea class="form-control" id="gmp_notes" name="gmp_notes" rows="2"
+                                      placeholder="Observaciones específicas sobre cumplimiento GMP..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 7: SISTEMAS CON TAREAS Y REPUESTOS CRÍTICOS -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="text-success mb-0">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Sistemas con Tareas y Repuestos Críticos
+                                </h5>
+                                <button type="button" class="btn btn-success" onclick="mostrarModalSistema()">
+                                    <i class="fas fa-plus-circle me-2"></i>Agregar Sistema
+                                </button>
+                            </div>
+                            <div class="alert alert-gmp-systems">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Cada sistema puede tener múltiples tareas. A cada tarea puede asignarle repuestos críticos y tiempo estimado.
+                                </small>
+                            </div>
+                            
+                            <!-- Lista de Sistemas -->
+                            <div id="sistemas-container" class="row">
+                                <!-- Se llenará con JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 8: CAMPOS OCULTOS PARA SISTEMAS -->
+                    <div id="hidden-fields"></div>
+
+                    <!-- SECCIÓN 9: FIRMAS Y APROBACIONES -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-signature me-2"></i>Registro de Responsables GMP
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="created_by" class="form-label gmp-required">
+                                                <i class="fas fa-user-edit me-1"></i>Creado Por *
+                                            </label>
+                                            <input type="text" class="form-control gmp-field" id="created_by" name="created_by" required
+                                                   value="{{ session.get('username', 'Usuario') }}">
+                                        </div>
+                                        
+                                        <div class="col-md-4 mb-3">
+                                            <label for="quality_approver" class="form-label">
+                                                <i class="fas fa-user-check me-1"></i>Aprobación Calidad
+                                            </label>
+                                            <input type="text" class="form-control" id="quality_approver" name="quality_approver"
+                                                   placeholder="Nombre aprobador calidad">
+                                        </div>
+                                        
+                                        <div class="col-md-4 mb-3">
+                                            <label for="maintenance_responsible" class="form-label">
+                                                <i class="fas fa-user-cog me-1"></i>Responsable Mantenimiento
+                                            </label>
+                                            <input type="text" class="form-control" id="maintenance_responsible" name="maintenance_responsible"
+                                                   placeholder="Nombre responsable">
+                                        </div>
+                                        
+                                        <div class="col-md-12">
+                                            <div class="form-check">
+                                                <input class="form-check-input gmp-field" type="checkbox" id="gmp_compliance" name="gmp_compliance" required>
+                                                <label class="form-check-label" for="gmp_compliance">
+                                                    <i class="fas fa-check-double me-1"></i>
+                                                    Certifico que la información registrada cumple con las Normas GMP vigentes *
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES DE ACCIÓN -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('equipos.gestion_equipos') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="button" class="btn btn-warning me-2" onclick="validarGMP()">
+                            <i class="fas fa-search me-2"></i>Validar GMP
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Registrar Equipo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar sistema -->
+<div class="modal fade" id="modalSistema" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>Agregar Sistema con Tareas y Repuestos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formSistema">
+                    <!-- Datos del sistema -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="sistema-nombre" class="form-label">Nombre del Sistema *</label>
+                            <input type="text" class="form-control" id="sistema-nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sistema-categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="sistema-categoria">
+                                <option value="Mecánico">Mecánico</option>
+                                <option value="Eléctrico">Eléctrico</option>
+                                <option value="Neumático">Neumático</option>
+                                <option value="Hidráulico">Hidráulico</option>
+                                <option value="Electrónico">Electrónico</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sistema-descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="sistema-descripcion" rows="2"></textarea>
+                    </div>
+
+                    <!-- Tareas del sistema -->
+                    <h6 class="fw-bold mt-4">Tareas de Mantenimiento</h6>
+                    <div id="tareas-container">
+                        <!-- Las tareas se agregan dinámicamente -->
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-success mt-2" onclick="agregarTarea()">
+                        <i class="fas fa-plus me-1"></i>Agregar Tarea
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="guardarSistema()">Guardar Sistema</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para seleccionar repuestos -->
+<div class="modal fade" id="modalRepuestos" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-boxes me-2"></i>Seleccionar Repuestos para la Tarea
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="repuestos-lista">
+                    <!-- Se llenará con JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarRepuestosTarea()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables globales
+    let sistemas = [];
+    let tareaActual = null;
+    let repuestosDisponibles = [];
+
+    // Cargar repuestos disponibles
+    fetch('/inventario/api/listar')
+        .then(response => response.json())
+        .then(data => {
+            repuestosDisponibles = data;
+            console.log("Repuestos cargados:", repuestosDisponibles.length);
+        })
+        .catch(error => console.error("Error cargando repuestos:", error));
+
+    // Mostrar modal para nuevo sistema
+    function mostrarModalSistema() {
+        document.getElementById('sistema-nombre').value = '';
+        document.getElementById('sistema-categoria').value = 'Mecánico';
+        document.getElementById('sistema-descripcion').value = '';
+        document.getElementById('tareas-container').innerHTML = '';
+        agregarTarea();
+        new bootstrap.Modal(document.getElementById('modalSistema')).show();
+    }
+
+    // Agregar tarea al sistema
+    function agregarTarea() {
+        const container = document.getElementById('tareas-container');
+        const tareaId = Date.now();
+        
+        const div = document.createElement('div');
+        div.className = 'card mb-3 tarea-card';
+        div.id = `tarea-${tareaId}`;
+        div.innerHTML = `
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Tarea</span>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarTarea(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8 mb-2">
+                        <label class="form-label">Descripción de la tarea *</label>
+                        <input type="text" class="form-control tarea-descripcion" required>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label">Frecuencia (días)</label>
+                        <select class="form-select tarea-frecuencia">
+                            <option value="7">7 días</option>
+                            <option value="15">15 días</option>
+                            <option value="30" selected>30 días</option>
+                            <option value="60">60 días</option>
+                            <option value="90">90 días</option>
+                            <option value="180">180 días</option>
+                            <option value="365">365 días</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                        <label class="form-label">Tiempo (horas)</label>
+                        <input type="number" class="form-control tarea-tiempo" value="1.0" min="0.5" step="0.5">
+                    </div>
+                </div>
+                
+                <div class="mt-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="text-success fw-bold small">
+                            <i class="fas fa-boxes me-1"></i>Repuestos críticos
+                        </label>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="mostrarSelectorRepuestos('${tareaId}')">
+                            <i class="fas fa-plus-circle me-1"></i>Agregar Repuestos
+                        </button>
+                    </div>
+                    <div id="repuestos-${tareaId}" class="mt-2 small">
+                        <!-- Los repuestos seleccionados se muestran aquí -->
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(div);
+    }
+
+    // Eliminar tarea
+    function eliminarTarea(btn) {
+        if (document.querySelectorAll('.tarea-card').length > 1) {
+            btn.closest('.tarea-card').remove();
+        } else {
+            alert('Debe haber al menos una tarea');
+        }
+    }
+
+    // Almacenar repuestos seleccionados temporalmente
+    let repuestosSeleccionadosTemp = {};
+
+    // Mostrar selector de repuestos
+    function mostrarSelectorRepuestos(tareaId) {
+        tareaActual = tareaId;
+        const container = document.getElementById('repuestos-lista');
+        
+        if (repuestosDisponibles.length === 0) {
+            container.innerHTML = '<div class="alert alert-warning">No hay repuestos disponibles. Cree repuestos en Inventario primero.</div>';
+        } else {
+            // Obtener repuestos ya seleccionados para esta tarea
+            const existingRepuestos = repuestosSeleccionadosTemp[tareaId] || [];
+            
+            let html = '<div class="row">';
+            repuestosDisponibles.forEach(rep => {
+                const isSelected = existingRepuestos.some(r => r.id == rep.id);
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-${isSelected ? 'success' : 'secondary'}">
+                            <div class="card-body py-2">
+                                <div class="form-check">
+                                    <input class="form-check-input repuesto-check" type="checkbox" 
+                                           value="${rep.id}" id="rep_${rep.id}"
+                                           ${isSelected ? 'checked' : ''}>
+                                    <label class="form-check-label" for="rep_${rep.id}">
+                                        <strong>${rep.codigo}</strong> - ${rep.nombre}
+                                    </label>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="small">Cantidad requerida:</label>
+                                    <input type="number" class="form-control form-control-sm" 
+                                           id="cant_${rep.id}" 
+                                           value="${isSelected ? existingRepuestos.find(r => r.id == rep.id).cantidad : 1}" 
+                                           min="1" style="width: 100px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        new bootstrap.Modal(document.getElementById('modalRepuestos')).show();
+    }
+
+    // Guardar repuestos seleccionados para la tarea
+    function guardarRepuestosTarea() {
+        const seleccionados = [];
+        document.querySelectorAll('.repuesto-check:checked').forEach(cb => {
+            const repId = parseInt(cb.value);
+            const cantidad = parseInt(document.getElementById(`cant_${repId}`).value) || 1;
+            const repuesto = repuestosDisponibles.find(r => r.id == repId);
+            if (repuesto) {
+                seleccionados.push({
+                    id: repId,
+                    codigo: repuesto.codigo,
+                    nombre: repuesto.nombre,
+                    cantidad: cantidad
+                });
+            }
+        });
+        
+        // Guardar en memoria temporal
+        repuestosSeleccionadosTemp[tareaActual] = seleccionados;
+        
+        // Actualizar la visualización en la tarea
+        const container = document.getElementById(`repuestos-${tareaActual}`);
+        if (seleccionados.length > 0) {
+            let html = '<div class="border-start border-success ps-2 mt-1">';
+            seleccionados.forEach(rep => {
+                html += `
+                    <div class="mb-1">
+                        <i class="fas fa-box text-success me-1"></i>
+                        <strong>${rep.codigo}</strong> - ${rep.nombre}
+                        <span class="badge bg-info">${rep.cantidad} ud(s)</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<span class="text-muted fst-italic">No hay repuestos asignados</span>';
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('modalRepuestos')).hide();
+    }
+
+    // Guardar sistema completo
+    function guardarSistema() {
+        const nombre = document.getElementById('sistema-nombre').value.trim();
+        if (!nombre) {
+            alert('Debe ingresar un nombre para el sistema');
+            return;
+        }
+        
+        const tareas = [];
+        let tareaIndex = 0;
+        document.querySelectorAll('.tarea-card').forEach(card => {
+            const desc = card.querySelector('.tarea-descripcion')?.value.trim();
+            if (desc) {
+                const tareaId = card.id.replace('tarea-', '');
+                const repuestos = repuestosSeleccionadosTemp[tareaId] || [];
+                
+                tareas.push({
+                    id: tareaIndex,
+                    descripcion: desc,
+                    frecuencia: card.querySelector('.tarea-frecuencia')?.value || '30',
+                    tiempo: card.querySelector('.tarea-tiempo')?.value || '1.0',
+                    repuestos: repuestos
+                });
+                tareaIndex++;
+            }
+        });
+        
+        if (tareas.length === 0) {
+            alert('Debe agregar al menos una tarea');
+            return;
+        }
+        
+        const sistema = {
+            id: Date.now(),
+            nombre: nombre,
+            categoria: document.getElementById('sistema-categoria').value,
+            descripcion: document.getElementById('sistema-descripcion').value,
+            tareas: tareas
+        };
+        
+        sistemas.push(sistema);
+        actualizarListaSistemas();
+        bootstrap.Modal.getInstance(document.getElementById('modalSistema')).hide();
+    }
+
+    // Actualizar lista visual de sistemas y generar campos ocultos
+    function actualizarListaSistemas() {
+        const container = document.getElementById('sistemas-container');
+        const hiddenFields = document.getElementById('hidden-fields');
+        
+        container.innerHTML = '';
+        hiddenFields.innerHTML = '';
+        
+        if (sistemas.length === 0) {
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-light text-center py-4">
+                        <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                        <p>No hay sistemas creados</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        sistemas.forEach((sistema, sistemaIdx) => {
+            // Campos ocultos del sistema
+            hiddenFields.innerHTML += `
+                <input type="hidden" name="sistema_${sistemaIdx}_nombre" value="${escapeHtml(sistema.nombre)}">
+                <input type="hidden" name="sistema_${sistemaIdx}_categoria" value="${escapeHtml(sistema.categoria)}">
+                <input type="hidden" name="sistema_${sistemaIdx}_descripcion" value="${escapeHtml(sistema.descripcion)}">
+            `;
+            
+            sistema.tareas.forEach((tarea, tareaIdx) => {
+                hiddenFields.innerHTML += `
+                    <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}" value="${escapeHtml(tarea.descripcion)}">
+                    <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_frecuencia" value="${tarea.frecuencia}">
+                    <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_tiempo" value="${tarea.tiempo}">
+                `;
+                
+                // Agregar campos ocultos para los repuestos de cada tarea
+                if (tarea.repuestos && tarea.repuestos.length > 0) {
+                    tarea.repuestos.forEach((rep, repIdx) => {
+                        hiddenFields.innerHTML += `
+                            <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_repuesto_${repIdx}" value="${rep.id}">
+                            <input type="hidden" name="sistema_${sistemaIdx}_tarea_${tareaIdx}_repuesto_${repIdx}_cantidad" value="${rep.cantidad}">
+                        `;
+                    });
+                }
+            });
+            
+            // Tarjeta visual
+            const col = document.createElement('div');
+            col.className = 'col-md-6 mb-3';
+            col.innerHTML = `
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white d-flex justify-content-between">
+                        <span><i class="fas fa-cog me-2"></i>${escapeHtml(sistema.nombre)}</span>
+                        <button class="btn btn-sm btn-light" onclick="eliminarSistema(${sistemaIdx})">
+                            <i class="fas fa-trash text-danger"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">${escapeHtml(sistema.descripcion || 'Sin descripción')}</p>
+                        <small class="fw-bold">Tareas (${sistema.tareas.length}):</small>
+                        <ul class="list-unstyled mt-2">
+                            ${sistema.tareas.map(t => `
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                    ${escapeHtml(t.descripcion)}
+                                    ${t.repuestos && t.repuestos.length > 0 ? 
+                                        `<br><small class="text-muted ms-4">
+                                            <i class="fas fa-boxes me-1"></i>Repuestos: ${t.repuestos.map(r => r.codigo).join(', ')}
+                                        </small>` : 
+                                        `<br><small class="text-muted ms-4">
+                                            <i class="fas fa-info-circle me-1"></i>Sin repuestos asignados
+                                        </small>`}
+                                    <br><small class="text-muted ms-4">
+                                        <i class="fas fa-clock me-1"></i>c/${t.frecuencia} días | 
+                                        <i class="fas fa-hourglass-half me-1"></i>${t.tiempo} horas
+                                    </small>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            container.appendChild(col);
+        });
+        
+        console.log("Sistemas guardados:", sistemas);
+        console.log("Campos ocultos generados");
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function eliminarSistema(idx) {
+        sistemas.splice(idx, 1);
+        actualizarListaSistemas();
+    }
+
+    // Función de validación GMP
+    function validarGMP() {
+        let errores = [];
+        
+        const codigo = document.getElementById('code').value.trim();
+        const nombre = document.getElementById('name').value.trim();
+        const clasificacion = document.getElementById('gmp_classification').value;
+        const contacto = document.getElementById('product_contact').value;
+        const creadoPor = document.getElementById('created_by').value.trim();
+        const compliance = document.getElementById('gmp_compliance').checked;
+        
+        if (!codigo) errores.push('Código GMP');
+        if (!nombre) errores.push('Nombre del equipo');
+        if (!clasificacion) errores.push('Clasificación GMP');
+        if (!contacto) errores.push('Contacto con producto');
+        if (!creadoPor) errores.push('Creado por');
+        if (!compliance) errores.push('Certificación GMP');
+        
+        if (errores.length > 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Campos GMP requeridos',
+                html: `Faltan: <strong>${errores.join(', ')}</strong>`
+            });
+        } else {
+            Swal.fire({
+                icon: 'success',
+                title: 'Validación GMP exitosa',
+                text: 'Todos los campos requeridos están completos',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    }
+
+    // Validación antes de enviar
+    document.getElementById('formNuevoEquipoGMP').addEventListener('submit', function(e) {
+        const compliance = document.getElementById('gmp_compliance').checked;
+        
+        if (!compliance) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Certificación requerida',
+                text: 'Debe certificar el cumplimiento de normas GMP'
+            });
+            return;
+        }
+        
+        // Mostrar resumen de sistemas y repuestos antes de enviar
+        let totalRepuestos = 0;
+        sistemas.forEach(s => {
+            s.tareas.forEach(t => {
+                if (t.repuestos) totalRepuestos += t.repuestos.length;
+            });
+        });
+        
+        Swal.fire({
+            title: '¿Confirmar registro GMP?',
+            html: `
+                <p><strong>Equipo:</strong> ${document.getElementById('code').value}</p>
+                <p><strong>Nombre:</strong> ${document.getElementById('name').value}</p>
+                <p><strong>Sistemas:</strong> ${sistemas.length}</p>
+                <p><strong>Tareas:</strong> ${sistemas.reduce((acc, s) => acc + s.tareas.length, 0)}</p>
+                <p><strong>Repuestos asignados:</strong> ${totalRepuestos}</p>
+                <p class="text-muted small">Esta información cumplirá con trazabilidad GMP</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, registrar',
+            cancelButtonText: 'Revisar'
+        }).then((result) => {
+            if (!result.isConfirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+
+<style>
+.alert-gmp-info {
+    background-color: #e7f3ff;
+    border-color: #b8daff;
+    color: #004085;
+    border-radius: 0.5rem;
+    padding: 10px 15px;
+}
+
+.alert-gmp-systems {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+    border-radius: 0.5rem;
+    padding: 10px 15px;
+}
+
+.gmp-required::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.gmp-field:required {
+    border-left: 3px solid #007bff;
+}
+
+.section-header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: 20px;
+}
+
+.tarea-card {
+    border-left: 3px solid #28a745;
+}
+</style>
+{% endblock %}
