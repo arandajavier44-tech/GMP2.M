@@ -8,7 +8,7 @@ from models import db
 from models.conocimiento import Normativa, ConsultaIA, RecomendacionIA
 from datetime import datetime, timedelta
 from utils.decorators import tecnico_required, admin_required
-from google import genai
+import google.generativeai as genai
 import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
@@ -18,25 +18,24 @@ from reportlab.lib.units import inch
 
 ia_bp = Blueprint('ia', __name__)
 
-# ========== CONFIGURACIÓN DE GEMINI ==========
+# Configuración de Gemini
 def get_gemini_client():
     """Obtiene el cliente de Gemini API"""
     api_key = os.environ.get('GOOGLE_API_KEY')
     if not api_key:
         return None
-    return genai.Client(api_key=api_key)
+    genai.configure(api_key=api_key)
+    return genai
 
 def consultar_gemini(pregunta):
     """Consulta a Gemini API y devuelve respuesta"""
     try:
-        client = get_gemini_client()
-        if not client:
+        gemini = get_gemini_client()
+        if not gemini:
             return "⚠️ La IA no está configurada. Contacta al administrador."
         
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=pregunta
-        )
+        model = gemini.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(pregunta)
         return response.text
     except Exception as e:
         print(f"Error en Gemini: {e}")
